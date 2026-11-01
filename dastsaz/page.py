@@ -542,6 +542,7 @@ def backtest_page(res: list[dict]) -> str:
                        f"<td>{_pct(x['momentum'], True)}</td><td><b>{_pct(x['actual'], True)}</b></td></tr>"
                        for x in ex[1:16]) + "</table>")
         name, what = src.get(r["source"], (r["source"], ""))
+        name += " — " + {"jewelry": "جواهر", "kitchen": "لوازم آشپزخانه (دسته‌ی کنترل)"}.get(r.get("cat", "jewelry"), "")
         verdict = ""
         if "ours" in sc and "persist" in sc:
             o, p_ = sc["ours"], sc["persist"]

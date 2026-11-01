@@ -41,6 +41,14 @@ TREND_KWS = ["گردنبند", "گوشواره", "دستبند", "انگشتر",
              "دستبند طلا", "آویز", "انگشتر فیروزه", "گردنبند مروارید", "دستبند چرم", "گوشواره حلقه ای",
              "گردنبند پروانه", "گردنبند قلب", "دستبند مهره", "انگشتر مردانه", "دستبند مردانه", "گردنبند حرف",
              "گردنبند ماه", "زنجیر", "گوشواره آویز", "بدلیجات"]
+KITCHEN_KWS = ["قابلمه", "ماهیتابه", "سرویس قابلمه", "زودپز", "کتری", "چای ساز", "قهوه ساز", "سرخ کن بدون روغن",
+               "آبمیوه گیری", "مخلوط کن", "غذاساز", "همزن", "توستر", "اسپرسو ساز", "سماور", "قوری", "فلاسک",
+               "ظرف غذا", "تابه گریل", "کارد", "تخته گوشت", "ادویه دان", "سرویس چاقو", "کاسه", "لیوان"]
+KITCHEN_QUERIES = ["قابلمه گرانیتی", "ماهیتابه سنگی", "تابه گریل", "سرویس قابلمه", "کتری استیل", "قوری چینی",
+                   "قوری مسی", "ادویه دان", "تخته گوشت چوبی", "ظرف سفالی", "کاسه سفالی", "لیوان سرامیکی",
+                   "دیزی سنگی", "سماور ذغالی", "سرویس چاقو", "جاقاشقی", "ظرف درب دار", "سینی چوبی",
+                   "قندان", "رومیزی"]
+CATS = {"jewelry": "جواهر", "kitchen": "لوازم آشپزخانه (دسته‌ی کنترل)"}
 METHODS = {"persist": "ثابت (هیچ تغییری نمی‌کند)", "momentum": "روند اخیر ادامه پیدا می‌کند",
            "seasonal": "پارسال همین موقع", "season_avg": "میانگین فصل در همه‌ی سال‌های قبل",
            "ours": "روش گزارش (فصل + روند سالانه)"}
@@ -174,26 +182,27 @@ def trends_series(items: list[dict]) -> tuple[dict[str, list[float]], list[str]]
     return series, months
 
 
-def run_trends(token: str) -> dict:
+def run_trends(token: str, cat: str = "jewelry") -> dict:
     from .etsy import Apify
     d = _dir()
-    raw = d / "trends_raw.json"
+    raw = d / ("trends_raw.json" if cat == "jewelry" else f"trends_raw_{cat}.json")
+    kws = TREND_KWS if cat == "jewelry" else KITCHEN_KWS
     if raw.exists() and time.time() - raw.stat().st_mtime < 7 * 86400:
         items = json.loads(raw.read_text(encoding="utf-8"))
         usd = 0.0
     else:
         ap = Apify(token)
-        run = ap.run({"keywords": TREND_KWS, "geo": "IR", "timeRange": "today 5-y", "includeRelatedQueries": False,
+        run = ap.run({"keywords": kws, "geo": "IR", "timeRange": "today 5-y", "includeRelatedQueries": False,
                       "includeInterestOverTime": True}, 0.3, actor=TREND_ACTOR)
         items = ap.items(run["defaultDatasetId"]) if run.get("defaultDatasetId") else []
         usd = ap.cost(run)
         raw.write_text(json.dumps(items, ensure_ascii=False), encoding="utf-8")
     series, months = trends_series(items)
-    res = {"source": "trends", "when": dt.date.today().isoformat(), "usd": usd, "keywords": len(series),
+    res = {"source": "trends", "cat": cat, "when": dt.date.today().isoformat(), "usd": usd, "keywords": len(series),
            "skipped": [it.get("keyword") for it in items if it.get("keyword") not in series],
            "months": [months[0], months[-1]] if months else [], "scores": evaluate(series, months),
            "example": last_cutoff(series, months) if months else []}
-    (d / "trends.json").write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
+    (d / f"trends_{cat}.json").write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
     return res
 
 
@@ -220,13 +229,13 @@ def product_reviews(s, pid, since: str, sleep=time.sleep, max_pages: int = 12) -
 
 
 def run_reviews(queries: list[str] | None = None, n: int = 40, per: int = 8, progress=None,
-                sleep=time.sleep) -> dict:
+                sleep=time.sleep, cat: str = "jewelry") -> dict:
     from . import basalam
     d = _dir()
-    cache_f = d / "reviews_raw.json"
+    cache_f = d / f"reviews_raw_{cat}.json"
     cache = json.loads(cache_f.read_text(encoding="utf-8")) if cache_f.exists() else {"products": {}, "designs": {}}
     if queries is None:
-        queries = latest_queries(n)
+        queries = latest_queries(n) if cat == "jewelry" else KITCHEN_QUERIES
     today = dt.date.today()
     since = (today.replace(day=1) - dt.timedelta(days=30 * 26)).isoformat()
     s = basalam._session()
@@ -250,6 +259,8 @@ def run_reviews(queries: list[str] | None = None, n: int = 40, per: int = 8, pro
     months = _months(since[:7], (today.replace(day=1) - dt.timedelta(days=1)).isoformat()[:7])
     series = {}
     for q, ids in cache["designs"].items():
+        if q not in queries:
+            continue
         cnt = defaultdict(int)
         for pid in ids:
             for x in cache["products"].get(pid, []):
@@ -257,10 +268,10 @@ def run_reviews(queries: list[str] | None = None, n: int = 40, per: int = 8, pro
         s_ = [float(cnt.get(mo, 0)) for mo in months]
         if sum(s_[-6:]) >= 6:                     # enough buyers recently to judge
             series[q] = s_
-    res = {"source": "reviews", "when": today.isoformat(), "usd": 0.0, "keywords": len(series),
+    res = {"source": "reviews", "cat": cat, "when": today.isoformat(), "usd": 0.0, "keywords": len(series),
            "designs": len(cache["designs"]), "months": [months[0], months[-1]] if months else [],
            "scores": evaluate(series, months), "example": last_cutoff(series, months) if months else []}
-    (d / "reviews.json").write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
+    (d / f"reviews_{cat}.json").write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
     return res
 
 
@@ -285,16 +296,20 @@ def latest_queries(n: int) -> list[str]:
 # ---------------------------------------------------------------- page
 def results() -> list[dict]:
     d = C.DATA_DIR / "backtest"
-    return [json.loads((d / f).read_text(encoding="utf-8")) for f in ("trends.json", "reviews.json") if (d / f).exists()]
+    names = [f"{s}_{c}.json" for s in ("trends", "reviews") for c in CATS]
+    return [json.loads((d / f).read_text(encoding="utf-8")) for f in names if (d / f).exists()]
 
 
 def main(argv: list[str]) -> None:
     logging.basicConfig(level=logging.INFO)
     what = argv[1] if len(argv) > 1 else "trends"
+    cat = argv[2] if len(argv) > 2 else "jewelry"
     if what == "trends":
-        r = run_trends(C.secret("APIFY_TOKEN"))
+        r = run_trends(C.secret("APIFY_TOKEN"), cat)
+    elif what == "page":
+        r = {"scores": {}}
     else:
-        r = run_reviews(progress=lambda i, t: print(f"{i}/{t}", flush=True))
+        r = run_reviews(progress=lambda i, t: print(f"{i}/{t}", flush=True), cat=cat)
     for m, v in r["scores"].items():
         print(m, {k: (round(x, 3) if isinstance(x, float) else x) for k, x in v.items()})
     from .page import backtest_page
