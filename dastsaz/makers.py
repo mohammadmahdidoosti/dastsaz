@@ -14,7 +14,7 @@ from . import config as C
 
 log = logging.getLogger(__name__)
 URL = "https://core.basalam.com/api_v2/vendor/identifier/{id}"
-MAKES = re.compile(r"دست\s*‌?\s*ساز|دستساز|هنر|کارگاه|تولید|طراحی و ساخت|ساخت خودم|خونگی|خانگی|سازنده|نقره\s*کار|"
+MAKES = re.compile(r"دست\s*‌?\s*ساز|دستساز|کارگاه|طراحی و ساخت|ساخت خودم|ساخته شده توسط|سازنده|نقره\s*کار|"
                    r"زیورساز|جواهرساز|میناکاری|ملیله|سفال|رزین|مکرومه", re.I)
 RESELL = re.compile(r"وارداتی|واردات|عمده|چین|ترکیه|پخش|حراجی", re.I)
 
@@ -45,7 +45,7 @@ def details(top: list[dict], progress=None, sleep=time.sleep) -> list[dict]:
             v = {}
         city = v.get("city") or {}
         types = [c.get("title", "") for c in v.get("category_type") or []]
-        text = " ".join([v.get("title") or "", v.get("description") or "", v.get("summary") or "", " ".join(types)])
+        text = " ".join([v.get("title") or "", v.get("description") or "", v.get("summary") or ""])
         out.append({**sh, "name": v.get("title") or sh["name"], "city": city.get("title") or sh.get("owner_city", ""),
                     "province": (city.get("parent") or {}).get("title") or "", "types": types,
                     "since": (v.get("created_at") or "")[:4], "catalog": v.get("product_count"),
