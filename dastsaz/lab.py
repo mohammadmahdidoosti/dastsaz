@@ -38,6 +38,7 @@ SOURCES = {"report": "گزارش (باسلام)", "etsy": "Etsy", "google": "گ�
            "voice": "نظر خریداران", "needs": "نیاز کادو", "instagram": "اینستاگرام", "maker": "پیشنهاد سازنده",
            "manual": "ایده‌ی خودم"}
 FIELDS = ("views", "saves", "messages", "carts", "orders")
+EXPLORE = 0.2          # share of showcase slots always kept for brand-new ideas (under MIN_VIEWS), so new trends get seen
 _lock = threading.Lock()
 
 
@@ -60,11 +61,12 @@ def save(tests: list[dict]) -> None:
 
 
 def add(name: str, channel: str, source: str, price: int | None = None, query: str = "", stage: str = "pretest",
-        control: bool = False, note: str = "") -> dict:
+        control: bool = False, note: str = "", tags: str = "") -> dict:
     t = {"id": uuid.uuid4().hex[:8], "name": name.strip()[:120], "query": query.strip()[:120],
          "channel": channel if channel in CHANNELS else "other", "source": source if source in SOURCES else "manual",
          "stage": stage if stage in STAGES else "pretest", "price": price, "control": bool(control),
-         "note": note.strip()[:300], "started": dt.date.today().isoformat(), "closed": "", "metrics": []}
+         "note": note.strip()[:300],
+         "tags": [x.strip() for x in tags.replace("،", ",").split(",") if x.strip()][:8], "started": dt.date.today().isoformat(), "closed": "", "metrics": []}
     with _lock:
         tests = load()
         tests.append(t)
@@ -135,13 +137,21 @@ def exposure(tests: list[dict], draws: int = 2000, seed: int | None = None) -> d
         by_ch[t["channel"]].append(t)
     out = {}
     for ts in by_ch.values():
+        new = [t for t in ts if last(t).get("views", 0) < MIN_VIEWS]
+        old = [t for t in ts if t not in new]
+        if new and old:      # keep EXPLORE for the new ones, split the rest by Thompson sampling
+            for t in new:
+                out[t["id"]] = EXPLORE / len(new)
+            scale, ts = 1 - EXPLORE, old
+        else:
+            scale = 1.0
         wins = defaultdict(int)
         for _ in range(draws):
             best = max(ts, key=lambda t: rnd.betavariate(1 + interest(last(t)),
                                                           1 + max(0.0, last(t).get("views", 0) - interest(last(t)))))
             wins[best["id"]] += 1
         for t in ts:
-            out[t["id"]] = wins[t["id"]] / draws
+            out[t["id"]] = scale * wins[t["id"]] / draws
     return out
 
 
@@ -161,4 +171,13 @@ def board() -> dict:
         s = by_src[r["source"]]
         s["tests"] += 1
         s["wins"] += r["verdict"] == "win"
-    return {"rows": rows, "control": ctrl, "sources": dict(by_src)}
+    by_tag = defaultdict(lambda: {"tests": 0, "wins": 0, "drops": 0})
+    for r in rows:
+        if r["control"] or r["verdict"] in ("early", "keep"):
+            continue                       # only decided tests teach us something
+        for tg in r.get("tags") or []:
+            s = by_tag[tg]
+            s["tests"] += 1
+            s["wins"] += r["verdict"] == "win"
+            s["drops"] += r["verdict"] == "drop"
+    return {"rows": rows, "control": ctrl, "sources": dict(by_src), "tags": dict(by_tag)}

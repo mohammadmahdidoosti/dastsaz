@@ -626,7 +626,8 @@ def lab_page(b: dict, changes: list[dict] | None = None, snaps: int = 0) -> str:
         rows.append(
             f"<tr{' class=hl' if t['control'] else ''}><td><b>{E(t['name'])}</b><div class='muted'>"
             f"{E(L.CHANNELS.get(t['channel'], ''))} · {E(L.STAGES.get(t['stage'], ''))} · منبع: {E(L.SOURCES.get(t['source'], ''))}"
-            f"{' · ' + toman(t['price']) + ' تومان' if t.get('price') else ''} · از {E(jalali(t['started']))}</div></td>"
+            f"{' · ' + toman(t['price']) + ' تومان' if t.get('price') else ''} · از {E(jalali(t['started']))}"
+            f"{''.join(' <span class=tag>' + E(x) + '</span>' for x in t.get('tags') or [])}</div></td>"
             f"<td>{fa(n.get('views', 0))}</td><td>{_pct(t['rate']) if t['rate'] is not None else '—'}</td>"
             f"<td class='v-{t['verdict']}'>{E(t['verdict_fa'])}</td>"
             f"<td>{'' if share is None else f'<div class=bar><i style=width:{round(100 * share)}%></i></div>{_pct(share)}'}</td>"
@@ -636,12 +637,16 @@ def lab_page(b: dict, changes: list[dict] | None = None, snaps: int = 0) -> str:
     src = "".join(f"<tr><td>{E(L.SOURCES.get(k, k))}</td><td>{fa(v['tests'])}</td><td>{fa(v['wins'])}</td>"
                   f"<td>{_pct(v['wins'] / v['tests']) if v['tests'] else '—'}</td></tr>"
                   for k, v in sorted(b["sources"].items(), key=lambda kv: -kv[1]["tests"]))
+    tags = "".join(f"<tr><td>{E(k)}</td><td>{fa(v['tests'])}</td><td>{fa(v['wins'])}</td><td>{fa(v['drops'])}</td>"
+                   f"<td>{_pct(v['wins'] / v['tests'])}</td></tr>"
+                   for k, v in sorted(b.get("tags", {}).items(), key=lambda kv: -kv[1]["tests"]))
     ch = ""
     if changes:
         ch = ("<section><h2>تغییر فروش نسبت به هفته‌ی پیش (باسلام)</h2><table><tr><th>جست‌وجو</th><th>هفته‌ی پیش</th>"
-              "<th>این هفته</th><th>تغییر</th><th>تغییر تعداد رقیب</th></tr>" + "".join(
+              "<th>این هفته</th><th>تغییر</th><th>تغییر تعداد رقیب</th><th>مرحله</th></tr>" + "".join(
                   f"<tr><td>{E(c['q'])}</td><td>{fa(c['prev'])}</td><td>{fa(c['now'])}</td>"
-                  f"<td>{_pct(c['change'], True)}</td><td>{fa(c['supply_change'])}</td></tr>" for c in changes[:30])
+                  f"<td>{_pct(c['change'], True)}</td><td>{fa(c['supply_change'])}</td><td>{E(c.get('stage', ''))}</td></tr>"
+                  for c in changes[:30])
               + "</table></section>")
     body = f"""<section><h2>آزمایش‌ها</h2>
 <p class='lead'>اعداد را «کل تا امروز» وارد کنید (نه فقط امروز). علاقه = پیام + سبد خرید + سفارش (+ ذخیره با وزن کم).
@@ -652,12 +657,18 @@ def lab_page(b: dict, changes: list[dict] | None = None, snaps: int = 0) -> str:
 <input class='w' name='name' placeholder='اسم طرح' required><input class='w' name='query' placeholder='عبارت جست‌وجو در باسلام (اختیاری)'>
 <select name='channel'>{_opts(L.CHANNELS)}</select><select name='stage'>{_opts(L.STAGES)}</select>
 <select name='source'>{_opts(L.SOURCES)}</select><input name='price' type='number' placeholder='قیمت (تومان)'>
-<label><input type='checkbox' name='control' value='1'> طرح کنترل</label><input class='w' name='note' placeholder='یادداشت'>
+<label><input type='checkbox' name='control' value='1'> طرح کنترل</label>
+<input class='w' name='tags' placeholder='ویژگی‌ها با ویرگول: پاپیون، طلایی، زیر ۳۰۰، کادو، اسم‌دار'>
+<input class='w' name='note' placeholder='یادداشت'>
 <button class='btn'>اضافه کن</button></form></section>
 <section><h2>کدام منبع ایده برنده می‌سازد</h2><p class='lead'>با هر آزمایش این جدول دقیق‌تر می‌شود؛ همین «حافظه»ی ماشین است.</p>
 <table><tr><th>منبع</th><th>آزمایش</th><th>برنده</th><th>درصد برد</th></tr>{src or '<tr><td colspan=4 class=muted>—</td></tr>'}</table></section>
 {ch}
+<section><h2>کدام ویژگی برنده می‌شود</h2><p class='lead'>مثل تیک‌تاک: به‌جای «این طرح»، یاد می‌گیریم «این موتیف، رنگ، قیمت یا کاربرد».
+فقط آزمایش‌های تمام‌شده (برنده یا کنار) حساب می‌شوند.</p>
+<table><tr><th>ویژگی</th><th>آزمایش تمام‌شده</th><th>برنده</th><th>کنار</th><th>درصد برد</th></tr>{tags or '<tr><td colspan=5 class=muted>—</td></tr>'}</table></section>
 <section><h2>قانون تصمیم (قبل از آزمایش ثابت است)</h2><ul>
+<li>{_pct(L.EXPLORE)} جای نمایش همیشه برای طرح‌های تازه (زیر {fa(L.MIN_VIEWS)} بازدید) است تا ترند تازه دیده شود.</li>
 <li>زیر {fa(L.MIN_VIEWS)} بازدید: زود است.</li>
 <li>برنده: نرخ علاقه حداقل {fa(L.WIN_X, 1)} برابر طرح کنترل همان کانال و حداقل {_pct(L.WIN_ABS)}.</li>
 <li>کنار بگذار: بعد از {fa(2 * L.MIN_VIEWS)} بازدید، کمتر از نصف کنترل.</li>

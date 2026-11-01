@@ -223,7 +223,7 @@ class H(BaseHTTPRequestHandler):
                 price = f.get("price", "").strip()
                 lab.add(f["name"], f.get("channel", "other"), f.get("source", "manual"),
                         int(price) if price.isdigit() else None, f.get("query", ""), f.get("stage", "pretest"),
-                        f.get("control") == "1", f.get("note", ""))
+                        f.get("control") == "1", f.get("note", ""), f.get("tags", ""))
             return self._back()
         if len(parts) == 3 and parts[:2] == ["lab", "update"] and NAME.match(parts[2]):
             f = self._form()

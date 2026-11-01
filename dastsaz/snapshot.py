@@ -60,6 +60,19 @@ def take(queries: list[str] | None = None, progress=None, sleep=time.sleep) -> d
     return snap
 
 
+def stage(sales_change, supply_change: float, supply: int) -> str:
+    """Life stage of a trend (status goods die when they get common): new sellers pour in faster than buyers -> saturating."""
+    if sales_change is not None and sales_change >= 0.2 and supply < 1500 and supply_change < 0.1:
+        return "نوظهور"
+    if supply_change >= 0.1 and (sales_change is None or sales_change < supply_change):
+        return "رو به اشباع"
+    if sales_change is not None and sales_change >= 0.2:
+        return "در اوج"
+    if sales_change is not None and sales_change <= -0.2:
+        return "رو به افت"
+    return "ثابت"
+
+
 def history() -> list[dict]:
     return [json.loads(f.read_text(encoding="utf-8")) for f in sorted(_dir().glob("*.json"))]
 
@@ -74,7 +87,8 @@ def changes(hist: list[dict] | None = None) -> list[dict]:
     for q, cur in b.items():
         if q in a:
             prev = a[q]["week"]
-            out.append({"q": q, "prev": prev, "now": cur["week"],
-                        "change": (cur["week"] - prev) / prev if prev else None,
-                        "supply_change": cur["supply"] - a[q]["supply"]})
+            ch = (cur["week"] - prev) / prev if prev else None
+            sup = (cur["supply"] - a[q]["supply"]) / a[q]["supply"] if a[q]["supply"] else 0.0
+            out.append({"q": q, "prev": prev, "now": cur["week"], "change": ch,
+                        "supply_change": cur["supply"] - a[q]["supply"], "stage": stage(ch, sup, cur["supply"])})
     return sorted(out, key=lambda r: -(r["now"] - r["prev"]))

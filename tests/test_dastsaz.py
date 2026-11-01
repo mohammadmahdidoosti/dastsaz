@@ -399,8 +399,8 @@ def test_lab_verdicts_and_exposure(tmp_path, monkeypatch):
     from dastsaz import lab, page
     monkeypatch.setattr(C, "DATA_DIR", tmp_path)
     c = lab.add("کنترل: دستبند ساده", "instagram", "report", 300000, control=True)
-    a = lab.add("گردنبند پاپیون", "instagram", "report", 350000, query="گردنبند پاپیون")
-    b = lab.add("گردنبند ماه", "instagram", "needs")
+    a = lab.add("گردنبند پاپیون", "instagram", "report", 350000, query="گردنبند پاپیون", tags="پاپیون، طلایی")
+    b = lab.add("گردنبند ماه", "instagram", "needs", tags="ماه, طلایی")
     e = lab.add("انگشتر اسم", "instagram", "manual")
     lab.update(c["id"], {"views": 1000, "messages": 10})
     lab.update(a["id"], {"views": 600, "messages": 15, "carts": 3})
@@ -413,6 +413,8 @@ def test_lab_verdicts_and_exposure(tmp_path, monkeypatch):
     sh = {r["name"]: r["share"] for r in bd["rows"] if r["share"] is not None}
     assert sh["گردنبند پاپیون"] > sh["گردنبند ماه"]
     assert bd["sources"]["report"] == {"tests": 1, "wins": 1}
+    assert bd["tags"]["طلایی"] == {"tests": 2, "wins": 1, "drops": 1}
+    assert abs(sh["انگشتر اسم"] - lab.EXPLORE) < 1e-9
     html = page.lab_page(bd, [{"q": "x", "prev": 4, "now": 8, "change": 1.0, "supply_change": 3}], 2)
     assert "گردنبند پاپیون" in html and "برنده" in html and "تغییر فروش" in html
 
@@ -423,6 +425,7 @@ def test_snapshot_changes(tmp_path, monkeypatch):
          {"date": "2026-11-08", "searches": {"a": {"week": 12, "supply": 14}, "b": {"week": 2, "supply": 9}}}]
     ch = snapshot.changes(h)
     assert ch[0]["q"] == "a" and ch[0]["change"] == 2.0 and ch[0]["supply_change"] == 4
+    assert ch[0]["stage"] == "در اوج" and snapshot.stage(0.5, 0.0, 200) == "نوظهور" and snapshot.stage(0.05, 0.3, 900) == "رو به اشباع"
     assert snapshot.changes(h[:1]) == []
 
 
