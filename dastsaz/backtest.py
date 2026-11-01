@@ -228,22 +228,59 @@ def product_reviews(s, pid, since: str, sleep=time.sleep, max_pages: int = 12) -
     return [x for x in out if x >= since]
 
 
+DK_URL = "https://api.digikala.com/v1/product/{id}/comments/"
+JMONTHS = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور", "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"]
+FA2EN = str.maketrans("۰۱۲۳۴۵۶۷۸۹", "0123456789")
+
+
+def jdate(t: str) -> str:
+    """'9 آبان 1405' -> '2026-10-31' ('' if unreadable)."""
+    from .occasions import j2g
+    parts = str(t or "").translate(FA2EN).split()
+    try:
+        d, m, y = int(parts[0]), JMONTHS.index(parts[1]) + 1, int(parts[2])
+        return j2g(y, m, d).isoformat()
+    except (ValueError, IndexError):
+        return ""
+
+
+def dk_reviews(s, pid, since: str, sleep=time.sleep, max_pages: int = 25) -> list[str]:
+    out = []
+    for page in range(1, max_pages + 1):
+        sleep(random.uniform(2.0, 4.0))
+        try:
+            data = (s.get(DK_URL.format(id=pid), params={"page": page}, timeout=20).json() or {}).get("data") or {}
+        except Exception as e:  # noqa: BLE001
+            log.warning("dk reviews %s: %s", pid, e)
+            break
+        dates = [x for x in (jdate(c.get("created_at")) for c in data.get("comments") or []) if x]
+        out += dates
+        pager = data.get("pager") or {}
+        if not dates or min(dates) < since or page >= int(pager.get("total_pages") or 0):
+            break
+    return [x for x in out if x >= since]
+
+
 def run_reviews(queries: list[str] | None = None, n: int = 40, per: int = 8, progress=None,
-                sleep=time.sleep, cat: str = "jewelry") -> dict:
-    from . import basalam
+                sleep=time.sleep, cat: str = "jewelry", market: str = "basalam") -> dict:
+    from . import basalam, digikala
     d = _dir()
-    cache_f = d / f"reviews_raw_{cat}.json"
+    tag = "" if market == "basalam" else "dk_"
+    cache_f = d / f"reviews_raw_{tag}{cat}.json"
     cache = json.loads(cache_f.read_text(encoding="utf-8")) if cache_f.exists() else {"products": {}, "designs": {}}
     if queries is None:
         queries = latest_queries(n) if cat == "jewelry" else KITCHEN_QUERIES
     today = dt.date.today()
     since = (today.replace(day=1) - dt.timedelta(days=30 * 26)).isoformat()
-    s = basalam._session()
+    s = basalam._session() if market == "basalam" else digikala._session()
     for i, q in enumerate(queries):
         if q not in cache["designs"]:
             sleep(random.uniform(*C.BASALAM_DELAY))
             try:
-                cards, _ = basalam.search(q, size=per * 2, session=s, sleep=lambda *_: None)
+                if market == "basalam":
+                    cards, _ = basalam.search(q, size=per * 2, session=s, sleep=lambda *_: None)
+                else:
+                    cards, _ = digikala.search(q, session=s, sleep=lambda *_: None)
             except Exception as e:  # noqa: BLE001
                 log.warning("search %s: %s", q, e)
                 continue
@@ -252,7 +289,8 @@ def run_reviews(queries: list[str] | None = None, n: int = 40, per: int = 8, pro
             cache["designs"][q] = ids
         for pid in cache["designs"][q]:
             if pid not in cache["products"]:
-                cache["products"][pid] = product_reviews(s, pid, since, sleep=sleep)
+                cache["products"][pid] = (product_reviews(s, pid, since, sleep=sleep) if market == "basalam"
+                                          else dk_reviews(s, pid, since, sleep=sleep))
         cache_f.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
         if progress:
             progress(i + 1, len(queries))
@@ -268,10 +306,10 @@ def run_reviews(queries: list[str] | None = None, n: int = 40, per: int = 8, pro
         s_ = [float(cnt.get(mo, 0)) for mo in months]
         if sum(s_[-6:]) >= 6:                     # enough buyers recently to judge
             series[q] = s_
-    res = {"source": "reviews", "cat": cat, "when": today.isoformat(), "usd": 0.0, "keywords": len(series),
+    res = {"source": "reviews" if market == "basalam" else "reviews_dk", "cat": cat, "when": today.isoformat(), "usd": 0.0, "keywords": len(series),
            "designs": len(cache["designs"]), "months": [months[0], months[-1]] if months else [],
            "scores": evaluate(series, months), "example": last_cutoff(series, months) if months else []}
-    (d / f"reviews_{cat}.json").write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
+    (d / f"reviews_{tag}{cat}.json").write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
     return res
 
 
@@ -296,7 +334,7 @@ def latest_queries(n: int) -> list[str]:
 # ---------------------------------------------------------------- page
 def results() -> list[dict]:
     d = C.DATA_DIR / "backtest"
-    names = [f"{s}_{c}.json" for s in ("trends", "reviews") for c in CATS]
+    names = [f"{s}_{c}.json" for s in ("trends", "reviews", "reviews_dk") for c in CATS]
     return [json.loads((d / f).read_text(encoding="utf-8")) for f in names if (d / f).exists()]
 
 
@@ -309,7 +347,8 @@ def main(argv: list[str]) -> None:
     elif what == "page":
         r = {"scores": {}}
     else:
-        r = run_reviews(progress=lambda i, t: print(f"{i}/{t}", flush=True), cat=cat)
+        r = run_reviews(progress=lambda i, t: print(f"{i}/{t}", flush=True), cat=cat,
+                        market="digikala" if what == "reviews_dk" else "basalam")
     for m, v in r["scores"].items():
         print(m, {k: (round(x, 3) if isinstance(x, float) else x) for k, x in v.items()})
     from .page import backtest_page

@@ -123,6 +123,18 @@ def evaluate_all(cat: str = "jewelry") -> dict:
             for mo, v in mm.items():
                 pooled[q][mo] += v
     cand = {"اینستاگرام (همه‌ی پیج‌ها)": pooled, **{f"پیج {u}": dq for u, dq in ig.items()}}
+    # Digikala sales of the same designs: does Digikala move before Basalam?
+    dk_f = C.DATA_DIR / "backtest" / f"reviews_raw_dk_{cat}.json"
+    if dk_f.exists():
+        dk = json.loads(dk_f.read_text(encoding="utf-8"))
+        push_dk = {}
+        for q, ids in dk["designs"].items():
+            cnt = defaultdict(float)
+            for pid in ids:
+                for x in dk["products"].get(pid, []):
+                    cnt[x[:7]] += 1
+            push_dk[q] = dict(cnt)
+        cand["دیجی‌کالا (فروش همان طرح)"] = push_dk
     # Basalam's own recent sales as the baseline source ("what sells now keeps selling")
     cand["خود باسلام (فروش اخیر)"] = {q: dict(zip(months, s)) for q, s in truth.items()}
     for name, push in cand.items():
@@ -130,6 +142,8 @@ def evaluate_all(cat: str = "jewelry") -> dict:
         rows = []
         for w0 in range(0, max(1, len(ig_months) - 5)):
             window = ig_months[w0:w0 + 3] if name.startswith(("اینستاگرام", "پیج")) else None
+            if not name.startswith(("اینستاگرام", "پیج")) and w0 > 8:
+                break
             if window is None:
                 k = len(months) - 9 - w0
                 if k < 3:
