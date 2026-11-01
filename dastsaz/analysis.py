@@ -98,6 +98,8 @@ ASK = """تو یک تحلیلگر ارشد بازار جواهرات دست‌س
 - فقط از عددهای همین داده استفاده کن؛ هیچ عددی از خودت نساز. اگر چیزی در داده نیست، درباره‌اش ادعا نکن.
 - فارسی ساده، جمله‌های کوتاه، بدون اصطلاح فنی و بدون تعارف.
 - طرح‌های برندها (ونکلیف، تیفانی و…) را پیشنهاد نکن.
+- اگر مناسبتی نزدیک است (occasions)، بگو برای کدام طرح‌ها تا چه تاریخی (order_by) باید سفارش داد.
+- شکایت خریداران (buyer_complaints) را به «نسخه‌ی بهتر ما» تبدیل کن.
 - عددهایی که اسمشان با _pct تمام می‌شود درصدند (مثلاً «۳۶٪ پرفروش‌های اتسی»)، نه تعداد.
 - maker_brief را خطاب به تولیدکننده بنویس و فقط درباره‌ی ساختن: کدام طرح‌ها، جنس، رنگ، اندازه، چند عدد نمونه، و اینکه
   قیمت و زمان تحویلش را بگوید. سقف قیمت خرید ما (buy_max)، قیمت فروش ما و برنامه‌ی فروش را هرگز در آن ننویس.
@@ -112,7 +114,8 @@ ASK = """تو یک تحلیلگر ارشد بازار جواهرات دست‌س
 """
 
 
-def executive(st: dict, tl: list[dict], tr: list[dict], mk: list[dict], key: str) -> tuple[dict, float]:
+def executive(st: dict, tl: list[dict], tr: list[dict], mk: list[dict], key: str,
+              extra: dict | None = None) -> tuple[dict, float]:
     if not key:
         return {}, 0.0
     data = {
@@ -126,8 +129,13 @@ def executive(st: dict, tl: list[dict], tr: list[dict], mk: list[dict], key: str
         "test_list": [{"design": o.get("name"), "search": o["q"], "labels": o["labels"],
                        "basalam_sales_this_week_top10": o["week"], "basalam_products": o["supply"],
                        "digikala_same_design_in_top20": o.get("dk_match"),
-                       "digikala_ratings": o.get("dk_reviews"), **{k: o["eco"][k] for k in
-                       ("retail", "buy_max", "test_qty", "channels")}} for o in tl],
+                       "digikala_ratings": o.get("dk_reviews"),
+                       "buyer_complaints": (o.get("review") or {}).get("complaints", []),
+                       **{k: o["eco"][k] for k in ("retail", "buy_max", "test_qty", "channels")}} for o in tl],
+        "occasions": [{"name": x["name"], "date": x["date"], "days_left": x["days_left"], "order_by": x["order_by"],
+                       "matching_designs": x["designs"]} for x in (extra or {}).get("occasions", [])][:6],
+        "silver_925_toman_per_gram": ((extra or {}).get("metals") or {}).get("silver_925", {}).get("toman"),
+        "people_type_on_digikala": list(((extra or {}).get("suggest") or {}).get("counts", {}))[:25],
         "google_trends": [{"keyword": r["keyword"], "yoy_pct": round(r["yoy"]) if r.get("yoy") is not None else None, "peak_months": r.get("peak_months"),
                            "rising": [q["query"] for q in (r.get("breakout", []) + r.get("rising", []))[:3]]}
                           for r in tr if r.get("average")][:15],

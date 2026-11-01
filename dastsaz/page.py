@@ -17,7 +17,8 @@ MARKET = {"etsy": ("اتسی", "gold"), "basalam": ("باسلام", "turq"), "di
           "google": ("گوگل", "ink")}
 LAB_CLS = {"تقاضای زیاد، رقیب کم": "good", "در حال اوج": "hot", "ترند جهانی، تازه در ایران": "hot",
            "در دیجی‌کالا کم‌رقیب": "good", "در دیجی‌کالا هم پرفروش": "", "در گوگل در حال رشد": "hot",
-           "بازار خالی (آزمایش جسورانه)": "dim", "پرفروش ولی ضعیف": "", "رقابت سنگین": "dim"}
+           "بازار خالی (آزمایش جسورانه)": "dim", "پرفروش ولی ضعیف": "", "رقابت سنگین": "dim",
+           "در جست‌وجوی مردم": "good"}
 def E(t) -> str:
     return html.escape(str(t))
 
@@ -124,6 +125,15 @@ background:#eef0ec;color:#424a59}
 .eco dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 12px}
 .eco dt{color:var(--soft)}.eco dd{margin:0;font-weight:700}
 .eco .rk{margin-top:10px;font-size:12px;color:var(--rose)}.eco .rk div{margin:2px 0}
+.eco .mt{margin-top:10px;font-size:12px;color:#5b6476;background:#f1f3f7;border-radius:6px;padding:6px 8px}
+.ev .rev{margin-top:8px;padding:8px 10px;background:#fff7f0;border-radius:8px;color:#5a4330}
+.chips{display:flex;flex-wrap:wrap;gap:6px}.chips span{background:var(--card);border:1px solid var(--line);
+border-radius:999px;padding:2px 12px}.chips span b{color:var(--turq);margin-right:4px}
+.chips span.tested{border-color:var(--turq);background:var(--turq-l)}
+.metal{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px}.metal div{background:var(--card);border:1px solid var(--line);
+border-radius:10px;padding:10px 16px}.metal b{display:block;font-size:19px}
+tr.quiet td{color:var(--soft);background:#f7f7f5}.soon{color:var(--rose);font-weight:700}
+.prov{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}.prov span{background:var(--gold-l);border-radius:6px;padding:1px 10px}
 .map{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px}
 .map svg{width:100%;height:auto;display:block}
 .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--soft);margin-top:8px}
@@ -179,6 +189,14 @@ def _design(i: int, o: dict) -> str:
         ev.append(f"<div>دیجی‌کالا: <a href='{E(o.get('dk_link') or '#')}' target='_blank' rel='noopener'>"
                   f"{fa(o['dk_match'])} از ۲۰ پرفروش</a> همین طرح‌اند، {fa(o.get('dk_reviews', 0))} امتیازدهنده</div>")
     rk = "".join(f"<div>{E(r)}</div>" for r in eco.get("risks", []))
+    rv = o.get("review") or {}
+    if rv.get("n"):
+        cm = "، ".join(P(c) for c in rv.get("complaints", [])) or "شکایت تکرارشونده‌ای پیدا نشد"
+        better = f"<div><b>نسخه‌ی بهتر ما:</b> {P(rv['improve'])}</div>" if rv.get("improve") else ""
+        ev.append(f"<div class='rev'><b>نظر خریداران:</b> {fa(rv['n'])} نظر، {fa(rv.get('low', 0))} ناراضی"
+                  f"{('، میانگین ' + fa(rv['avg'], 1) + ' از ۵') if rv.get('avg') else ''}. "
+                  f"<b>شکایت‌ها:</b> {cm}{better}</div>")
+    metal = f"<div class='mt'>{P(eco['metal'])}</div>" if eco.get("metal") else ""
     return f"""<article class="design">{_shots(o)}
 <div><div class="rank">طرح {fa(i)}</div><h3>{E(o.get('name') or o['q'])}</h3>{_labs(o['labels'])}
 <p class="why">{P(o.get('brief') or '')}</p><div class="ev"><div>چرا: {E(o['why'])}</div>{''.join(ev)}</div></div>
@@ -186,7 +204,7 @@ def _design(i: int, o: dict) -> str:
 <dt>خرید از سازنده</dt><dd>حداکثر {toman(eco.get('buy_max'))}</dd>
 <dt>تعداد آزمایشی</dt><dd>{fa(eco.get('test_qty'))} عدد</dd>
 <dt>کجا بفروشید</dt><dd>{E('، '.join(eco.get('channels', [])))}</dd></dl>
-{f"<div class='rk'>{rk}</div>" if rk else ""}</div></article>"""
+{metal}{f"<div class='rk'>{rk}</div>" if rk else ""}</div></article>"""
 
 
 def _map(opps: list[dict], tl: list[dict], mid: float) -> str:
@@ -348,8 +366,73 @@ def _gallery(items, n=40):
     return "".join(out) + "</div>"
 
 
+def _timing(occ: list[dict], mt: dict) -> str:
+    if not occ and not mt:
+        return ""
+    metal = "".join(f"<div><span class='muted'>{E(v['name'])}</span><b>{toman(v['toman'])} تومان</b></div>"
+                    for v in mt.values())
+    rows = []
+    for o in occ:
+        if o.get("quiet"):
+            rows.append(f"<tr class='quiet'><td>{E(o['name'])}</td><td>{E(jalali(o['date']))} تا "
+                        f"{E(jalali(o.get('until', '')))}</td><td>{fa(max(0, o['days_left']))} روز</td>"
+                        f"<td colspan='2'>فروش جواهرِ جشن معمولاً کم است؛ سفارش زیاد نگیرید</td></tr>")
+            continue
+        ob = (f"<span class='{'soon' if o['days_left'] <= 35 else ''}'>{E(jalali(o['order_by']))}</span>"
+              if o["order_by"] else "<span class='soon'>دیر است؛ فقط با موجودی فعلی</span>")
+        ds = "، ".join(E(x) for x in o["designs"]) or f"<span class='muted'>{E('، '.join(o['themes']))}</span>"
+        rows.append(f"<tr><td>{E(o['name'])}{' <span class=muted>(تاریخ قمری، حدودی)</span>' if o['approx'] else ''}</td>"
+                    f"<td>{E(jalali(o['date']))}</td><td>{fa(o['days_left'])} روز</td><td>{ob}</td><td>{ds}</td></tr>")
+    table = ("<table><tr><th>مناسبت</th><th>تاریخ</th><th>مانده</th><th>سفارش به سازنده تا</th>"
+             "<th>طرح‌های مناسب از لیست آزمایش (یا موضوع‌های پرفروش)</th></tr>" + "".join(rows) + "</table>") if rows else ""
+    return (f"<section id='timing'><h2>مناسبت‌ها و قیمت فلز</h2><p class='lead'>کی باید جنس آماده باشد، و قیمت امروز "
+            f"نقره و طلا (منبع: tgju) برای سنجیدن سقف خرید قطعه‌های نقره.</p><div class='metal'>{metal}</div>{table}"
+            f"</section>")
+
+
+def _typed(sug: dict, opps: list[dict]) -> str:
+    counts = (sug or {}).get("counts") or {}
+    if not counts:
+        return ""
+    tested = {o["q"]: o for o in opps if o["source"] == "suggest"}
+    chips = "".join(
+        f"<span class='{'tested' if k in tested else ''}' title='{fa(v)} بار پیشنهاد شد'>{E(k)}"
+        + (f" <b>{fa(tested[k]['week'])} فروش</b>" if k in tested else "") + "</span>"
+        for k, v in list(counts.items())[:45])
+    trend = "".join(f"<span>{E(k)}</span>" for k in (sug.get("trending") or [])[:15])
+    return (f"<section id='typed'><h2>مردم چه تایپ می‌کنند</h2><p class='lead'>پیشنهادهای جعبه‌ی جست‌وجوی دیجی‌کالا "
+            f"برای کلمه‌های جواهر؛ هرچه زودتر در فهرست، بیشتر پیشنهاد شده. آن‌هایی که رنگی‌اند طرح بودند و در باسلام هم "
+            f"سنجیده شدند (فروش این هفته‌ی ۱۰ پرفروش).</p><div class='chips'>{chips}</div>"
+            + (f"<h3 style='margin-top:18px'>پرجست‌وجوهای کل دیجی‌کالا در این لحظه</h3><div class='chips'>{trend}</div>"
+               if trend else "") + "</section>")
+
+
+def _makers(mk_: list[dict]) -> str:
+    if not mk_:
+        return ""
+    from .makers import by_province
+    prov = "".join(f"<span>{E(p)}: {fa(c)}</span>" for p, c in by_province(mk_))
+    rows = "".join(
+        f"<tr><td><a href='{E(m['url'])}' target='_blank' rel='noopener'>{E(m['name'])}</a></td>"
+        f"<td>{E(m['city'])}{('، ' + E(m['province'])) if m['province'] else ''}</td>"
+        f"<td>{'سازنده یا کارگاه' if m['maker'] else '<span class=muted>نامشخص یا فروشنده</span>'}</td>"
+        f"<td>{fa(m['products'])}</td><td>{fa(m['sales'])}</td><td>{fa(m['week'])}</td>"
+        f"<td>{E(m['since']).translate(FA_DIGITS) or '—'}</td></tr>" for m in mk_[:30])
+    return (f"<section id='makers'><h2>سازنده‌های احتمالی</h2><p class='lead'>غرفه‌های باسلام که بین پرفروش‌های جواهر "
+            f"بودند. «سازنده یا کارگاه» یعنی در معرفی غرفه نشانه‌ی ساخت (دست‌ساز، کارگاه، تولید، کسب‌وکار خانگی…) هست و "
+            f"نشانه‌ی واردات نیست؛ قبل از همکاری، تماس و نمونه بگیرید.</p>"
+            + (f"<div class='prov'>{prov}</div>" if prov else "")
+            + "<table><tr><th>غرفه</th><th>شهر</th><th>نوع</th><th>محصول در پرفروش‌ها</th><th>فروش کل این محصولات</th>"
+              f"<th>فروش این هفته</th><th>از سال</th></tr>{rows}</table></section>")
+
+
 def render(name: str, when: str, st: dict, ex: dict, mk: list[dict], etsy: list[dict], bas: list[dict],
-           dk: list[dict], opps: list[dict], tl: list[dict], tr: list[dict], cost: dict, mid: float) -> str:
+           dk: list[dict], opps: list[dict], tl: list[dict], tr: list[dict], cost: dict, mid: float,
+           extra: dict | None = None) -> str:
+    extra = extra or {}
+    timing = _timing(extra.get("occasions") or [], extra.get("metals") or {})
+    typed = _typed(extra.get("suggest") or {}, opps)
+    makers_html = _makers(extra.get("makers") or [])
     has_dk = bool(dk)
     top = tl[0] if tl else None
     pick = ""
@@ -373,8 +456,10 @@ def render(name: str, when: str, st: dict, ex: dict, mk: list[dict], etsy: list[
         "<p class='muted'>این هفته طرحی با شرایط آزمایش پیدا نشد.</p>"
     steps = "، ".join(f"{E(k)}: {fa(v['usd'], 3)} دلار" for k, v in cost.get("steps", {}).items())
     tr_html = _trends(tr)
-    nav = [("خلاصه", "summary"), ("لیست آزمایش", "test"), ("نقشه‌ی فرصت‌ها", "map"), ("سه بازار", "markets")] + \
-          ([("گوگل", "trends")] if tr_html else []) + [("جزئیات", "details")]
+    nav = [("خلاصه", "summary"), ("لیست آزمایش", "test")] + ([("مناسبت‌ها", "timing")] if timing else []) + \
+          [("نقشه‌ی فرصت‌ها", "map"), ("سه بازار", "markets")] + ([("جست‌وجوی مردم", "typed")] if typed else []) + \
+          ([("گوگل", "trends")] if tr_html else []) + ([("سازنده‌ها", "makers")] if makers_html else []) + \
+          [("جزئیات", "details")]
     galleries = [("اتسی", etsy), ("باسلام", bas)] + ([("دیجی‌کالا", dk)] if has_dk else [])
     return f"""<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>دست‌ساز — گزارش ترند {E(name)}</title>
@@ -395,6 +480,7 @@ def render(name: str, when: str, st: dict, ex: dict, mk: list[dict], etsy: list[
 <p class="lead">از هر طرح فقط چند عدد بسازید، یک تا دو هفته فروش را بسنجید و فقط برنده‌ها را دوباره سفارش دهید.
 عکس‌ها مرجع ترندند؛ سازنده نسخه‌ی خودش را بسازد. «خرید از سازنده» حداکثر {fa(round(C.BUY_SHARE * 100))}٪ قیمت فروش است
 تا کارمزد، ارسال، تبلیغ و سود جا داشته باشد.</p>{designs}</section>
+{timing}
 <section id="map"><h2>نقشه‌ی فرصت‌ها</h2>
 <p class="lead">هر نقطه یک جست‌وجو در باسلام است: بالاتر یعنی فروش این هفته بیشتر، راست‌تر یعنی رقیب کمتر.
 بهترین جا گوشه‌ی بالا و راست است.</p>{_map(opps, tl, mid)}</section>
@@ -407,6 +493,8 @@ def render(name: str, when: str, st: dict, ex: dict, mk: list[dict], etsy: list[
 {f'<section id="trends"><h2>گوگل ترندز ایران</h2><p class="lead">جست‌وجوی هر کلمه در گوگل ایران در ۵ سال اخیر: '
   f'چقدر نسبت به پارسال تغییر کرده، کدام ماه‌ها اوج دارد و کی باید جنس آماده باشد. جست‌وجوهای در حال رشدِ مربوط به '
   f'جواهر در باسلام و دیجی‌کالا هم بررسی شدند.</p>{tr_html}</section>' if tr_html else ''}
+{typed}
+{makers_html}
 <section id="details"><h2>جزئیات</h2>
 <details><summary>همه‌ی جست‌وجوهای فرصت ({fa(len(opps))})</summary><div class="in">{_opps(opps)}</div></details>
 {''.join(f'<details><summary>۴۰ پرفروش اول {t}</summary><div class="in">{_gallery(items)}</div></details>'

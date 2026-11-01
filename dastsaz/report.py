@@ -70,8 +70,10 @@ def stats(etsy: list[dict], bas: list[dict], dk: list[dict] | None = None) -> di
 
 def build(run_dir: Path, name: str, etsy: list[dict], bas: list[dict], key: str, cost_add, when: str,
           opps: list[dict] | None = None, tl: list[dict] | None = None, dk: list[dict] | None = None,
-          tr: list[dict] | None = None) -> Path:
+          tr: list[dict] | None = None, extra: dict | None = None) -> Path:
     from . import analysis as AN
+    from . import metals as MT
+    extra = extra or {}
     from . import costs, page
     dk = [x for x in (dk or []) if x.get("is_jewelry", True)]
     etsy = [x for x in etsy if x.get("is_jewelry", True)]
@@ -81,12 +83,18 @@ def build(run_dir: Path, name: str, etsy: list[dict], bas: list[dict], key: str,
     mid = AN.mid_week(opps)
     for o in tl:
         o["eco"] = AN.economics(o, mid)
+        note = MT.silver_note(o, o["eco"].get("buy_max"), extra.get("metals") or {})
+        if note:
+            o["eco"]["metal"] = note
+            if "ممکن نیست" in note:
+                o["eco"]["risks"].append("نقره‌ی واقعی با این قیمت ممکن نیست")
+        o["review"] = (extra.get("reviews") or {}).get(o["q"]) or {}
     mk = AN.markets(etsy, bas, dk)
-    ex, usd = AN.executive(st, tl, tr, mk, key)
+    ex, usd = AN.executive(st, tl, tr, mk, key, extra)
     if usd:
         cost_add("تحلیل مدیریتی (هوش مصنوعی)", 1, usd)
     html_page = page.render(name, page.jalali(when[:10]) + when[10:], st, ex, mk, etsy, bas, dk, opps, tl, tr,
-                            costs.summary(run_dir), mid)
+                            costs.summary(run_dir), mid, extra)
     (run_dir / "stats.json").write_text(json.dumps({**st, "executive": ex, "markets": mk,
                                                     "points": [f["text"] for f in ex.get("findings", [])]},
                                                    ensure_ascii=False, default=str, indent=1), encoding="utf-8")

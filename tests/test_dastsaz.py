@@ -11,7 +11,7 @@ from dastsaz import basalam, config as C, digikala, etsy, guard, pipeline, trend
 BAS_PRODUCT = {"id": 39072910, "name": "گردنبند نقره اسم دلخواه", "price": 1200000, "primaryPrice": 1500000,
                "rating": {"average": 4.8, "count": 6}, "sales_count": 80, "sales_count_week": 7,
                "categoryTitle": "گردنبند", "photo": {"MEDIUM": "https://statics.basalam.com/x.jpg"},
-               "vendor": {"name": "نقره‌کاری", "owner": {"city": "اصفهان"}}}
+               "vendor": {"name": "نقره‌کاری", "identifier": "noghrekari", "owner": {"city": "اصفهان"}}}
 
 DK_PRODUCT = {"id": 18411251, "title_fa": "گردنبند زنانه مدل پاپیون", "rating": {"rate": 81.3, "count": 555},
               "url": {"uri": "/product/dkp-18411251/گردنبند-پاپیون"},
@@ -136,7 +136,7 @@ def test_pipeline_end_to_end(tmp_path, monkeypatch):
                  "stone": "", "_cost": 0.0002, "_error": ""} for i, p in enumerate(items)], 0.012
     monkeypatch.setattr(pipeline.A, "classify_all", fake_all)
     from dastsaz import analysis
-    monkeypatch.setattr(analysis, "executive", lambda st, tl, tr, mk, key: (
+    monkeypatch.setattr(analysis, "executive", lambda st, tl, tr, mk, key, extra=None: (
         {"headline": "تیتر آزمایشی", "findings": [{"title": "یافته", "text": "نکته‌ی آزمایشی"}],
          "actions": ["کار اول"], "risks": ["ریسک"], "maker_brief": "متن سازنده"}, 0.001))
 
@@ -152,8 +152,22 @@ def test_pipeline_end_to_end(tmp_path, monkeypatch):
     tr_rows = [trends.row(TR_ITEM)]
     monkeypatch.setattr(pipeline.trends, "fetch", lambda token, kws, on_cost=None: tr_rows)
     monkeypatch.setattr(pipeline.O, "briefs", lambda items, key: ({0: {"i": 0, "name": "طرح آزمایشی", "brief": "ب"}}, 0.002))
+    monkeypatch.setattr(pipeline.suggest, "fetch", lambda progress=None: {
+        "counts": {"گردنبند ماه و ستاره": 6, "گردنبند": 9, "قیمت گردنبند": 3}, "trending": ["گوشی"]})
+    monkeypatch.setattr(pipeline.reviews, "collect", lambda tl, progress=None: {"x": [{"star": 2, "text": "زود سیاه شد"}]})
+    monkeypatch.setattr(pipeline.reviews, "summarize", lambda tl, raw, key: (
+        {o["q"]: {"n": 4, "low": 1, "avg": 4.2, "complaints": ["زود سیاه شد"], "improve": "آبکاری ضخیم‌تر"} for o in tl}, 0.001))
+    monkeypatch.setattr(pipeline.makers, "details", lambda top, progress=None: [
+        {**sh, "city": "اصفهان", "province": "اصفهان", "types": [], "since": "2021", "catalog": 30, "maker": True,
+         "url": "https://basalam.com/x"} for sh in top])
+    monkeypatch.setattr(pipeline.metals, "fetch", lambda: {
+        "silver_925": {"name": "نقره ۹۲۵ (هر گرم)", "toman": 434634, "time": ""}})
     out = pipeline.run("t1")
     html = out.read_text(encoding="utf-8")
+    assert "مناسبت‌ها و قیمت فلز" in html and "۴۳۵ هزار تومان" in html
+    assert "سازنده‌های احتمالی" in html and "اصفهان" in html
+    assert "مردم چه تایپ می‌کنند" in html and "گردنبند ماه و ستاره" in html
+    assert "زود سیاه شد" in html and "آبکاری ضخیم‌تر" in html
     assert "گزارش ترند" in html and "نکته‌ی آزمایشی" in html and "تیتر آزمایشی" in html and "متن سازنده" in html
     assert "خرید از سازنده" in html and "نقشه‌ی فرصت‌ها" in html and "سه بازار، سه مشتری" in html
     assert "لیست آزمایش این هفته" in html and "طرح آزمایشی" in html
@@ -285,3 +299,46 @@ def test_relevance_drops_unrelated_results():
 def test_ai_text_gets_persian_digits():
     from dastsaz.page import P
     assert P("16.5 درصد و 60,000 تومان <b>") == "۱۶٫۵ درصد و ۶۰٬۰۰۰ تومان &lt;b&gt;"
+
+
+def test_occasions_dates_and_matching():
+    import datetime as dt
+    from dastsaz import occasions
+    tl = [{"q": "گردنبند اسم مادر"}, {"q": "دستبند ست"}, {"q": "دستبند ساده"}]
+    occ = occasions.upcoming(dt.date(2026, 11, 1), days=60, test_list=tl)
+    names = {o["name"]: o for o in occ}
+    mom = next(o for n, o in names.items() if "مادر" in n)
+    assert mom["date"] == "2026-11-30" and mom["days_left"] == 29
+    yalda = next(o for n, o in names.items() if "یلدا" in n)
+    assert yalda["date"] == "2026-12-21"
+    assert occasions.j2g(1405, 10, 1) == dt.date(2026, 12, 22)
+
+
+def test_metal_note_and_suggest_ideas():
+    from dastsaz import metals, suggest
+    pr = {"silver_925": {"name": "n", "toman": 430000, "time": ""}}
+    assert "ممکن نیست" in metals.silver_note({"q": "گردنبند نقره"}, 900000, pr)
+    assert metals.silver_note({"q": "گردنبند استیل"}, 900000, pr) == ""
+    ids = suggest.ideas({"counts": {"گردنبند": 9, "گردنبند ماه و ستاره": 5, "قیمت گردنبند طلا": 4}}, set())
+    assert "گردنبند ماه و ستاره" in ids and "گردنبند" not in ids
+
+
+def test_maker_flag(monkeypatch):
+    from dastsaz import makers
+
+    class R:
+        def __init__(self, d): self.d = d
+        def json(self): return self.d
+
+    class S:
+        def get(self, url, timeout=20):
+            if "a1" in url:
+                return R({"title": "کارگاه نقره", "description": "ساخت دست خودم", "city": {"title": "زنجان",
+                          "parent": {"title": "زنجان"}}, "created_at": "2020-01-01"})
+            return R({"title": "پخش عمده", "description": "اجناس وارداتی چین"})
+    monkeypatch.setattr(makers.basalam, "_session", lambda: S())
+    top = makers.shops([{"shop_id": "a1", "shop": "a", "sales_total": 5, "sales_week": 1},
+                        {"shop_id": "b2", "shop": "b", "sales_total": 50, "sales_week": 3}])
+    out = makers.details(top, sleep=lambda s: None)
+    assert out[0]["id"] == "a1" and out[0]["maker"] and out[0]["province"] == "زنجان"
+    assert not out[1]["maker"]

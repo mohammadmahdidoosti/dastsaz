@@ -50,7 +50,7 @@ def card(p: dict, query: str, position: int) -> dict:
         "price_toman": round(price / 10) if price else None, "price_usd": None,
         "sales_total": p.get("sales_count") or 0, "sales_week": p.get("sales_count_week") or 0,
         "rating": r.get("average") or None, "reviews": r.get("count") or 0,
-        "category": p.get("categoryTitle") or "", "shop": v.get("name") or "",
+        "category": p.get("categoryTitle") or "", "shop": v.get("name") or "", "shop_id": v.get("identifier") or "",
         "shop_city": (v.get("owner") or {}).get("city") or "", "query": query, "position": position,
         "tags": "", "materials": "", "bought_24h": None, "in_cart": None,
     }

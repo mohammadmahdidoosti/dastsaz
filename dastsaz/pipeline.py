@@ -10,7 +10,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from . import analyze as A
-from . import basalam, costs, digikala, etsy, guard, report, trends
+from . import basalam, costs, digikala, etsy, guard, makers, metals, occasions, report, reviews, suggest, trends
 from . import opportunities as O
 from . import config as C
 
@@ -155,6 +155,77 @@ def run(name: str, status=lambda **k: None, only: str = "") -> Path:
                 _save(d / "testlist.json", tl)
             except Exception as e:  # noqa: BLE001
                 log.warning("google ideas skipped: %s", e)
+    # 4c. What people type on Digikala: suggestions that are designs become extra opportunity searches
+    sug = _load(d / "suggestions.json")
+    if sug is None and C.DIGIKALA:
+        step("suggest", "پیشنهادهای جست‌وجوی دیجی‌کالا")
+        try:
+            sug = suggest.fetch(progress=lambda i, t: status(step="suggest", done=i, total=t, note=""))
+        except Exception as e:  # noqa: BLE001
+            log.warning("suggestions skipped: %s", e)
+            sug = {}
+        _save(d / "suggestions.json", sug)
+    sug = sug or {}
+    if sug and not any(o["source"] == "suggest" for o in opps):
+        ideas = suggest.ideas(sug, {o["q"] for o in opps})
+        if ideas:
+            step("expand", "جست‌وجوهای پرتکرار مردم در باسلام و دیجی‌کالا")
+            try:
+                extra = O.run_queries(O.google_queries(ideas, "suggest"),
+                                      progress=lambda i, t: status(step="expand", done=i, total=t, note="پیشنهادها"))
+                extra = [x for x in extra if x.get("match", 0) >= 3]
+                for x in extra:
+                    x["typed"] = sug.get("counts", {}).get(x["q"], 0)
+                if C.DIGIKALA:
+                    O.add_digikala(extra)
+                opps = O.relabel(opps + extra)
+                _save(d / "opportunities.json", opps)
+                tl, usd = O.test_list(opps, ej, C.secret("OPENROUTER_API_KEY"))
+                if usd:
+                    costs.add(d, "لیست آزمایش (هوش مصنوعی)", len(tl), usd)
+                _save(d / "testlist.json", tl)
+                (d / "reviews.json").unlink(missing_ok=True)
+            except Exception as e:  # noqa: BLE001
+                log.warning("suggestion ideas skipped: %s", e)
+
+    # 4d. buyers' reviews of each test design's best-sellers (complaints = what to do better)
+    rv = _load(d / "reviews.json")
+    if rv is None and tl:
+        step("reviews", "خواندن نظر خریداران")
+        try:
+            raw = reviews.collect(tl, progress=lambda i, t: status(step="reviews", done=i, total=t, note=""))
+            rv, usd = reviews.summarize(tl, raw, C.secret("OPENROUTER_API_KEY"))
+            if usd:
+                costs.add(d, "خلاصه‌ی نظرها (هوش مصنوعی)", len(tl), usd)
+        except Exception as e:  # noqa: BLE001
+            log.warning("reviews skipped: %s", e)
+            rv = {}
+        _save(d / "reviews.json", rv)
+    rv = rv or {}
+
+    # 4e. possible makers among the Basalam booths
+    mk_ = _load(d / "makers.json")
+    if mk_ is None:
+        top_shops = makers.shops(bas)
+        if top_shops:
+            step("makers", "پیدا کردن سازنده‌ها در باسلام")
+            try:
+                mk_ = makers.details(top_shops, progress=lambda i, t: status(step="makers", done=i, total=t, note=""))
+            except Exception as e:  # noqa: BLE001
+                log.warning("makers skipped: %s", e)
+                mk_ = []
+        else:
+            mk_ = []             # an older run without booth ids
+        _save(d / "makers.json", mk_)
+
+    # 4f. today's metal prices (always fresh) and the coming occasions
+    mt = metals.fetch()
+    if mt:
+        _save(d / "metals.json", mt)
+    else:
+        mt = _load(d / "metals.json") or {}
+    occ = occasions.upcoming(test_list=tl)
+
     with (d / "opportunities.csv").open("w", newline="", encoding="utf-8-sig") as f:
         w = csv.writer(f)
         w.writerow(["جست‌وجو", "برچسب‌ها", "فروش این هفته (۱۰ پرفروش)", "فروش کل (۱۰ پرفروش)",
@@ -173,7 +244,8 @@ def run(name: str, status=lambda **k: None, only: str = "") -> Path:
         w.writerows(e + b + k)
     when = dt.datetime.now(ZoneInfo(C.TIMEZONE)).strftime("%Y-%m-%d %H:%M")
     return report.build(d, name, e, b, C.secret("OPENROUTER_API_KEY"),
-                        lambda s, u, usd: costs.add(d, s, u, usd), when, opps=opps, tl=tl, dk=kj, tr=tr)
+                        lambda s, u, usd: costs.add(d, s, u, usd), when, opps=opps, tl=tl, dk=kj, tr=tr,
+                        extra={"suggest": sug, "reviews": rv, "makers": mk_, "metals": mt, "occasions": occ})
 
 
 def runs() -> list[dict]:
