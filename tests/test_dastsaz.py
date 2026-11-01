@@ -135,7 +135,10 @@ def test_pipeline_end_to_end(tmp_path, monkeypatch):
                  "material": "نقره", "color": "نقره‌ای", "personalized": i % 2 == 0, "motif": "قلب",
                  "stone": "", "_cost": 0.0002, "_error": ""} for i, p in enumerate(items)], 0.012
     monkeypatch.setattr(pipeline.A, "classify_all", fake_all)
-    monkeypatch.setattr(pipeline.report, "insights", lambda st, key: (["نکته‌ی آزمایشی"], 0.001))
+    from dastsaz import analysis
+    monkeypatch.setattr(analysis, "executive", lambda st, tl, tr, mk, key: (
+        {"headline": "تیتر آزمایشی", "findings": [{"title": "یافته", "text": "نکته‌ی آزمایشی"}],
+         "actions": ["کار اول"], "risks": ["ریسک"], "maker_brief": "متن سازنده"}, 0.001))
 
     def fake_search(q, size=30, session=None, sleep=None):
         return [basalam.card({**BAS_PRODUCT, "id": hash(q) % 1000 + i, "sales_count_week": 5, "name": q + " نقره"}, q, i)
@@ -151,10 +154,11 @@ def test_pipeline_end_to_end(tmp_path, monkeypatch):
     monkeypatch.setattr(pipeline.O, "briefs", lambda items, key: ({0: {"i": 0, "name": "طرح آزمایشی", "brief": "ب"}}, 0.002))
     out = pipeline.run("t1")
     html = out.read_text(encoding="utf-8")
-    assert "گزارش ترند" in html and "نکته‌ی آزمایشی" in html
+    assert "گزارش ترند" in html and "نکته‌ی آزمایشی" in html and "تیتر آزمایشی" in html and "متن سازنده" in html
+    assert "خرید از سازنده" in html and "نقشه‌ی فرصت‌ها" in html and "سه بازار، سه مشتری" in html
     assert "لیست آزمایش این هفته" in html and "طرح آزمایشی" in html
     assert (tmp_path / "runs" / "t1" / "opportunities.csv").exists()
-    assert "۴۰ پرفروش اول دیجی‌کالا" in html and "همین طرح در ۲۰ پرفروش دیجی‌کالا" in html
+    assert "۴۰ پرفروش اول دیجی‌کالا" in html and "همین طرح در دیجی‌کالا" in html
     assert "گوگل ترندز ایران" in html
     opps = json.loads((tmp_path / "runs" / "t1" / "opportunities.json").read_text(encoding="utf-8"))
     assert any(o["source"] == "google" and o["q"] == "گردنبند اسم انگلیسی" for o in opps)
@@ -170,18 +174,29 @@ def test_etsy_rank_without_details():
     assert A.top([a, b], 1)[0] is b
 
 
-def test_insights_asks_without_reasoning(monkeypatch):
-    from dastsaz import report
+def test_executive_asks_without_reasoning(monkeypatch):
+    from dastsaz import analysis, report
     sent = {}
 
     def fake_post(url, json=None, timeout=None, headers=None):
         sent.update(json)
-        return FakeResp({"choices": [{"message": {"content": '{"points": ["الف", "ب"]}'}}], "usage": {"cost": 0.001}})
-    monkeypatch.setattr(report.requests, "post", fake_post)
-    st = report.stats([], [])
-    pts, usd = report.insights(st, "k")
-    assert pts == ["الف", "ب"] and sent["reasoning"] == {"enabled": False} and sent["max_tokens"] >= 4000
+        return FakeResp({"choices": [{"message": {"content": '{"headline": "ت", "findings": [{"title": "a", "text": "b"}],'
+                                                             ' "actions": ["x"], "risks": [], "maker_brief": "m"}'}}],
+                         "usage": {"cost": 0.002}})
+    monkeypatch.setattr(analysis.requests, "post", fake_post)
+    ex, usd = analysis.executive(report.stats([], []), [], [], [], "k")
+    assert ex["headline"] == "ت" and ex["findings"][0]["text"] == "b" and usd == 0.002
+    assert sent["reasoning"] == {"enabled": False} and "عددی از خودت نساز" in sent["messages"][0]["content"]
 
+
+def test_economics_rules():
+    from dastsaz import analysis
+    o = {"week": 80, "supply": 162, "price_low": 65000, "price_high": 196000, "price_median": 120000,
+         "dk_reviews": 0, "dk_match": 0, "source": "basalam", "weak": []}
+    e = analysis.economics(o, 5)
+    assert e["retail"] == 120000 and e["buy_max"] == 50000 and e["test_qty"] == 20 and e["channels"] == ["باسلام"]
+    wide = analysis.economics({**o, "week": 3, "price_high": 1500000, "source": "etsy"}, 5)
+    assert wide["test_qty"] == 6 and "اینستاگرام و سایت خودتان" in wide["channels"] and len(wide["risks"]) == 2
 
 def test_seeds_and_signals():
     from dastsaz import opportunities as O

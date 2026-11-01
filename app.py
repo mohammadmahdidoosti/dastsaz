@@ -21,6 +21,7 @@ import threading
 import time
 import traceback
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from dastsaz import config as C
@@ -30,6 +31,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 log = logging.getLogger("app")
 APP_PASSWORD = os.environ.get("APP_PASSWORD", "")
+STATIC = Path(__file__).resolve().parent / "static"
 NAME = re.compile(r"^[\w\-]{1,60}$")
 STEP_FA = {"wait": "منتظر", "basalam": "باسلام", "digikala": "دیجی‌کالا", "etsy": "اتسی", "ai": "هوش مصنوعی", "expand": "فرصت‌یابی", "testlist": "لیست آزمایش", "trends": "گوگل ترندز",
            "report": "گزارش"}
@@ -67,23 +69,44 @@ JOB = Job()
 
 PAGE = """<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>دست‌ساز</title>
-<style>body{font-family:Vazirmatn,Tahoma,sans-serif;background:#faf7f2;color:#2b2622;max-width:760px;margin:auto;padding:20px;line-height:1.9}
-.box{background:#fff;border:1px solid #ece3d6;border-radius:12px;padding:16px;margin:14px 0}
-button{font:inherit;background:#b8860b;color:#fff;border:0;border-radius:8px;padding:8px 18px;cursor:pointer}
-button:disabled{background:#ccc}a{color:#8a5a00}.err{color:#b00}.muted{color:#8a7f74;font-size:13px}</style></head>
-<body><h1>دست‌ساز — گزارش ترند جواهرات</h1>
-<div class="box" id="st">...</div>
-<div class="box"><button id="go" onclick="go()">ساختن گزارش جدید</button>
-<p class="muted">کراول باسلام آرام است؛ اتسی روی سرورهای Apify اجرا می‌شود.</p></div>
-<div class="box"><h3>گزارش‌ها</h3><div id="list">...</div></div>
+<style>@font-face{font-family:Vazirmatn;src:url(/static/vazirmatn.woff2) format('woff2');font-weight:100 900}
+:root{--ink:#1d2433;--soft:#5b6476;--paper:#f4f5f2;--line:#dfe2dc;--gold:#b0822a;--turq:#13877f;--lapis:#2f4b85}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.85 Vazirmatn,Tahoma,sans-serif}
+header{background:var(--lapis);color:#fff;padding:34px 0 30px}.w{max-width:820px;margin:auto;padding:0 20px}
+h1{margin:0;font-size:30px;font-weight:800}header p{margin:6px 0 0;color:#dfe5f3}
+.stones{display:flex;gap:6px;margin-top:14px}.stones i{width:12px;height:12px;border-radius:50%;display:block}
+.now{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:-18px 0 26px;
+box-shadow:0 10px 30px rgba(20,30,60,.08)}
+.now .st{font-weight:700}.err{color:#a43f55}.muted{color:var(--soft);font-size:13px}
+button{font:inherit;font-weight:700;background:var(--gold);color:#fff;border:0;border-radius:8px;padding:9px 20px;cursor:pointer}
+button:disabled{background:#c9ccc6;cursor:default}button:focus-visible,a:focus-visible{outline:2px solid var(--lapis);outline-offset:2px}
+.prog{height:6px;background:#eceee9;border-radius:3px;margin:10px 0 4px;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--turq);width:0;transition:width .4s}
+h2{font-size:19px;margin:0 0 10px}
+.r{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);
+border-radius:10px;padding:12px 16px;margin-bottom:8px}
+.r a.t{font-weight:800;font-size:16px;color:var(--ink);text-decoration:none}.r a.t:hover{color:var(--lapis)}
+.r .l a{font-size:13px;color:var(--lapis);margin-right:12px}</style></head>
+<body><header><div class="w"><h1>دست‌ساز</h1><p>ترند جواهرات از اتسی، باسلام، دیجی‌کالا و گوگل؛ برای انتخاب طرح و صحبت با تولیدکننده.</p>
+<div class="stones"><i style="background:#b0822a"></i><i style="background:#13877f"></i><i style="background:#9fb5e3"></i></div></div></header>
+<main class="w"><div class="now"><div id="st">...</div><div class="prog" id="pg" hidden><i></i></div>
+<p style="margin:12px 0 0"><button id="go" onclick="go()">ساختن گزارش تازه</button>
+<span class="muted">حدود نیم ساعت؛ حدود ۱٫۶ دلار.</span></p></div>
+<h2>گزارش‌ها</h2><div id="list">...</div></main>
 <script>
 const F=n=>String(n).replace(/[0-9]/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
-async function load(){const s=await (await fetch('api/status')).json();const j=s.job;
-let t=j.running?`در حال ساخت «${j.run}» — مرحله: ${s.step_fa}${j.total?` (${F(j.done)} از ${F(j.total)})`:''}<br><span class=muted>${j.note||''}</span>`
-:(j.error?`<span class=err>خطا در «${j.run}»: ${j.error}</span>`:(j.run?`آخرین گزارش «${j.run}» آماده شد.`:'آماده.'));
-if(s.guard)t+=`<br><span class=muted>منتظر: ${s.guard}</span>`;
+async function load(){const s=await (await fetch('api/status')).json();const j=s.job;let t;
+if(j.running){t=`<span class=st>در حال ساخت «${j.run}»</span> — ${s.step_fa}${j.total?` (${F(j.done)} از ${F(j.total)})`:''}`+
+(j.note?`<div class=muted>${j.note}</div>`:'');}
+else if(j.error){t=`<span class="st err">ساخت «${j.run}» متوقف شد:</span> ${j.error}`}
+else t=j.run?`<span class=st>گزارش «${j.run}» آماده است.</span>`:'<span class=st>آماده برای گزارش تازه.</span>';
+if(s.guard)t+=`<div class=muted>منتظر: ${s.guard}</div>`;
 document.getElementById('st').innerHTML=t;document.getElementById('go').disabled=j.running;
-document.getElementById('list').innerHTML=s.runs.map(r=>r.report?`<p><a href="report/${r.name}" target=_blank>${r.name}</a> — هزینه ${F(r.usd)} دلار · <a href="csv/${r.name}">محصولات (CSV)</a> · <a href="csv/${r.name}?f=opportunities">فرصت‌ها (CSV)</a></p>`:`<p>${r.name} (ناتمام)</p>`).join('')||'هنوز گزارشی نیست.'}
+const pg=document.getElementById('pg');pg.hidden=!(j.running&&j.total);if(j.total)pg.firstChild.style.width=(100*j.done/j.total)+'%';
+document.getElementById('list').innerHTML=s.runs.map(r=>r.report?`<div class=r><div><a class=t href="report/${r.name}" target=_blank>${r.name}</a>
+<div class=muted>هزینه ${F(r.usd)} دلار</div></div><div class=l><a href="csv/${r.name}">محصولات (اکسل)</a>
+<a href="csv/${r.name}?f=opportunities">فرصت‌ها (اکسل)</a></div></div>`:`<div class=r><span>${r.name}</span><span class=muted>ناتمام</span></div>`).join('')
+||'<p class=muted>هنوز گزارشی ساخته نشده. «ساختن گزارش تازه» را بزنید.</p>'}
 async function go(){const r=await (await fetch('api/run',{method:'POST'})).json();if(r.error)alert(r.error);load()}
 load();setInterval(load,10000);
 </script></body></html>"""
@@ -127,6 +150,9 @@ class H(BaseHTTPRequestHandler):
         u = urlparse(self.path)
         if u.path == "/healthz":
             return self._send(200, b"ok", "text/plain")
+        if u.path == "/static/vazirmatn.woff2":           # the report font (no outside font server needed in Iran)
+            return self._send(200, (STATIC / "vazirmatn.woff2").read_bytes(), "font/woff2",
+                              {"Cache-Control": "public, max-age=2592000"})
         if not self._gate():
             return
         parts = [p for p in u.path.split("/") if p]

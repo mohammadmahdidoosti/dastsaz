@@ -20,6 +20,11 @@ TIMEZONE = "Asia/Tehran"
 AI_MODEL = os.environ.get("AI_MODEL", "deepseek/deepseek-v4.1-flash")
 AI_WORKERS = int(os.environ.get("AI_WORKERS", "4"))
 
+# the executive analysis (one call per report); a stronger model can be set here
+ANALYST_MODEL = os.environ.get("ANALYST_MODEL", AI_MODEL)
+# share of the shelf price paid to the maker at most (rule of thumb shown in the report)
+BUY_SHARE = float(os.environ.get("BUY_SHARE", "0.45"))
+
 # Etsy through Apify
 APIFY_ACTOR = os.environ.get("APIFY_ACTOR", "automation-lab~etsy-scraper")
 APIFY_MAX_USD = float(os.environ.get("APIFY_MAX_USD", "3"))   # hard cap per run
