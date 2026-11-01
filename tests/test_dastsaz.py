@@ -393,3 +393,83 @@ def test_signal_scores_a_page_that_leads_sales(tmp_path, monkeypatch):
     r = S.evaluate_all()
     assert r["sources"]["پیج lead"]["lift"] > r["sources"]["پیج noise"]["lift"]
     assert r["sources"]["پیج lead"]["hit"] == 1.0
+
+
+def test_lab_verdicts_and_exposure(tmp_path, monkeypatch):
+    from dastsaz import lab, page
+    monkeypatch.setattr(C, "DATA_DIR", tmp_path)
+    c = lab.add("کنترل: دستبند ساده", "instagram", "report", 300000, control=True)
+    a = lab.add("گردنبند پاپیون", "instagram", "report", 350000, query="گردنبند پاپیون")
+    b = lab.add("گردنبند ماه", "instagram", "needs")
+    e = lab.add("انگشتر اسم", "instagram", "manual")
+    lab.update(c["id"], {"views": 1000, "messages": 10})
+    lab.update(a["id"], {"views": 600, "messages": 15, "carts": 3})
+    lab.update(b["id"], {"views": 700, "messages": 1})
+    lab.update(e["id"], {"views": 100, "messages": 5})
+    bd = lab.board()
+    v = {r["name"]: r["verdict"] for r in bd["rows"]}
+    assert v["گردنبند پاپیون"] == "win" and v["گردنبند ماه"] == "drop" and v["انگشتر اسم"] == "early"
+    assert v["کنترل: دستبند ساده"] == "control"
+    sh = {r["name"]: r["share"] for r in bd["rows"] if r["share"] is not None}
+    assert sh["گردنبند پاپیون"] > sh["گردنبند ماه"]
+    assert bd["sources"]["report"] == {"tests": 1, "wins": 1}
+    html = page.lab_page(bd, [{"q": "x", "prev": 4, "now": 8, "change": 1.0, "supply_change": 3}], 2)
+    assert "گردنبند پاپیون" in html and "برنده" in html and "تغییر فروش" in html
+
+
+def test_snapshot_changes(tmp_path, monkeypatch):
+    from dastsaz import snapshot
+    h = [{"date": "2026-11-01", "searches": {"a": {"week": 4, "supply": 10}, "b": {"week": 5, "supply": 9}}},
+         {"date": "2026-11-08", "searches": {"a": {"week": 12, "supply": 14}, "b": {"week": 2, "supply": 9}}}]
+    ch = snapshot.changes(h)
+    assert ch[0]["q"] == "a" and ch[0]["change"] == 2.0 and ch[0]["supply_change"] == 4
+    assert snapshot.changes(h[:1]) == []
+
+
+def test_needs_parse_and_table(monkeypatch):
+    from dastsaz import needs
+
+    def fake(prompt, data, key, max_tokens=0, model=None):
+        return {"items": [{"i": d["i"], "for": "همسر" if "همسر" in d["text"] else "مادر",
+                           "occasion": "سالگرد" if "سالگرد" in d["text"] else "تولد",
+                           "budget": 500 if "۵۰۰" in d["text"] else None, "idea": "گردنبند" if "گردنبند" in d["text"] else "",
+                           "jewelry": "گردنبند" in d["text"]} for d in data]}, 0.001
+    monkeypatch.setattr(needs.ai, "ask_json", fake)
+    rows = [{"text": t, "src": "google"} for t in ["کادو سالگرد برای همسر", "کادو سالگرد همسر گردنبند",
+                                                    "کادو تولد مادر زیر ۵۰۰", "کادو برای همسر سالگرد"]]
+    items, usd = needs.parse(rows, "k")
+    t = needs.table(items)
+    assert t["cells"][0] == {"for": "همسر", "occasion": "سالگرد", "n": 3}
+    assert t["budgets"] == [500.0] and t["ideas"][0] == ("گردنبند", 1)
+    assert 0.2 < t["jewelry_share"] < 0.3
+
+
+def test_voice_intent_and_cluster(monkeypatch):
+    from dastsaz import voice, page
+    posts = [{"ownerUsername": "p", "url": "u1", "likesCount": 50, "caption": "گردنبند",
+              "latestComments": [{"text": "قیمت؟"}, {"text": "خیلی قشنگه"}, {"text": "موجوده؟"}]},
+             {"ownerUsername": "q", "url": "u2", "likesCount": 900, "latestComments": [{"text": "عالی"}]}]
+    ig = voice.ig_intent(posts)
+    assert len(ig) == 1 and ig[0]["intent"] == 2
+
+    def fake(prompt, data, key, max_tokens=0, model=None):
+        if "fix" in prompt:
+            return {"themes": [{"theme": "سیاه شدن", "kind": "complaint", "count": 2, "examples": ["سیاه شد"],
+                                "fix": "استیل رنگ ثابت"}]}, 0.001
+        return {"themes": [{"theme": "سیاه شدن", "kind": "complaint", "count": 2, "examples": ["سیاه شد"]}]}, 0.001
+    monkeypatch.setattr(voice.ai, "ask_json", fake)
+    th, usd = voice.cluster([{"text": "بعد یک هفته سیاه شد", "stars": 1}, {"text": "زود سیاه شد متاسفانه", "stars": 2}], "k")
+    assert th[0]["theme"] == "سیاه شدن" and th[0]["share"] == 1.0 and usd > 0
+    html = page.voice_page({"date": "2026-11-01", "reviews": 2, "designs": ["a"], "stars": {1: 1, 2: 1},
+                            "themes": th, "instagram": ig})
+    assert "سیاه شدن" in html and "استیل رنگ ثابت" in html and "قصد خرید" in html
+    assert "نیازهای کادو" in page.needs_page(None)
+
+
+def test_metals_record(tmp_path, monkeypatch):
+    from dastsaz import metals
+    monkeypatch.setattr(C, "DATA_DIR", tmp_path)
+    metals.record({"price_dollar_rl": {"toman": 90000}, "geram18": {"toman": 2500000}})
+    metals.record({"price_dollar_rl": {"toman": 91000}, "geram18": {"toman": 2500000}})
+    lines = (tmp_path / "macro" / "daily.jsonl").read_text().splitlines()
+    assert len(lines) == 1 and '"price_dollar_rl": 91000' in lines[0]

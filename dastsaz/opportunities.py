@@ -165,7 +165,7 @@ def relabel(opps: list[dict]) -> list[dict]:
         if o["source"] == "etsy" and o["week"] >= 3 and o["supply"] <= 1000:
             lab.append("ترند جهانی، تازه در ایران")
         if o["source"] == "google" and o["week"] >= 1:
-            lab.append("در گوگل در حال رشد")
+            lab.append("جست‌وجوی تازه در گوگل")
         if o["source"] == "suggest" and o["week"] >= 1:
             lab.append("در جست‌وجوی مردم")
         if o["source"] == "etsy" and o["supply"] < 30:
@@ -188,7 +188,7 @@ def expand(etsy, bas, progress=None, session=None, sleep=None) -> list[dict]:
 
 
 def google_queries(ideas: list[str], source: str = "google") -> list[dict]:
-    why = {"google": "«{t}» در گوگل ایران در حال رشد است",
+    why = {"google": "«{t}» از جست‌وجوهای تازه‌ی گوگل ایران است (فقط منبع ایده؛ رشد اخیر به‌تنهایی پیش‌بینی‌کننده نیست)",
            "suggest": "«{t}» از پیشنهادهای جست‌وجوی دیجی‌کالا است؛ یعنی مردم زیاد تایپش می‌کنند"}[source]
     out = []
     for t in ideas:
@@ -255,7 +255,7 @@ def pick(opps: list[dict], n: int = 15, per_seed: int = 2, per_type: int = 5) ->
                                                                        in o["labels"])]
     strong = {"در حال اوج": 3, "تقاضای زیاد، رقیب کم": 4, "ترند جهانی، تازه در ایران": 2,
               "بازار خالی (آزمایش جسورانه)": 1, "پرفروش ولی ضعیف": 1, "در دیجی‌کالا هم پرفروش": 2,
-              "در دیجی‌کالا کم‌رقیب": 1, "در گوگل در حال رشد": 2, "در جست‌وجوی مردم": 2}
+              "در دیجی‌کالا کم‌رقیب": 1, "جست‌وجوی تازه در گوگل": 1, "در جست‌وجوی مردم": 2}
     ok.sort(key=lambda o: (-sum(strong.get(l, 0) for l in o["labels"]), -o["score"]))
     out, by_seed, by_type = [], Counter(), Counter()
     for o in ok:

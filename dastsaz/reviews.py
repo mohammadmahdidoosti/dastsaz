@@ -28,6 +28,41 @@ def _ids(o: dict) -> tuple[list[str], list[str]]:
     return ba[:3], dk[:2]
 
 
+def basalam_texts(s, pid, pages: int = 2, sleep=time.sleep) -> list[dict]:
+    """Newest Basalam reviews with text (the API gives at most 20 per page)."""
+    rows = []
+    for page in range(pages):
+        if page:
+            sleep(random.uniform(*C.BASALAM_DELAY))
+        try:
+            r = s.get(BA_URL.format(id=pid), params={"limit": 20, "offset": 20 * page}, timeout=20).json()
+        except Exception as e:  # noqa: BLE001
+            log.warning("basalam reviews %s: %s", pid, e)
+            break
+        rows += [{"src": "باسلام", "stars": x.get("star"), "text": (x.get("description") or "").strip()[:300],
+                  "date": str(x.get("createdAt") or "")[:10]}
+                 for x in r.get("reviews") or [] if (x.get("description") or "").strip()]
+        if not r.get("has_next"):
+            break
+    return rows
+
+
+def digikala_texts(s, pid, pages: int = 1, sleep=time.sleep) -> list[dict]:
+    rows = []
+    for page in range(1, pages + 1):
+        if page > 1:
+            sleep(random.uniform(*C.BASALAM_DELAY))
+        try:
+            r = (s.get(DK_URL.format(id=pid), params={"page": page}, timeout=20).json() or {}).get("data") or {}
+        except Exception as e:  # noqa: BLE001
+            log.warning("digikala comments %s: %s", pid, e)
+            break
+        rows += [{"src": "دیجی‌کالا", "stars": x.get("rate"), "text": (x.get("body") or "").strip()[:300],
+                  "date": str(x.get("created_at") or "")}
+                 for x in r.get("comments") or [] if (x.get("body") or "").strip()]
+    return rows
+
+
 def collect(tl: list[dict], progress=None, sleep=time.sleep) -> dict[str, list[dict]]:
     """{search: [{'src', 'stars', 'text'}]} for every test design."""
     sb, sd = basalam._session(), digikala._session()
@@ -37,20 +72,10 @@ def collect(tl: list[dict], progress=None, sleep=time.sleep) -> dict[str, list[d
         rows = []
         for pid in ba:
             sleep(random.uniform(*C.BASALAM_DELAY))
-            try:
-                r = sb.get(BA_URL.format(id=pid), params={"limit": 40, "offset": 0}, timeout=20).json()
-                rows += [{"src": "باسلام", "stars": x.get("star"), "text": (x.get("description") or "").strip()[:300]}
-                         for x in r.get("reviews") or [] if (x.get("description") or "").strip()]
-            except Exception as e:  # noqa: BLE001
-                log.warning("basalam reviews %s: %s", pid, e)
+            rows += basalam_texts(sb, pid, pages=2, sleep=sleep)
         for pid in dk:
             sleep(random.uniform(*C.BASALAM_DELAY))
-            try:
-                r = (sd.get(DK_URL.format(id=pid), params={"page": 1}, timeout=20).json() or {}).get("data") or {}
-                rows += [{"src": "دیجی‌کالا", "stars": x.get("rate"), "text": (x.get("body") or "").strip()[:300]}
-                         for x in r.get("comments") or [] if (x.get("body") or "").strip()]
-            except Exception as e:  # noqa: BLE001
-                log.warning("digikala comments %s: %s", pid, e)
+            rows += digikala_texts(sd, pid, pages=1, sleep=sleep)
         out[o["q"]] = rows
         if progress:
             progress(i + 1, len(tl))

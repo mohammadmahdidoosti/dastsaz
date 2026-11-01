@@ -16,7 +16,7 @@ JMONTHS = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرد
 MARKET = {"etsy": ("اتسی", "gold"), "basalam": ("باسلام", "turq"), "digikala": ("دیجی‌کالا", "lapis"),
           "google": ("گوگل", "ink")}
 LAB_CLS = {"تقاضای زیاد، رقیب کم": "good", "در حال اوج": "hot", "ترند جهانی، تازه در ایران": "hot",
-           "در دیجی‌کالا کم‌رقیب": "good", "در دیجی‌کالا هم پرفروش": "", "در گوگل در حال رشد": "hot",
+           "در دیجی‌کالا کم‌رقیب": "good", "در دیجی‌کالا هم پرفروش": "", "جست‌وجوی تازه در گوگل": "",
            "بازار خالی (آزمایش جسورانه)": "dim", "پرفروش ولی ضعیف": "", "رقابت سنگین": "dim",
            "در جست‌وجوی مردم": "good"}
 def E(t) -> str:
@@ -313,7 +313,7 @@ def _trends(tr: list[dict]) -> str:
     if not rows:
         return ""
     from .trends import MONTHS_FA
-    out = ["<table><tr><th>کلمه</th><th>نسبت به پارسال</th><th>ماه‌های اوج</th><th>اوج بعدی</th>"
+    out = ["<table><tr><th>کلمه</th><th>نسبت به پارسال<div class='muted'>(برای پیش‌بینی ضعیف)</div></th><th>ماه‌های اوج<div class='muted'>(قابل‌اعتمادتر)</div></th><th>اوج بعدی</th>"
            "<th>جست‌وجوهای در حال رشد</th></tr>"]
     for r in sorted(rows, key=lambda r: -(r.get("average") or 0)):
         y = r.get("yoy")
@@ -473,7 +473,9 @@ def render(name: str, when: str, st: dict, ex: dict, mk: list[dict], etsy: list[
 <span><b>{fa(cost.get('usd', 0), 2)}</b>دلار هزینه‌ی گزارش</span></div></div>{pick}</div></header>
 <main class="wrap">
 <section id="summary"><h2>خلاصه‌ی مدیریتی</h2>
-<p class="lead">نتیجه‌گیری هوش مصنوعی فقط از عددهای همین گزارش؛ عددها را در بخش‌های پایین می‌توانید چک کنید.</p>
+<p class="lead">نتیجه‌گیری هوش مصنوعی فقط از عددهای همین گزارش؛ عددها را در بخش‌های پایین می‌توانید چک کنید.
+این گزارش «ایده‌یاب» است، نه پیش‌گوی فروش: آزمون روی گذشته نشان داد فروش یک طرح خاص را از بیرون نمی‌شود دقیق پیش‌بینی کرد
+(<a href="/backtest">دقت سیستم</a>)؛ داور، آزمایش کم و ارزان در <a href="/lab">آزمایشگاه</a> است.</p>
 <div class="exec"><div>{findings}</div><div><div class="todo"><h3>کارهای این هفته</h3><ol>{actions}</ol></div>
 {f'<div class="todo risk"><h3>ریسک‌ها و محدودیت داده</h3><ul>{risks}</ul></div>' if risks else ''}</div></div>{brief}</section>
 <section id="test"><h2>لیست آزمایش این هفته</h2>
@@ -492,7 +494,8 @@ def render(name: str, when: str, st: dict, ex: dict, mk: list[dict], etsy: list[
 </section>
 {f'<section id="trends"><h2>گوگل ترندز ایران</h2><p class="lead">جست‌وجوی هر کلمه در گوگل ایران در ۵ سال اخیر: '
   f'چقدر نسبت به پارسال تغییر کرده، کدام ماه‌ها اوج دارد و کی باید جنس آماده باشد. جست‌وجوهای در حال رشدِ مربوط به '
-  f'جواهر در باسلام و دیجی‌کالا هم بررسی شدند.</p>{tr_html}</section>' if tr_html else ''}
+  f'جواهر در باسلام و دیجی‌کالا هم بررسی شدند. آزمون روی ۵ سال گذشته نشان داد <b>ماه‌های اوج فصلی</b> قابل‌اعتمادند '
+  f'ولی «رشد اخیر» به‌تنهایی آینده را پیش‌بینی نمی‌کند (<a href="/backtest">دقت سیستم</a>).</p>{tr_html}</section>' if tr_html else ''}
 {typed}
 {makers_html}
 <section id="details"><h2>جزئیات</h2>
@@ -581,3 +584,130 @@ def backtest_page(res: list[dict]) -> str:
 <li><b>۵ انتخاب اول:</b> اگر هر ماه فقط ۵ موردی را که روش بیشترین رشد برایشان گفته انتخاب می‌کردیم، چند درصدشان واقعاً رشد کردند. ردیف «انتخاب تصادفی» مبنای مقایسه است.</li>
 <li>تعداد نظرها تقریبی از فروش است و نمونه‌ها کم؛ عددها را نشانه بدانید، نه حکم قطعی.</li></ul></section>
 </main></body></html>"""
+
+
+def _shell(title: str, kicker: str, lead: str, body: str, extra_css: str = "") -> str:
+    return f"""<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>دست‌ساز — {E(title)}</title>
+<style>{CSS}
+.verdict{{padding:12px 16px;border-radius:10px;margin:0 0 16px;font-weight:600}}.verdict.good{{background:#e3f4ef}}
+.verdict.bad{{background:#fbe9ec}}tr.hl td{{background:#fff7e6}}
+form.inline{{display:flex;gap:6px;flex-wrap:wrap;align-items:center}}form.inline input,form.inline select{{font:inherit;
+padding:4px 6px;border:1px solid var(--line);border-radius:6px;max-width:170px}}form.inline input.w{{max-width:240px}}
+label.num{{display:flex;flex-direction:column;font-size:12px;color:var(--soft)}}label.num input{{max-width:80px}}
+.btn{{font:inherit;background:var(--lapis,#2f4b85);color:#fff;border:0;border-radius:8px;padding:6px 14px;cursor:pointer}}
+.v-win{{color:#13877f;font-weight:700}}.v-drop{{color:#a43f55;font-weight:700}}.v-early{{color:#8a8f99}}
+.bar{{height:8px;background:#e8eaee;border-radius:4px;min-width:80px}}.bar i{{display:block;height:8px;border-radius:4px;background:#13877f}}
+{extra_css}</style></head><body>
+<nav class="bar-top"><div class="wrap"><span class="brand">دست‌ساز</span><a href="/">خانه</a><a href="/lab">آزمایشگاه</a>
+<a href="/voice">صدای مشتری</a><a href="/needs">نیازهای کادو</a><a href="/backtest">دقت سیستم</a></div></nav>
+<header class="hero"><div class="wrap"><div><div class="date">{E(kicker)}</div><h1>{E(title)}</h1><p>{lead}</p></div></div></header>
+<main class="wrap">{body}</main></body></html>"""
+
+
+def _opts(d: dict, sel: str = "") -> str:
+    return "".join(f"<option value='{E(k)}'{' selected' if k == sel else ''}>{E(v)}</option>" for k, v in d.items())
+
+
+def lab_page(b: dict, changes: list[dict] | None = None, snaps: int = 0) -> str:
+    from . import lab as L
+    rows = []
+    for t in sorted(b["rows"], key=lambda r: (bool(r["closed"]), r["channel"], -(r["rate"] or 0))):
+        n = t["now"]
+        share = t.get("share")
+        form = "" if t["closed"] else (
+            f"<form class='inline' method='post' action='/lab/update/{E(t['id'])}'>"
+            + "".join(f"<label class='num'>{lab_fa}<input name='{k}' type='number' min='0' value='{n.get(k, 0)}'></label>"
+                      for k, lab_fa in (("views", "بازدید"), ("saves", "ذخیره"), ("messages", "پیام"),
+                                        ("carts", "سبد"), ("orders", "سفارش")))
+            + "<select name='close'><option value=''>باز</option><option value='win'>برنده، ببند</option>"
+              "<option value='drop'>کنار بگذار</option><option value='stop'>متوقف</option></select>"
+              "<button class='btn'>ثبت</button></form>")
+        rows.append(
+            f"<tr{' class=hl' if t['control'] else ''}><td><b>{E(t['name'])}</b><div class='muted'>"
+            f"{E(L.CHANNELS.get(t['channel'], ''))} · {E(L.STAGES.get(t['stage'], ''))} · منبع: {E(L.SOURCES.get(t['source'], ''))}"
+            f"{' · ' + toman(t['price']) + ' تومان' if t.get('price') else ''} · از {E(jalali(t['started']))}</div></td>"
+            f"<td>{fa(n.get('views', 0))}</td><td>{_pct(t['rate']) if t['rate'] is not None else '—'}</td>"
+            f"<td class='v-{t['verdict']}'>{E(t['verdict_fa'])}</td>"
+            f"<td>{'' if share is None else f'<div class=bar><i style=width:{round(100 * share)}%></i></div>{_pct(share)}'}</td>"
+            f"<td>{form}</td></tr>")
+    ctrl = "، ".join(f"{E(L.CHANNELS[c])}: {_pct(r)}" for c, r in b["control"].items() if r is not None) or \
+        "هنوز طرح کنترلی ثبت نشده؛ در هر کانال یک طرح با فروش متوسط را «کنترل» بگذارید"
+    src = "".join(f"<tr><td>{E(L.SOURCES.get(k, k))}</td><td>{fa(v['tests'])}</td><td>{fa(v['wins'])}</td>"
+                  f"<td>{_pct(v['wins'] / v['tests']) if v['tests'] else '—'}</td></tr>"
+                  for k, v in sorted(b["sources"].items(), key=lambda kv: -kv[1]["tests"]))
+    ch = ""
+    if changes:
+        ch = ("<section><h2>تغییر فروش نسبت به هفته‌ی پیش (باسلام)</h2><table><tr><th>جست‌وجو</th><th>هفته‌ی پیش</th>"
+              "<th>این هفته</th><th>تغییر</th><th>تغییر تعداد رقیب</th></tr>" + "".join(
+                  f"<tr><td>{E(c['q'])}</td><td>{fa(c['prev'])}</td><td>{fa(c['now'])}</td>"
+                  f"<td>{_pct(c['change'], True)}</td><td>{fa(c['supply_change'])}</td></tr>" for c in changes[:30])
+              + "</table></section>")
+    body = f"""<section><h2>آزمایش‌ها</h2>
+<p class='lead'>اعداد را «کل تا امروز» وارد کنید (نه فقط امروز). علاقه = پیام + سبد خرید + سفارش (+ ذخیره با وزن کم).
+نرخ کنترل الان: {ctrl}. ستون «سهم نمایش» می‌گوید در پست‌ها و ویترین بعدی چقدر جا به هر طرح بدهید.</p>
+<table><tr><th>طرح</th><th>بازدید</th><th>نرخ علاقه</th><th>تصمیم</th><th>سهم نمایش</th><th>ثبت عددهای امروز</th></tr>
+{''.join(rows) or '<tr><td colspan=6 class=muted>هنوز آزمایشی نیست.</td></tr>'}</table></section>
+<section><h2>آزمایش تازه</h2><form class='inline' method='post' action='/lab/add'>
+<input class='w' name='name' placeholder='اسم طرح' required><input class='w' name='query' placeholder='عبارت جست‌وجو در باسلام (اختیاری)'>
+<select name='channel'>{_opts(L.CHANNELS)}</select><select name='stage'>{_opts(L.STAGES)}</select>
+<select name='source'>{_opts(L.SOURCES)}</select><input name='price' type='number' placeholder='قیمت (تومان)'>
+<label><input type='checkbox' name='control' value='1'> طرح کنترل</label><input class='w' name='note' placeholder='یادداشت'>
+<button class='btn'>اضافه کن</button></form></section>
+<section><h2>کدام منبع ایده برنده می‌سازد</h2><p class='lead'>با هر آزمایش این جدول دقیق‌تر می‌شود؛ همین «حافظه»ی ماشین است.</p>
+<table><tr><th>منبع</th><th>آزمایش</th><th>برنده</th><th>درصد برد</th></tr>{src or '<tr><td colspan=4 class=muted>—</td></tr>'}</table></section>
+{ch}
+<section><h2>قانون تصمیم (قبل از آزمایش ثابت است)</h2><ul>
+<li>زیر {fa(L.MIN_VIEWS)} بازدید: زود است.</li>
+<li>برنده: نرخ علاقه حداقل {fa(L.WIN_X, 1)} برابر طرح کنترل همان کانال و حداقل {_pct(L.WIN_ABS)}.</li>
+<li>کنار بگذار: بعد از {fa(2 * L.MIN_VIEWS)} بازدید، کمتر از نصف کنترل.</li>
+<li>عکس هفتگی فروش باسلام: {fa(snaps)} بار گرفته شده.</li></ul></section>"""
+    return _shell("آزمایشگاه", "ماشین آزمایش", "هر طرح کم و ارزان امتحان می‌شود، برنده‌ها بیشتر دیده و سفارش داده می‌شوند، "
+                  "بازنده‌ها زود کنار می‌روند؛ و ماشین یاد می‌گیرد کدام منبع ایده درست می‌گوید.", body)
+
+
+def voice_page(v: dict | None) -> str:
+    if not v:
+        return _shell("صدای مشتری", "نظر خریداران", "هنوز اجرا نشده؛ از صفحه‌ی اول «صدای مشتری» را بزنید.", "")
+    kinds = {"complaint": ("شکایت", "down"), "praise": ("تعریف", "up"), "wish": ("خواسته‌ی برآورده‌نشده", "")}
+    rows = "".join(
+        f"<tr><td><b>{E(t['theme'])}</b><div class='muted'>{'، '.join('«' + E(x) + '»' for x in t.get('examples', [])[:2])}</div></td>"
+        f"<td><span class='{kinds.get(t.get('kind'), ('', ''))[1]}'>{E(kinds.get(t.get('kind'), (t.get('kind', ''), ''))[0])}</span></td>"
+        f"<td>{fa(t['count'])}<div class='muted'>{_pct(t.get('share'))}</div></td><td>{E(t.get('fix', ''))}</td></tr>"
+        for t in v["themes"])
+    ig = "".join(
+        f"<tr><td>{E(p['page'])}</td><td>{E(p['caption'])}</td><td>{fa(p['intent'])} از {fa(p['comments'])}</td>"
+        f"<td>{fa(p['likes'])}</td><td><a href='{E(p['url'])}' target='_blank' rel='noopener'>پست</a></td></tr>"
+        for p in v.get("instagram", [])[:20])
+    st = " · ".join(f"{fa(k)} ستاره: {fa(n)}" for k, n in v.get("stars", {}).items())
+    body = (f"<section><h2>موضوع‌های نظر خریداران</h2><p class='lead'>{fa(v['reviews'])} نظر از پرفروش‌های "
+            f"{fa(len(v['designs']))} طرح در باسلام و دیجی‌کالا ({st}). هر شکایت بزرگ یک «نسخه‌ی بهتر» است.</p>"
+            f"<table><tr><th>موضوع</th><th>نوع</th><th>تعداد</th><th>برای نسخه‌ی ما</th></tr>{rows}</table></section>"
+            + (f"<section><h2>پست‌هایی که قصد خرید آوردند (اینستاگرام)</h2><p class='lead'>کامنت‌هایی مثل «قیمت؟»، "
+               f"«موجوده؟»، «برای کادو» از لایک ارزشمندترند.</p><table><tr><th>پیج</th><th>متن پست</th>"
+               f"<th>کامنت قصد خرید</th><th>لایک</th><th></th></tr>{ig}</table></section>" if ig else ""))
+    return _shell("صدای مشتری", f"نظر خریداران · {jalali(v['date'])}", "مشتری‌ها از چه شاکی‌اند، چه چیزی را دوست دارند و "
+                  "چه می‌خواهند که پیدا نمی‌کنند.", body)
+
+
+def needs_page(n: dict | None) -> str:
+    if not n:
+        return _shell("نیازهای کادو", "نیاز", "هنوز اجرا نشده؛ از صفحه‌ی اول «نیازهای کادو» را بزنید.", "")
+    t = n["table"]
+    cells = "".join(f"<tr><td>{E(c['for'])}</td><td>{E(c['occasion'])}</td><td>{fa(c['n'])}</td></tr>" for c in t["cells"][:25])
+    ideas = "".join(f"<tr><td>{E(i.get('need', ''))}</td><td><b>{E(i.get('design', ''))}</b></td><td>{E(i.get('search', ''))}</td>"
+                    f"<td>{E(i.get('why', ''))}</td></tr>" for i in n.get("ideas", []))
+    said = "".join(f"<span>{E(k)} <b>{fa(v)}</b></span>" for k, v in t["ideas"][:30])
+    b = t.get("budgets") or []
+    bud = f"میانه‌ی بودجه‌ی گفته‌شده: {toman(b[len(b) // 2] * 1000)} تومان ({fa(len(b))} مورد)" if b else ""
+    src = "، ".join(f"{E(k)}: {fa(v)}" for k, v in n.get("sources", {}).items())
+    body = (f"<section><h2>ایده‌های آزمایش از روی نیازها</h2><table><tr><th>نیاز</th><th>طرح پیشنهادی</th>"
+            f"<th>جست‌وجو در باسلام</th><th>چرا</th></tr>{ideas}</table></section>"
+            f"<section><h2>برای چه کسی، چه مناسبتی</h2><p class='lead'>{fa(n['phrases'])} عبارت ({src}). "
+            f"{_pct(t['jewelry_share'])} به جواهر و اکسسوری مربوط بود. {bud}</p>"
+            f"<table><tr><th>برای</th><th>مناسبت</th><th>تعداد</th></tr>{cells}</table></section>"
+            f"<section><h2>محصول‌هایی که خود مردم گفتند</h2><div class='chips'>{said}</div></section>")
+    return _shell("نیازهای کادو", f"دم بلند · {jalali(n['date'])}", "مردم وقتی نمی‌دانند چه بخرند چه می‌پرسند؛ "
+                  "هر نیاز پرتکرار یک ایده‌ی آزمایش است.", body,
+                  ".chips{display:flex;flex-wrap:wrap;gap:6px}.chips span{background:#fff;border:1px solid var(--line);"
+                  "border-radius:999px;padding:2px 12px}")

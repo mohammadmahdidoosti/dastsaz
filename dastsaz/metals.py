@@ -8,7 +8,8 @@ import logging
 
 log = logging.getLogger(__name__)
 URL = "https://call1.tgju.org/ajax.json"
-KEYS = {"silver_925": "نقره ۹۲۵ (هر گرم)", "silver_999": "نقره ۹۹۹ (هر گرم)", "geram18": "طلای ۱۸ عیار (هر گرم)"}
+KEYS = {"silver_925": "نقره ۹۲۵ (هر گرم)", "silver_999": "نقره ۹۹۹ (هر گرم)", "geram18": "طلای ۱۸ عیار (هر گرم)",
+        "price_dollar_rl": "دلار (بازار آزاد)"}
 
 
 def _num(s) -> float | None:
@@ -47,3 +48,19 @@ def silver_note(o: dict, buy_max: float | None, prices: dict) -> str:
         return (f"فقط نقره‌ی یک قطعه‌ی حدود {grams} گرمی امروز حدود {round(metal, -3):,.0f} تومان است؛ با این سقف خرید، "
                 f"نسخه‌ی نقره‌ی واقعی ممکن نیست (استیل یا روکش)")
     return f"نقره‌ی یک قطعه‌ی حدود {grams} گرمی امروز حدود {round(metal, -3):,.0f} تومان است"
+
+
+def record(prices: dict) -> None:
+    """Keep one line a day (dollar, gold, silver) so their effect on what sells can be tested later."""
+    import datetime as dt
+    import json
+    from . import config as C
+    if not prices:
+        return
+    d = C.DATA_DIR / "macro"
+    d.mkdir(parents=True, exist_ok=True)
+    f = d / "daily.jsonl"
+    today = dt.date.today().isoformat()
+    lines = [x for x in (f.read_text(encoding="utf-8").splitlines() if f.exists() else []) if not x.startswith('{"date": "' + today)]
+    lines.append(json.dumps({"date": today, **{k: v["toman"] for k, v in prices.items()}}))
+    f.write_text("\n".join(lines) + "\n", encoding="utf-8")

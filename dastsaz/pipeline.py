@@ -221,6 +221,7 @@ def run(name: str, status=lambda **k: None, only: str = "") -> Path:
     # 4f. today's metal prices (always fresh) and the coming occasions
     mt = metals.fetch()
     if mt:
+        metals.record(mt)
         _save(d / "metals.json", mt)
     else:
         mt = _load(d / "metals.json") or {}

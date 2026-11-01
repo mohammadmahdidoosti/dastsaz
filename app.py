@@ -25,7 +25,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from dastsaz import config as C
-from dastsaz import guard, pipeline
+from dastsaz import guard, lab, needs, page, pipeline, snapshot, voice
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S")
 logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -34,7 +34,8 @@ APP_PASSWORD = os.environ.get("APP_PASSWORD", "")
 STATIC = Path(__file__).resolve().parent / "static"
 NAME = re.compile(r"^[\w\-]{1,60}$")
 STEP_FA = {"wait": "منتظر", "basalam": "باسلام", "digikala": "دیجی‌کالا", "etsy": "اتسی", "ai": "هوش مصنوعی", "expand": "فرصت‌یابی", "testlist": "لیست آزمایش", "trends": "گوگل ترندز", "suggest": "پیشنهادهای جست‌وجو",
-           "reviews": "نظر خریداران", "makers": "سازنده‌ها",
+           "reviews": "نظر خریداران", "makers": "سازنده‌ها", "snapshot": "عکس هفتگی فروش",
+           "voice": "صدای مشتری", "needs": "نیازهای کادو",
            "report": "گزارش"}
 
 
@@ -48,17 +49,23 @@ class Job:
         with self.lock:
             self.state.update(k)
 
-    def start(self, name: str, only: str = "") -> str:
+    def start(self, name: str, only: str = "", task=None) -> str:
+        """One job at a time (they all read Basalam/Digikala slowly). task: a function(progress) instead of a report."""
         with self.lock:
             if self.state["running"]:
-                return "یک گزارش در حال ساخت است"
+                return "یک کار دیگر در حال اجراست؛ بعد از تمام شدنش دوباره بزنید"
             self.state.update(running=True, run=name, step="", done=0, total=0, note="", error="",
                               started=time.time(), ended=0)
-        threading.Thread(target=self._go, args=(name, only), daemon=True).start()
+        threading.Thread(target=self._go, args=(name, only, task), daemon=True).start()
         return ""
 
-    def _go(self, name, only):
+    def _go(self, name, only, task=None):
         try:
+            if task:
+                self.update(step=name)
+                task(lambda i, t: self.update(done=i, total=t))
+                self.update(running=False, ended=time.time(), step="done", note="آماده است")
+                return
             pipeline.run(name, status=self.update, only=only)
             self.update(running=False, ended=time.time(), step="done", note="گزارش آماده است")
         except Exception as e:  # noqa: BLE001
@@ -87,13 +94,25 @@ h2{font-size:19px;margin:0 0 10px}
 .r{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);
 border-radius:10px;padding:12px 16px;margin-bottom:8px}
 .r a.t{font-weight:800;font-size:16px;color:var(--ink);text-decoration:none}.r a.t:hover{color:var(--lapis)}
-.r .l a{font-size:13px;color:var(--lapis);margin-right:12px}</style></head>
+.r .l a{font-size:13px;color:var(--lapis);margin-right:12px}
+.tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:0 0 14px}
+.tool{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;text-decoration:none;color:var(--ink)}
+.tool b{display:block;color:var(--lapis)}.tool span{font-size:13px;color:var(--soft)}
+button.sm{font-size:13px;padding:4px 12px;background:var(--turq);margin:4px 2px}</style></head>
 <body><header><div class="w"><h1>دست‌ساز</h1><p>ترند جواهرات از اتسی، باسلام، دیجی‌کالا و گوگل؛ برای انتخاب طرح و صحبت با تولیدکننده.</p>
 <div class="stones"><i style="background:#b0822a"></i><i style="background:#13877f"></i><i style="background:#9fb5e3"></i></div></div></header>
 <main class="w"><div class="now"><div id="st">...</div><div class="prog" id="pg" hidden><i></i></div>
 <p style="margin:12px 0 0"><button id="go" onclick="go()">ساختن گزارش تازه</button>
 <span class="muted">حدود نیم ساعت؛ حدود ۱٫۶ دلار.</span></p></div>
-<h2>گزارش‌ها</h2><div id="list">...</div><p><a href="backtest">دقت سیستم پیش‌بینی (آزمون روی گذشته)</a></p></main>
+<div class="tools"><a class="tool" href="lab"><b>آزمایشگاه</b><span>ثبت آزمایش‌ها، تصمیم برنده/کنار، سهم نمایش</span></a>
+<a class="tool" href="voice"><b>صدای مشتری</b><span>شکایت‌ها و خواسته‌های خریداران</span></a>
+<a class="tool" href="needs"><b>نیازهای کادو</b><span>مردم برای چه کسی و چه مناسبتی دنبال کادو هستند</span></a>
+<a class="tool" href="backtest"><b>دقت سیستم</b><span>آزمون روی گذشته</span></a></div>
+<p class="muted">اجرای دستی (هر کدام جدا؛ با هم اجرا نمی‌شوند):
+<button class="sm" onclick="task('snapshot')">عکس هفتگی فروش (۶ دقیقه)</button>
+<button class="sm" onclick="task('voice')">صدای مشتری (۲۰ دقیقه)</button>
+<button class="sm" onclick="task('needs')">نیازهای کادو (۵ دقیقه)</button></p>
+<h2>گزارش‌ها</h2><div id="list">...</div></main>
 <script>
 const F=n=>String(n).replace(/[0-9]/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
 async function load(){const s=await (await fetch('api/status')).json();const j=s.job;let t;
@@ -108,6 +127,7 @@ document.getElementById('list').innerHTML=s.runs.map(r=>r.report?`<div class=r><
 <div class=muted>هزینه ${F(r.usd)} دلار</div></div><div class=l><a href="csv/${r.name}">محصولات (اکسل)</a>
 <a href="csv/${r.name}?f=opportunities">فرصت‌ها (اکسل)</a></div></div>`:`<div class=r><span>${r.name}</span><span class=muted>ناتمام</span></div>`).join('')
 ||'<p class=muted>هنوز گزارشی ساخته نشده. «ساختن گزارش تازه» را بزنید.</p>'}
+async function task(n){const r=await (await fetch('api/task?name='+n,{method:'POST'})).json();if(r.error)alert(r.error);load()}
 async function go(){const r=await (await fetch('api/run',{method:'POST'})).json();if(r.error)alert(r.error);load()}
 load();setInterval(load,10000);
 </script></body></html>"""
@@ -165,6 +185,12 @@ class H(BaseHTTPRequestHandler):
             g = guard.check() if "guard" in q or not j["running"] else ""
             return self._json({"job": j, "step_fa": STEP_FA.get(j["step"], j["step"]), "runs": pipeline.runs(),
                                "guard": g})
+        if parts == ["lab"]:
+            return self._send(200, page.lab_page(lab.board(), snapshot.changes(), len(snapshot.history())).encode())
+        if parts == ["voice"]:
+            return self._send(200, page.voice_page(voice.latest()).encode())
+        if parts == ["needs"]:
+            return self._send(200, page.needs_page(needs.latest()).encode())
         if parts == ["backtest"]:
             f = C.DATA_DIR / "backtest" / "report.html"
             return self._send(200, f.read_bytes()) if f.exists() else self._send(404, "هنوز آزمونی اجرا نشده".encode(), "text/plain; charset=utf-8")
@@ -178,10 +204,40 @@ class H(BaseHTTPRequestHandler):
                                   {"Content-Disposition": f'attachment; filename="dastsaz-{parts[1]}-{f}.csv"'})
         return self._send(404, "پیدا نشد".encode(), "text/plain; charset=utf-8")
 
+    def _form(self) -> dict:
+        n = min(int(self.headers.get("Content-Length") or 0), 20000)
+        raw = self.rfile.read(n).decode("utf-8", "replace") if n else ""
+        return {k: v[0] for k, v in parse_qs(raw).items()}
+
+    def _back(self, to="/lab"):
+        self._send(303, b"", "text/plain", {"Location": to})
+
     def do_POST(self):
         if not self._gate():
             return
         u = urlparse(self.path)
+        parts = [p for p in u.path.split("/") if p]
+        if parts == ["lab", "add"]:
+            f = self._form()
+            if f.get("name", "").strip():
+                price = f.get("price", "").strip()
+                lab.add(f["name"], f.get("channel", "other"), f.get("source", "manual"),
+                        int(price) if price.isdigit() else None, f.get("query", ""), f.get("stage", "pretest"),
+                        f.get("control") == "1", f.get("note", ""))
+            return self._back()
+        if len(parts) == 3 and parts[:2] == ["lab", "update"] and NAME.match(parts[2]):
+            f = self._form()
+            lab.update(parts[2], {k: f.get(k) if str(f.get(k, "")).isdigit() else 0 for k in lab.FIELDS},
+                       f.get("close", ""))
+            return self._back()
+        if u.path == "/api/task":
+            name = (parse_qs(u.query).get("name") or [""])[0]
+            fn = {"snapshot": lambda p: snapshot.take(progress=p), "voice": lambda p: voice.run(progress=p),
+                  "needs": lambda p: needs.run(progress=p)}.get(name)
+            if not fn:
+                return self._json({"error": "نامعتبر"}, 400)
+            err = JOB.start(name, task=fn)
+            return self._json({"error": err} if err else {"ok": True})
         if u.path == "/api/run":
             q = parse_qs(u.query)
             name = (q.get("name") or [time.strftime("trial-%Y%m%d-%H%M")])[0]
