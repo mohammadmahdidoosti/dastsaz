@@ -42,7 +42,8 @@ TREND_KWS = ["گردنبند", "گوشواره", "دستبند", "انگشتر",
              "گردنبند پروانه", "گردنبند قلب", "دستبند مهره", "انگشتر مردانه", "دستبند مردانه", "گردنبند حرف",
              "گردنبند ماه", "زنجیر", "گوشواره آویز", "بدلیجات"]
 METHODS = {"persist": "ثابت (هیچ تغییری نمی‌کند)", "momentum": "روند اخیر ادامه پیدا می‌کند",
-           "seasonal": "پارسال همین موقع", "ours": "روش گزارش (فصل + روند سالانه)"}
+           "seasonal": "پارسال همین موقع", "season_avg": "میانگین فصل در همه‌ی سال‌های قبل",
+           "ours": "روش گزارش (فصل + روند سالانه)"}
 
 
 def _dir() -> Path:
@@ -76,12 +77,14 @@ def predict(s: list[float], t: int, method: str):
         if t < 14:
             return None
         return _ratio(_mean(s[t - 11:t - 8]), _mean(s[t - 14:t - 11]))
-    if method == "ours":
+    if method in ("ours", "season_avg"):
         seas = [_ratio(_mean(s[t - 12 * k + 1:t - 12 * k + 4]), _mean(s[t - 12 * k - 2:t - 12 * k + 1]))
                 for k in range(1, 6) if t - 12 * k - 2 >= 0]
         seas = [x for x in seas if x is not None]
         if not seas:
             return None
+        if method == "season_avg":
+            return _mean(seas)
         yoy = _ratio(_mean(s[t - 2:t + 1]), _mean(s[t - 14:t - 11])) if t >= 14 else 0.0
         yoy = max(-0.9, min(3.0, yoy or 0.0))
         return (1 + _mean(seas)) * (1 + yoy) ** (H / 12) - 1
@@ -141,7 +144,7 @@ def last_cutoff(series: dict[str, list[float]], months: list[str]) -> list[dict]
         y = actual(s, t)
         if y is None:
             continue
-        rows.append({"name": k, "actual": y, **{m: predict(s, t, m) for m in ("momentum", "seasonal", "ours")}})
+        rows.append({"name": k, "actual": y, **{m: predict(s, t, m) for m in ("momentum", "seasonal", "season_avg", "ours")}})
     rows.sort(key=lambda r: -(r["ours"] if r["ours"] is not None else -9))
     return [{"cutoff": months[t], "until": months[t + H]}] + rows
 
