@@ -365,3 +365,31 @@ def test_trends_monthly_drops_partial():
     m = B.monthly([{"date": "2025-01-05", "value": 10}, {"date": "2025-01-12", "value": 20},
                    {"date": "2025-02-02", "value": 99, "isPartial": True}])
     assert m == {"2025-01": 15.0}
+
+
+def test_signal_scores_a_page_that_leads_sales(tmp_path, monkeypatch):
+    from dastsaz import backtest as B, signals as S
+    monkeypatch.setattr(C, "DATA_DIR", tmp_path)
+    (tmp_path / "backtest").mkdir()
+    months = B._months("2025-01", "2026-10")
+    designs = [f"گردنبند طرح{i}" for i in range(10)]
+    prods, des = {}, {}
+    for i, q in enumerate(designs):
+        dates = []
+        for j, mo in enumerate(months):
+            n = 3 + (6 if (i < 3 and mo >= "2026-02") else 0)        # designs 0-2 take off in Feb 2026
+            dates += [mo + "-10"] * n
+        prods[str(i)] = dates
+        des[q] = [str(i)]
+    (tmp_path / "backtest" / "reviews_raw_jewelry.json").write_text(
+        json.dumps({"products": prods, "designs": des}, ensure_ascii=False), encoding="utf-8")
+    posts = [{"ownerUsername": "lead", "timestamp": f"2025-{m:02d}-05T10:00:00", "caption": f"طرح{i} جدید",
+              "likesCount": 500, "commentsCount": 10} for m in (10, 11, 12) for i in range(3)]
+    posts += [{"ownerUsername": "noise", "timestamp": f"2025-{m:02d}-05T10:00:00", "caption": f"طرح{i}",
+               "likesCount": 500, "commentsCount": 10} for m in (10, 11, 12) for i in (5, 6, 7)]
+    (tmp_path / "ig_posts.json").write_text(json.dumps(posts, ensure_ascii=False), encoding="utf-8")
+    (tmp_path / "ig_pages.json").write_text(json.dumps([{"username": "lead", "followersCount": 10000},
+                                                        {"username": "noise", "followersCount": 10000}]), encoding="utf-8")
+    r = S.evaluate_all()
+    assert r["sources"]["پیج lead"]["lift"] > r["sources"]["پیج noise"]["lift"]
+    assert r["sources"]["پیج lead"]["hit"] == 1.0
