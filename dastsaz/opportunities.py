@@ -124,24 +124,40 @@ def signals(q: dict, cards: list[dict], total: int) -> dict:
             "weak": [{"title": c["title"], "url": c["url"], "rating": c["rating"], "sales": c["sales_total"]}
                      for c in weak[:3]],
             "images": [{"src": c["image"], "url": c["url"], "title": c["title"]} for c in top if c.get("image")][:4],
-            "score": round(score, 2), "labels": labels(week, total, momentum, q["source"], weak)}
+            "score": round(score, 2), "labels": []}
 
 
-def labels(week: int, supply: int, momentum: float, source: str, weak: list) -> list[str]:
-    out = []
-    if week >= 10 and momentum >= 0.08:
-        out.append("در حال اوج")
-    if week >= 10 and supply <= 300:
-        out.append("تقاضای زیاد، رقیب کم")
-    if source == "etsy" and week >= 3 and supply <= 1000:
-        out.append("ترند جهانی، تازه در ایران")
-    if source == "etsy" and supply < 30:
-        out.append("بازار خالی (آزمایش جسورانه)")
-    if weak:
-        out.append("پرفروش ولی ضعیف")
-    if supply >= 3000:
-        out.append("رقابت سنگین")
-    return out
+def _q(vals: list[float], p: float) -> float:
+    v = sorted(vals)
+    return v[min(len(v) - 1, int(len(v) * p))] if v else 0.0
+
+
+def relabel(opps: list[dict]) -> list[dict]:
+    """Labels relative to this run's own numbers (Basalam's sales per week are small and vary by season):
+    high demand = top quarter of weekly sales (at least 10); low supply = at most 500 products or the lowest
+    quarter; on the rise = at least twice the median 'fresh heat' with real sales this week."""
+    if not opps:
+        return opps
+    hi_week = max(10, _q([o["week"] for o in opps], 0.75))
+    lo_supply = max(500, _q([o["supply"] for o in opps], 0.25))
+    mid_mom = _q([o["momentum"] for o in opps], 0.5)
+    mid_week = max(3, _q([o["week"] for o in opps], 0.5))
+    for o in opps:
+        lab = []
+        if o["momentum"] >= max(0.02, 2 * mid_mom) and o["week"] >= mid_week:
+            lab.append("در حال اوج")
+        if o["week"] >= hi_week and o["supply"] <= lo_supply:
+            lab.append("تقاضای زیاد، رقیب کم")
+        if o["source"] == "etsy" and o["week"] >= 3 and o["supply"] <= 1000:
+            lab.append("ترند جهانی، تازه در ایران")
+        if o["source"] == "etsy" and o["supply"] < 30:
+            lab.append("بازار خالی (آزمایش جسورانه)")
+        if o.get("weak"):
+            lab.append("پرفروش ولی ضعیف")
+        if o["supply"] >= 3000:
+            lab.append("رقابت سنگین")
+        o["labels"] = lab
+    return opps
 
 
 def expand(etsy, bas, progress=None, session=None, sleep=None) -> list[dict]:
@@ -161,14 +177,16 @@ def expand(etsy, bas, progress=None, session=None, sleep=None) -> list[dict]:
             log.warning("expand %s: %s", q["q"], e)
         if progress:
             progress(i + 1, len(qs))
-    return out
+    return relabel(out)
 
 
 def pick(opps: list[dict], n: int = 15, per_seed: int = 2, per_type: int = 5) -> list[dict]:
     """Best searches for the test list: some demand or a clear global trend, not crowded, diverse."""
     ok = [o for o in opps if "رقابت سنگین" not in o["labels"] and (o["week"] >= 3 or "بازار خالی (آزمایش جسورانه)"
                                                                        in o["labels"])]
-    ok.sort(key=lambda o: (-len([l for l in o["labels"] if l != "پرفروش ولی ضعیف"]), -o["score"]))
+    strong = {"در حال اوج": 3, "تقاضای زیاد، رقیب کم": 4, "ترند جهانی، تازه در ایران": 2,
+              "بازار خالی (آزمایش جسورانه)": 1, "پرفروش ولی ضعیف": 1}
+    ok.sort(key=lambda o: (-sum(strong.get(l, 0) for l in o["labels"]), -o["score"]))
     out, by_seed, by_type = [], Counter(), Counter()
     for o in ok:
         if by_seed[o["term"]] >= per_seed or by_type[o["type"]] >= per_type:

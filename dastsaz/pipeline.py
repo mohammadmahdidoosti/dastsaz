@@ -84,6 +84,7 @@ def run(name: str, status=lambda **k: None, only: str = "") -> Path:
         step("expand", "فرصت‌یابی: جست‌وجوهای تکمیلی آرام در باسلام")
         opps = O.expand(ej, bj, progress=lambda i, t: status(step="expand", done=i, total=t, note=""))
         _save(d / "opportunities.json", opps)
+    opps = O.relabel(opps)
     tl = _load(d / "testlist.json")
     if tl is None:
         step("testlist", "ساختن لیست آزمایش هفتگی")
