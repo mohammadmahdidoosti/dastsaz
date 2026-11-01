@@ -49,8 +49,8 @@ class Apify:
         self.s = requests.Session()
         self.s.headers["Authorization"] = f"Bearer {token}"
 
-    def run(self, inp: dict, max_usd: float) -> dict:
-        r = self.s.post(f"{API}/acts/{C.APIFY_ACTOR}/runs", json=inp,
+    def run(self, inp: dict, max_usd: float, actor: str | None = None) -> dict:
+        r = self.s.post(f"{API}/acts/{actor or C.APIFY_ACTOR}/runs", json=inp,
                         params={"maxTotalChargeUsd": f"{max_usd:.2f}"}, timeout=60)
         r.raise_for_status()
         run = r.json()["data"]

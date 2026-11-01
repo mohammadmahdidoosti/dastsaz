@@ -24,6 +24,30 @@ def fa(n, dec: int = 0) -> str:
     return s.translate(FA_DIGITS).replace(",", "٬")
 
 
+JMONTHS = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور", "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"]
+
+
+def jalali(date: str) -> str:
+    """'2026-12-15' -> '۲۴ آذر ۱۴۰۵' (standard Gregorian-to-Jalali arithmetic); anything else is returned as is."""
+    try:
+        gy, gm, gd = (int(x) for x in str(date)[:10].split("-"))
+    except ValueError:
+        return str(date or "")
+    g_d_m = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334]
+    gy2 = gy + 1 if gm > 2 else gy
+    days = 355666 + 365 * gy + (gy2 + 3) // 4 - (gy2 + 99) // 100 + (gy2 + 399) // 400 + gd + g_d_m[gm - 1]
+    jy = -1595 + 33 * (days // 12053)
+    days %= 12053
+    jy += 4 * (days // 1461)
+    days %= 1461
+    if days > 365:
+        jy += (days - 1) // 365
+        days = (days - 1) % 365
+    jm = 1 + days // 31 if days < 186 else 7 + (days - 186) // 30
+    jd = 1 + (days % 31 if days < 186 else (days - 186) % 30)
+    return f"{fa(jd)} {JMONTHS[jm - 1]} {str(jy).translate(FA_DIGITS)}"
+
+
 def shares(items: list[dict], field: str) -> dict[str, float]:
     c = Counter(x.get(field) or "سایر" for x in items)
     n = sum(c.values()) or 1
@@ -215,7 +239,7 @@ def _gallery(items, n=40):
 
 
 LAB_CLS = {"تقاضای زیاد، رقیب کم": "g", "در حال اوج": "", "ترند جهانی، تازه در ایران": "",
-           "در دیجی‌کالا کم‌رقیب": "g", "در دیجی‌کالا هم پرفروش": "",
+           "در دیجی‌کالا کم‌رقیب": "g", "در دیجی‌کالا هم پرفروش": "", "در گوگل در حال رشد": "",
            "بازار خالی (آزمایش جسورانه)": "r", "پرفروش ولی ضعیف": "", "رقابت سنگین": "r"}
 
 
@@ -235,6 +259,36 @@ def _dk_line(o: dict) -> str:
     med = f"، قیمت میانه‌ی پرفروش‌ها {fa(round(o['dk_price_median'], -4))} تومان" if o.get("dk_price_median") else ""
     return (f"<br>دیجی‌کالا: <a href='{html.escape(o.get('dk_link', '#'))}' target='_blank' rel='noopener'>"
             f"{fa(o['dk_supply'])} محصول</a>، {fa(o.get('dk_reviews', 0))} امتیازدهنده در ۱۰ پرفروش{med}")
+
+
+def _trends(tr: list[dict]) -> str:
+    rows = [r for r in tr if r.get("average") is not None]
+    if not rows:
+        return ""
+    from .trends import MONTHS_FA
+    out = ["<h2>گوگل ترندز ایران</h2><p class='muted'>روند جست‌وجوی هر کلمه در گوگل ایران در ۵ سال اخیر. "
+           "«اوج بعدی» و «سفارش تا» یعنی کی باید جنس آماده باشد. جست‌وجوهای «در حال رشد» ایده‌ی طرح تازه‌اند "
+           "و آن‌هایی که به جواهر مربوط بودند در باسلام و دیجی‌کالا هم جست‌وجو شدند.</p>"
+           "<table><tr><th>کلمه</th><th>تغییر نسبت به پارسال</th><th>ماه‌های اوج</th><th>اوج بعدی</th>"
+           "<th>جست‌وجوهای در حال رشد</th></tr>"]
+    for r in sorted(rows, key=lambda r: -(r.get("average") or 0)):
+        yoy = r.get("yoy")
+        ycls = "gp" if (yoy or 0) >= 15 else ("gn" if (yoy or 0) <= -15 else "")
+        ytxt = f"{'+' if (yoy or 0) > 0 else ''}{fa(round(yoy))}٪" if yoy is not None else "—"
+        pm = "، ".join(MONTHS_FA.get(m, str(m)) for m in r.get("peak_months") or []) or "—"
+        nxt = html.escape(jalali(r.get("next_peak")) or "—")
+        if r.get("order_by"):
+            nxt += f"<br><span class='muted'>سفارش تا {html.escape(jalali(r['order_by']))}</span>"
+        rq = r.get("breakout", [])[:3] + r.get("rising", [])[:4]
+        rtxt = " ".join(f"<span class='tag'>{html.escape(q['query'])}"
+                        f"{(' ' + html.escape(q['value'])) if q.get('value') else ''}</span>" for q in rq) or "—"
+        low = " <span class='muted'>(داده‌ی کم)</span>" if r.get("low_precision") else ""
+        kw = html.escape(r["keyword"])
+        link = f"<a href='{html.escape(r['url'])}' target='_blank' rel='noopener'>{kw}</a>" if r.get("url") else kw
+        out.append(f"<tr><td>{link}{low}</td><td class='{ycls}'>{ytxt}</td><td>{pm}</td><td>{nxt}</td>"
+                   f"<td>{rtxt}</td></tr>")
+    out.append("</table>")
+    return "".join(out)
 
 
 def _testlist(tl: list[dict]) -> str:
@@ -279,8 +333,9 @@ def _opps_table(opps: list[dict], n: int = 40) -> str:
 
 def render(name: str, etsy: list[dict], bas: list[dict], st: dict, points: list[str], cost: dict,
            when: str, opps: list[dict] | None = None, tl: list[dict] | None = None,
-           dk: list[dict] | None = None) -> str:
+           dk: list[dict] | None = None, tr: list[dict] | None = None) -> str:
     dk = dk or []
+    tr_html = _trends(tr or [])
     dk_card = (f'<div class="card">پرفروش دیجی‌کالا<b>{fa(st.get("n_digikala", 0))}</b></div>' if dk else "")
     dk_motif = (f"<div><h3>دیجی‌کالا</h3><p>نقش‌ها: {_list(st.get('motif_digikala', []))}</p>"
                 f"<p>سنگ‌ها: {_list(st.get('stone_digikala', []))}</p></div>" if dk else "")
@@ -302,6 +357,7 @@ def render(name: str, etsy: list[dict], bas: list[dict], st: dict, points: list[
    + _testlist(tl)) if tl is not None else ''}
 <h2>جمع‌بندی برای صحبت با تولیدکننده</h2><ul class="ins">{ins}</ul>
 {('<h2>همه‌ی فرصت‌ها</h2>' + _opps_table(opps)) if opps else ''}
+{tr_html}
 <p class="legend"><span><span class="bar e" style="width:20px"></span>اتسی</span>
 <span><span class="bar b" style="width:20px"></span>باسلام</span>{dk_leg}
 <span class="gp">قرمز = در اتسی خیلی بیشتر (فرصت)</span><span class="gn">سبز = در باسلام بیشتر</span></p>
@@ -323,7 +379,8 @@ def render(name: str, etsy: list[dict], bas: list[dict], st: dict, points: list[
 
 
 def build(run_dir: Path, name: str, etsy: list[dict], bas: list[dict], key: str, cost_add, when: str,
-          opps: list[dict] | None = None, tl: list[dict] | None = None, dk: list[dict] | None = None) -> Path:
+          opps: list[dict] | None = None, tl: list[dict] | None = None, dk: list[dict] | None = None,
+          tr: list[dict] | None = None) -> Path:
     dk = [x for x in (dk or []) if x.get("is_jewelry", True)]
     etsy = [x for x in etsy if x.get("is_jewelry", True)]
     bas = [x for x in bas if x.get("is_jewelry", True)]
@@ -332,7 +389,7 @@ def build(run_dir: Path, name: str, etsy: list[dict], bas: list[dict], key: str,
     if usd:
         cost_add("جمع‌بندی", 1, usd)
     from . import costs
-    page = render(name, etsy, bas, st, points, costs.summary(run_dir), when, opps=opps, tl=tl, dk=dk)
+    page = render(name, etsy, bas, st, points, costs.summary(run_dir), when, opps=opps, tl=tl, dk=dk, tr=tr)
     (run_dir / "stats.json").write_text(json.dumps({**st, "points": points}, ensure_ascii=False, default=str,
                                                    indent=1), encoding="utf-8")
     p = run_dir / "report.html"

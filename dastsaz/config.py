@@ -39,6 +39,9 @@ BASALAM_DELAY = (4.0, 8.0)          # seconds between Basalam requests (slow on 
 DIGIKALA = os.environ.get("DIGIKALA", "1") == "1"
 DIGIKALA_PER_QUERY = int(os.environ.get("DIGIKALA_PER_QUERY", "40"))
 
+TRENDS = os.environ.get("TRENDS", "1") == "1"
+TRENDS_MAX_USD = float(os.environ.get("TRENDS_MAX_USD", "0.3"))
+
 TOP_N = int(os.environ.get("TOP_N", "200"))
 
 

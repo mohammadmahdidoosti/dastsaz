@@ -151,6 +151,8 @@ def relabel(opps: list[dict]) -> list[dict]:
             lab.append("تقاضای زیاد، رقیب کم")
         if o["source"] == "etsy" and o["week"] >= 3 and o["supply"] <= 1000:
             lab.append("ترند جهانی، تازه در ایران")
+        if o["source"] == "google" and o["week"] >= 1:
+            lab.append("در گوگل در حال رشد")
         if o["source"] == "etsy" and o["supply"] < 30:
             lab.append("بازار خالی (آزمایش جسورانه)")
         if o.get("weak"):
@@ -167,8 +169,19 @@ def relabel(opps: list[dict]) -> list[dict]:
 
 
 def expand(etsy, bas, progress=None, session=None, sleep=None) -> list[dict]:
-    sd = seeds(etsy, bas)
-    qs = queries(sd)
+    return run_queries(queries(seeds(etsy, bas)), progress, session, sleep)
+
+
+def google_queries(ideas: list[str]) -> list[dict]:
+    out = []
+    for t in ideas:
+        typ = next((ty for ty in TYPES + ["پابند", "آویز", "ست"] if ty in t), "سایر")
+        out.append({"q": t, "type": typ, "term": t, "why": f"«{t}» در گوگل ایران در حال رشد است",
+                    "source": "google"})
+    return out
+
+
+def run_queries(qs: list[dict], progress=None, session=None, sleep=None) -> list[dict]:
     kw = {"session": session or basalam._session()}
     if sleep:
         kw["sleep"] = sleep
@@ -220,7 +233,7 @@ def pick(opps: list[dict], n: int = 15, per_seed: int = 2, per_type: int = 5) ->
                                                                        in o["labels"])]
     strong = {"در حال اوج": 3, "تقاضای زیاد، رقیب کم": 4, "ترند جهانی، تازه در ایران": 2,
               "بازار خالی (آزمایش جسورانه)": 1, "پرفروش ولی ضعیف": 1, "در دیجی‌کالا هم پرفروش": 2,
-              "در دیجی‌کالا کم‌رقیب": 1}
+              "در دیجی‌کالا کم‌رقیب": 1, "در گوگل در حال رشد": 2}
     ok.sort(key=lambda o: (-sum(strong.get(l, 0) for l in o["labels"]), -o["score"]))
     out, by_seed, by_type = [], Counter(), Counter()
     for o in ok:

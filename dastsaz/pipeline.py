@@ -10,7 +10,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from . import analyze as A
-from . import basalam, costs, digikala, etsy, guard, report
+from . import basalam, costs, digikala, etsy, guard, report, trends
 from . import opportunities as O
 from . import config as C
 
@@ -125,6 +125,35 @@ def run(name: str, status=lambda **k: None, only: str = "") -> Path:
         if usd:
             costs.add(d, "لیست آزمایش (هوش مصنوعی)", len(tl), usd)
         _save(d / "testlist.json", tl)
+    # 4b. Google Trends (Iran): timing + rising searches; new jewelry ideas become extra opportunity searches
+    tr = _load(d / "trends.json")
+    if tr is None and C.TRENDS:
+        step("trends", "گوگل ترندز ایران")
+        try:
+            tr = trends.fetch(C.secret("APIFY_TOKEN"), trends.keywords(tl),
+                              on_cost=lambda n, usd, st: costs.add(d, "گوگل ترندز (Apify)", n, usd, st))
+        except Exception as e:  # noqa: BLE001 - extra: the report goes on without it
+            log.warning("trends skipped: %s", e)
+            tr = []
+        _save(d / "trends.json", tr)
+    tr = tr or []
+    if tr and not any(o["source"] == "google" for o in opps):
+        ideas = trends.new_ideas(tr, {o["q"] for o in opps})
+        if ideas:
+            step("expand", "جست‌وجوهای در حال رشد گوگل در باسلام و دیجی‌کالا")
+            try:
+                extra = O.run_queries(O.google_queries(ideas),
+                                      progress=lambda i, t: status(step="expand", done=i, total=t, note="گوگل"))
+                if C.DIGIKALA:
+                    O.add_digikala(extra)
+                opps = O.relabel(opps + extra)
+                _save(d / "opportunities.json", opps)
+                tl, usd = O.test_list(opps, ej, C.secret("OPENROUTER_API_KEY"))
+                if usd:
+                    costs.add(d, "لیست آزمایش (هوش مصنوعی)", len(tl), usd)
+                _save(d / "testlist.json", tl)
+            except Exception as e:  # noqa: BLE001
+                log.warning("google ideas skipped: %s", e)
     with (d / "opportunities.csv").open("w", newline="", encoding="utf-8-sig") as f:
         w = csv.writer(f)
         w.writerow(["جست‌وجو", "برچسب‌ها", "فروش این هفته (۱۰ پرفروش)", "فروش کل (۱۰ پرفروش)",
@@ -143,7 +172,7 @@ def run(name: str, status=lambda **k: None, only: str = "") -> Path:
         w.writerows(e + b + k)
     when = dt.datetime.now(ZoneInfo(C.TIMEZONE)).strftime("%Y-%m-%d %H:%M")
     return report.build(d, name, e, b, C.secret("OPENROUTER_API_KEY"),
-                        lambda s, u, usd: costs.add(d, s, u, usd), when, opps=opps, tl=tl, dk=kj)
+                        lambda s, u, usd: costs.add(d, s, u, usd), when, opps=opps, tl=tl, dk=kj, tr=tr)
 
 
 def runs() -> list[dict]:

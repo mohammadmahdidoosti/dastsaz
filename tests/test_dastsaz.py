@@ -5,7 +5,7 @@ import random
 import pytest
 
 from dastsaz import analyze as A
-from dastsaz import basalam, config as C, digikala, etsy, guard, pipeline
+from dastsaz import basalam, config as C, digikala, etsy, guard, pipeline, trends
 
 
 BAS_PRODUCT = {"id": 39072910, "name": "گردنبند نقره اسم دلخواه", "price": 1200000, "primaryPrice": 1500000,
@@ -18,6 +18,13 @@ DK_PRODUCT = {"id": 18411251, "title_fa": "گردنبند زنانه مدل پا
               "images": {"main": {"url": ["https://dkstatics-public.digikala.com/a.jpg?x-oss-process=resize"]}},
               "default_variant": {"price": {"selling_price": 6990000}},
               "data_layer": {"brand": "متفرقه", "item_category5": "زیورآلات زنانه"}}
+
+TR_ITEM = {"keyword": "گردنبند اسم", "averageInterest": 40, "latestInterest": 55, "yoyChangePct": 22.5,
+           "seasonality": {"isSeasonal": True, "peakMonths": [12, 2], "nextPeakDate": "2026-12-15",
+                           "publishBy": "2026-11-20"},
+           "risingQueries": [{"query": "گردنبند اسم انگلیسی", "formattedValue": "+250%"}, "قیمت دلار"],
+           "breakoutQueries": [{"query": "گردنبند اسم انگلیسی", "value": "Breakout"}],
+           "trendsUrl": "https://trends.google.com/trends/explore?geo=IR&q=x"}
 
 ETSY_ITEM = {"listingId": "123", "name": "Dainty Gold Name Necklace", "url": "https://www.etsy.com/listing/123",
              "imageUrl": "https://i.etsystatic.com/a.jpg", "price": "24.50", "currency": "USD",
@@ -139,6 +146,8 @@ def test_pipeline_end_to_end(tmp_path, monkeypatch):
     monkeypatch.setattr(pipeline.digikala, "fetch", lambda **k: dk)
     monkeypatch.setattr(pipeline.O.digikala, "search", lambda q, session=None, sleep=None: (dk[:10], 60))
     monkeypatch.setattr(pipeline.O.digikala, "_session", lambda: None)
+    tr_rows = [trends.row(TR_ITEM)]
+    monkeypatch.setattr(pipeline.trends, "fetch", lambda token, kws, on_cost=None: tr_rows)
     monkeypatch.setattr(pipeline.O, "briefs", lambda items, key: ({0: {"i": 0, "name": "طرح آزمایشی", "brief": "ب"}}, 0.002))
     out = pipeline.run("t1")
     html = out.read_text(encoding="utf-8")
@@ -146,6 +155,9 @@ def test_pipeline_end_to_end(tmp_path, monkeypatch):
     assert "لیست آزمایش این هفته" in html and "طرح آزمایشی" in html
     assert (tmp_path / "runs" / "t1" / "opportunities.csv").exists()
     assert "۴۰ پرفروش اول دیجی‌کالا" in html and "رقیب در دیجی‌کالا" in html
+    assert "گوگل ترندز ایران" in html
+    opps = json.loads((tmp_path / "runs" / "t1" / "opportunities.json").read_text(encoding="utf-8"))
+    assert any(o["source"] == "google" and o["q"] == "گردنبند اسم انگلیسی" for o in opps)
     assert (tmp_path / "runs" / "t1" / "products.csv").exists()
     pipeline.run("t1")                         # resume: no new AI calls
     assert calls["n"] == 2          # Etsy+Basalam once, Digikala once; resume adds none
@@ -198,3 +210,19 @@ def test_digikala_card():
     assert c["url"].startswith("https://www.digikala.com/product/dkp-18411251") and c["image"].endswith("a.jpg")
     out = digikala.card({**DK_PRODUCT, "default_variant": []}, "q", 1)
     assert out["available"] is False and out["price_toman"] is None
+
+
+def test_trends_row_and_ideas():
+    r = trends.row(TR_ITEM)
+    assert r["peak_months"] == [12, 2] and r["next_peak"] == "2026-12-15" and r["yoy"] == 22.5
+    assert r["rising"][0] == {"query": "گردنبند اسم انگلیسی", "value": "+250%"}
+    ideas = trends.new_ideas([r], known={"گردنبند"})
+    assert ideas == ["گردنبند اسم انگلیسی"]          # non-jewelry «قیمت دلار» left out, no duplicates
+    assert "گردنبند اسم" in trends.keywords([{"q": "دستبند پاپیون"}]) and "دستبند پاپیون" in trends.keywords(
+        [{"q": "دستبند پاپیون"}])
+
+
+def test_jalali():
+    from dastsaz.report import jalali
+    assert jalali("2026-11-01") == "۱۰ آبان ۱۴۰۵" and jalali("2026-03-21") == "۱ فروردین ۱۴۰۵"
+    assert jalali("2026-12-15") == "۲۴ آذر ۱۴۰۵" and jalali("") == ""
