@@ -138,7 +138,7 @@ def test_pipeline_end_to_end(tmp_path, monkeypatch):
     monkeypatch.setattr(pipeline.report, "insights", lambda st, key: (["نکته‌ی آزمایشی"], 0.001))
 
     def fake_search(q, size=30, session=None, sleep=None):
-        return [basalam.card({**BAS_PRODUCT, "id": hash(q) % 1000 + i, "sales_count_week": 5}, q, i)
+        return [basalam.card({**BAS_PRODUCT, "id": hash(q) % 1000 + i, "sales_count_week": 5, "name": q + " نقره"}, q, i)
                 for i in range(10)], 120
     monkeypatch.setattr(pipeline.O.basalam, "search", fake_search)
     monkeypatch.setattr(pipeline.O.basalam, "_session", lambda: None)
@@ -192,7 +192,8 @@ def test_seeds_and_signals():
     sd = O.seeds(ets, bas)
     terms = [x["term"] for x in sd]
     assert terms[0] == "پاپیون" and "بدون طرح" not in terms and "وینتیج" in terms and "گل" in terms
-    cards = [basalam.card({**BAS_PRODUCT, "id": i, "sales_count_week": 3, "sales_count": 20}, "q", i) for i in range(10)]
+    cards = [basalam.card({**BAS_PRODUCT, "id": i, "sales_count_week": 3, "sales_count": 20, "name": "گوشواره پاپیون"},
+                          "q", i) for i in range(10)]
     o = O.signals({"q": "گوشواره پاپیون", "type": "گوشواره", "term": "پاپیون", "why": "", "source": "basalam"}, cards, 150)
     slow = [basalam.card({**BAS_PRODUCT, "id": i, "sales_count_week": 0, "sales_count": 200}, "q", i) for i in range(10)]
     quiet = [O.signals({"q": f"x{i}", "type": "گردنبند", "term": f"x{i}", "why": "", "source": "basalam"}, slow, 2000)
@@ -252,3 +253,14 @@ def test_trends_month_names_and_filters():
     from dastsaz import opportunities as O
     o = {"q": "گوشواره ونکلیف", "type": "گوشواره", "term": "x", "labels": ["در حال اوج"], "week": 20, "score": 9}
     assert O.pick([o]) == []
+
+
+def test_relevance_drops_unrelated_results():
+    from dastsaz import opportunities as O
+    cards = [basalam.card({**BAS_PRODUCT, "id": i, "name": n}, "q", i) for i, n in
+             enumerate(["گردنبند دم وال نقره", "گردنبند استیل دم وال", "گردنبند\u200cدم وال", "گردنبند قلب"])]
+    o = O.signals({"q": "گردنبند دم وال", "type": "گردنبند", "term": "دم وال", "why": "", "source": "google"}, cards, 50)
+    assert o["match"] == 3
+    lyric = O.signals({"q": "بگو هنوزم داری گردنبند", "type": "گردنبند", "term": "x", "why": "", "source": "google"},
+                      cards, 50)
+    assert lyric["match"] == 0 and O.pick([dict(lyric, labels=["در حال اوج"], week=50)]) == []

@@ -108,8 +108,15 @@ def queries(sd: list[dict], limit: int = EXPAND_MAX) -> list[dict]:
     return out[:limit]
 
 
+def relevant(q: str, cards: list[dict]) -> int:
+    """How many results really are this design: all words of the search in the title."""
+    words = [w for w in _plain(q).split() if len(w) > 1]
+    return sum(1 for c in cards if all(w in _plain(c.get("title")) for w in words))
+
+
 def signals(q: dict, cards: list[dict], total: int) -> dict:
     top = sorted(cards, key=lambda c: -(c.get("sales_total") or 0))[:10]
+    rel = relevant(q["q"], top)
     week = sum(int(c.get("sales_week") or 0) for c in top)
     alltime = sum(int(c.get("sales_total") or 0) for c in top)
     prices = sorted(c["price_toman"] for c in top if c.get("price_toman"))
@@ -130,7 +137,7 @@ def signals(q: dict, cards: list[dict], total: int) -> dict:
             "weak": [{"title": c["title"], "url": c["url"], "rating": c["rating"], "sales": c["sales_total"]}
                      for c in weak[:3]],
             "images": [{"src": c["image"], "url": c["url"], "title": c["title"]} for c in top if c.get("image")][:4],
-            "score": round(score, 2), "labels": []}
+            "score": round(score, 2), "labels": [], "match": rel}
 
 
 def _q(vals: list[float], p: float) -> float:
@@ -241,7 +248,7 @@ def pick(opps: list[dict], n: int = 15, per_seed: int = 2, per_type: int = 5) ->
     """Best searches for the test list: some demand or a clear global trend, not crowded, diverse.
     Never a brand's design (legal risk)."""
     from .trends import BRANDS
-    ok = [o for o in opps if "رقابت سنگین" not in o["labels"] and not BRANDS.search(o["q"]) and (o["week"] >= 3 or "بازار خالی (آزمایش جسورانه)"
+    ok = [o for o in opps if "رقابت سنگین" not in o["labels"] and not BRANDS.search(o["q"]) and o.get("match", 10) >= 3 and (o["week"] >= 3 or "بازار خالی (آزمایش جسورانه)"
                                                                        in o["labels"])]
     strong = {"در حال اوج": 3, "تقاضای زیاد، رقیب کم": 4, "ترند جهانی، تازه در ایران": 2,
               "بازار خالی (آزمایش جسورانه)": 1, "پرفروش ولی ضعیف": 1, "در دیجی‌کالا هم پرفروش": 2,

@@ -144,6 +144,7 @@ def run(name: str, status=lambda **k: None, only: str = "") -> Path:
             try:
                 extra = O.run_queries(O.google_queries(ideas),
                                       progress=lambda i, t: status(step="expand", done=i, total=t, note="گوگل"))
+                extra = [x for x in extra if x.get("match", 0) >= 3]   # Basalam must really have this design
                 if C.DIGIKALA:
                     O.add_digikala(extra)
                 opps = O.relabel(opps + extra)

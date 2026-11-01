@@ -31,6 +31,7 @@ MON = {m: i for i, m in enumerate(["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Ju
 NOT_DESIGN = re.compile(r"تعبیر|خواب|قیمت|لیست|خرید|فروش|آموزش|چطور|چگونه|ایرپاد|ایربادز|هندزفری|کاپشن|دختر|پسر|"
                         r"عکس|فیلم|آهنگ|سریال|بازیگر|طلا فروشی|گرم|عیار|نرخ|بورس|مدل جدید ۱۴|سکه")
 BRANDS = re.compile(r"ونکلیف|ون کلیف|تیفانی|ورساچه|کارتیه|گوچی|شنل|دیور|پاندورا|سواروسکی|بولگاری|لویی|هرمس|"
+                    r"آدیداس|نایک|پوما|زارا|رولکس|"
                     r"van ?cleef|tiffany|versace|cartier|gucci|chanel|dior|pandora|swarovski|bvlgari", re.I)
 
 
@@ -111,6 +112,6 @@ def new_ideas(rows: list[dict], known: set[str], n: int = 12) -> list[str]:
         for q in r["breakout"] + r["rising"]:
             t = q["query"].strip()
             if (t and t not in known and t not in out and JEWELRY.search(t) and len(t) <= 30
-                    and len(t.split()) <= 4 and not NOT_DESIGN.search(t) and not BRANDS.search(t)):
+                    and len(t.split()) <= 3 and not NOT_DESIGN.search(t) and not BRANDS.search(t)):
                 out.append(t)
     return out[:n]
