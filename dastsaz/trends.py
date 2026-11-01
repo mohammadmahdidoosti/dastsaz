@@ -7,6 +7,7 @@ and new ideas (rising searches become extra Basalam/Digikala opportunity searche
 """
 from __future__ import annotations
 
+import datetime as dt
 import logging
 import re
 
@@ -22,6 +23,35 @@ JEWELRY = re.compile(r"گردن|گوشوار|دستبند|انگشتر|پابن�
 MONTHS_FA = {1: "ژانویه (دی/بهمن)", 2: "فوریه (بهمن/اسفند)", 3: "مارس (اسفند/فروردین)", 4: "آوریل (فروردین/اردیبهشت)",
              5: "مه (اردیبهشت/خرداد)", 6: "ژوئن (خرداد/تیر)", 7: "ژوئیه (تیر/مرداد)", 8: "اوت (مرداد/شهریور)",
              9: "سپتامبر (شهریور/مهر)", 10: "اکتبر (مهر/آبان)", 11: "نوامبر (آبان/آذر)", 12: "دسامبر (آذر/دی)"}
+
+
+MON = {m: i for i, m in enumerate(["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], 1)}
+# rising searches that are not a design to make: questions, prices, dreams, memes, earbuds, and brand names
+# (copying a brand's design is a legal risk, so brands never become test-list ideas)
+NOT_DESIGN = re.compile(r"تعبیر|خواب|قیمت|لیست|خرید|فروش|آموزش|چطور|چگونه|ایرپاد|ایربادز|هندزفری|کاپشن|دختر|پسر|"
+                        r"عکس|فیلم|آهنگ|سریال|بازیگر|طلا فروشی|گرم|عیار|نرخ|بورس|مدل جدید ۱۴|سکه")
+BRANDS = re.compile(r"ونکلیف|ون کلیف|تیفانی|ورساچه|کارتیه|گوچی|شنل|دیور|پاندورا|سواروسکی|بولگاری|لویی|هرمس|"
+                    r"van ?cleef|tiffany|versace|cartier|gucci|chanel|dior|pandora|swarovski|bvlgari", re.I)
+
+
+def _month(m) -> int | None:
+    if isinstance(m, int) or str(m).isdigit():
+        return int(m)
+    return MON.get(str(m)[:3].title())
+
+
+def next_peak(profile: dict, today: dt.date | None = None) -> tuple[str, str]:
+    """From the average interest per month: the next 15th of the strongest month, and 4 weeks before it."""
+    if not profile:
+        return "", ""
+    best = max(profile.items(), key=lambda kv: kv[1] or 0)[0]
+    m = _month(best)
+    if not m:
+        return "", ""
+    today = today or dt.date.today()
+    y = today.year if (m, 15) > (today.month, today.day) else today.year + 1
+    peak = dt.date(y, m, 15)
+    return peak.isoformat(), (peak - dt.timedelta(days=28)).isoformat()
 
 
 def keywords(test_list: list[dict] | None = None, extra: int = 12) -> list[str]:
@@ -48,12 +78,16 @@ def _queries(v) -> list[dict]:
 
 def row(it: dict) -> dict:
     s = it.get("seasonality") or {}
+    prof = s.get("monthlyProfile") or it.get("monthlyProfile") or {}
+    nxt, order = s.get("nextPeakDate") or "", s.get("publishBy") or ""
+    if not nxt and prof:
+        nxt, order = next_peak(prof)
     return {
         "keyword": it.get("keyword") or "", "average": it.get("averageInterest"), "latest": it.get("latestInterest"),
         "yoy": it.get("yoyChangePct"), "slope": it.get("trendSlopePctPerYear"),
-        "seasonal": bool(s.get("isSeasonal")), "peak_months": [int(m) for m in (s.get("peakMonths") or [])
-                                                                if str(m).isdigit()],
-        "next_peak": s.get("nextPeakDate") or "", "order_by": s.get("publishBy") or "",
+        "seasonal": bool(s.get("isSeasonal")), "season_index": s.get("seasonalityIndex"),
+        "peak_months": [m for m in (_month(x) for x in (s.get("peakMonths") or [])) if m],
+        "next_peak": nxt, "order_by": order,
         "rising": _queries(it.get("risingQueries")), "breakout": _queries(it.get("breakoutQueries")),
         "top": _queries(it.get("topQueries"))[:10], "low_precision": bool(it.get("lowPrecision")),
         "url": it.get("trendsUrl") or "",
@@ -76,6 +110,7 @@ def new_ideas(rows: list[dict], known: set[str], n: int = 12) -> list[str]:
     for r in rows:
         for q in r["breakout"] + r["rising"]:
             t = q["query"].strip()
-            if t and t not in known and t not in out and JEWELRY.search(t) and len(t) <= 40:
+            if (t and t not in known and t not in out and JEWELRY.search(t) and len(t) <= 30
+                    and len(t.split()) <= 4 and not NOT_DESIGN.search(t) and not BRANDS.search(t)):
                 out.append(t)
     return out[:n]

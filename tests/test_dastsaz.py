@@ -236,3 +236,19 @@ def test_digikala_match_counts_only_same_design(monkeypatch):
     o = {"q": "دستبند پاپیون", "week": 9, "supply": 100, "momentum": 0.01, "source": "basalam", "score": 1}
     O.add_digikala([o], session=object())
     assert o["dk_match"] == 2 and o["dk_reviews"] == 1110
+
+
+def test_trends_month_names_and_filters():
+    import datetime as dt
+    it = {"keyword": "گردنبند", "averageInterest": 63.9, "seasonality": {"isSeasonal": False, "peakMonths": ["Aug", "Jul"],
+          "monthlyProfile": {"Jan": 59.7, "Aug": 72.5, "Jul": 69.5}, "nextPeakDate": None}}
+    r = trends.row(it)
+    assert r["peak_months"] == [8, 7] and r["next_peak"].endswith("-08-15") and r["order_by"].endswith("-07-18")
+    assert trends.next_peak({"Aug": 72, "Jan": 3}, dt.date(2026, 11, 1)) == ("2027-08-15", "2027-07-18")
+    rows = [{"breakout": [{"query": q, "value": ""} for q in [
+        "گوشواره ونکلیف", "تعبیر خواب گوشواره طلا", "گوشواره ایرپاد", "لیست قیمت گوشواره طلا",
+        "کاپشن صورتی گوشواره قلبی", "گوشواره قلبی"]], "rising": []}]
+    assert trends.new_ideas(rows, set()) == ["گوشواره قلبی"]
+    from dastsaz import opportunities as O
+    o = {"q": "گوشواره ونکلیف", "type": "گوشواره", "term": "x", "labels": ["در حال اوج"], "week": 20, "score": 9}
+    assert O.pick([o]) == []

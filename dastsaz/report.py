@@ -276,6 +276,8 @@ def _trends(tr: list[dict]) -> str:
         ycls = "gp" if (yoy or 0) >= 15 else ("gn" if (yoy or 0) <= -15 else "")
         ytxt = f"{'+' if (yoy or 0) > 0 else ''}{fa(round(yoy))}٪" if yoy is not None else "—"
         pm = "، ".join(MONTHS_FA.get(m, str(m)) for m in r.get("peak_months") or []) or "—"
+        if r.get("peak_months") and not r.get("seasonal"):
+            pm += "<br><span class='muted'>فصلی بودنش ضعیف است</span>"
         nxt = html.escape(jalali(r.get("next_peak")) or "—")
         if r.get("order_by"):
             nxt += f"<br><span class='muted'>سفارش تا {html.escape(jalali(r['order_by']))}</span>"

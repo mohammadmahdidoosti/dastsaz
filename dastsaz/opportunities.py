@@ -166,7 +166,7 @@ def relabel(opps: list[dict]) -> list[dict]:
         if o["supply"] >= 3000:
             lab.append("رقابت سنگین")
         if "dk_match" in o:
-            if o["dk_match"] <= 3 and o["week"] >= mid_week:
+            if o["dk_match"] <= 1 and o["week"] >= hi_week:
                 lab.append("در دیجی‌کالا کم‌رقیب")
             if o.get("dk_reviews", 0) >= hi_dk:
                 lab.append("در دیجی‌کالا هم پرفروش")
@@ -238,8 +238,10 @@ def add_digikala(opps: list[dict], progress=None, session=None, sleep=None) -> l
 
 
 def pick(opps: list[dict], n: int = 15, per_seed: int = 2, per_type: int = 5) -> list[dict]:
-    """Best searches for the test list: some demand or a clear global trend, not crowded, diverse."""
-    ok = [o for o in opps if "رقابت سنگین" not in o["labels"] and (o["week"] >= 3 or "بازار خالی (آزمایش جسورانه)"
+    """Best searches for the test list: some demand or a clear global trend, not crowded, diverse.
+    Never a brand's design (legal risk)."""
+    from .trends import BRANDS
+    ok = [o for o in opps if "رقابت سنگین" not in o["labels"] and not BRANDS.search(o["q"]) and (o["week"] >= 3 or "بازار خالی (آزمایش جسورانه)"
                                                                        in o["labels"])]
     strong = {"در حال اوج": 3, "تقاضای زیاد، رقیب کم": 4, "ترند جهانی، تازه در ایران": 2,
               "بازار خالی (آزمایش جسورانه)": 1, "پرفروش ولی ضعیف": 1, "در دیجی‌کالا هم پرفروش": 2,
