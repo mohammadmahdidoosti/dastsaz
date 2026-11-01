@@ -1,0 +1,4 @@
+requests>=2.31
+curl_cffi>=0.7        # Chrome-like connection for Basalam's public search
+tzdata>=2024.1        # Tehran time for the quiet night hours
+pytest>=8.0

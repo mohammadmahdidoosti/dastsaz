@@ -1,0 +1,96 @@
+"""One trend report, step by step. Each step saves its result in DATA_DIR/runs/<name>/, so a run that is
+cut (restart, deploy) continues from the last finished step instead of paying again."""
+from __future__ import annotations
+
+import csv
+import datetime as dt
+import json
+import logging
+from pathlib import Path
+from zoneinfo import ZoneInfo
+
+from . import analyze as A
+from . import basalam, costs, etsy, guard, report
+from . import config as C
+
+log = logging.getLogger(__name__)
+CSV_COLS = ["source", "id", "name_fa", "title", "type", "style", "material", "color", "personalized", "motif",
+            "stone", "price_usd", "price_toman", "bought_24h", "in_cart", "reviews", "rating", "sales_week",
+            "sales_total", "shop", "shop_city", "query", "tags", "materials", "url", "image", "is_jewelry"]
+
+
+def run_dir(name: str) -> Path:
+    d = C.DATA_DIR / "runs" / name
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def _load(p: Path):
+    return json.loads(p.read_text(encoding="utf-8")) if p.exists() else None
+
+
+def _save(p: Path, data) -> None:
+    tmp = p.with_suffix(".tmp")
+    tmp.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    tmp.replace(p)
+
+
+def run(name: str, status=lambda **k: None, only: str = "") -> Path:
+    """status(step=, done=, total=, note=) is called to show progress. only: 'basalam' to skip Etsy."""
+    d = run_dir(name)
+    n = C.TOP_N
+
+    def step(s, note=""):
+        status(step=s, done=0, total=0, note=note)
+
+    # 1. Basalam (slow, from our server)
+    bas = _load(d / "basalam_raw.json")
+    if bas is None:
+        step("wait", "بررسی اینکه کراولر کاروان صنعت آزاد باشد")
+        guard.wait_free(on_wait=lambda why: step("wait", why))
+        step("basalam", "خواندن آرام پرفروش‌های باسلام")
+        bas = basalam.fetch(progress=lambda i, t: status(step="basalam", done=i, total=t, note=""))
+        _save(d / "basalam_raw.json", bas)
+
+    # 2. Etsy (on Apify's servers)
+    ets = _load(d / "etsy_raw.json")
+    if ets is None and only != "basalam":
+        step("etsy", "دریافت پرفروش‌های اتسی از Apify")
+        ets = etsy.fetch(C.secret("APIFY_TOKEN"),
+                         progress=lambda i, t: status(step="etsy", done=i, total=t, note=""),
+                         on_cost=lambda q, usd, st: costs.add(d, "اتسی (Apify)", 1, usd, f"{q} {st}"))
+        _save(d / "etsy_raw.json", ets)
+    ets = ets or []
+
+    # 3. AI: translate + classify the top n of each
+    cls = _load(d / "classified.json")
+    if cls is None:
+        step("ai", "ترجمه و دسته‌بندی سبک‌ها با هوش مصنوعی")
+        pick = A.top(ets, n) + A.top(bas, n)
+        cls, usd = A.classify_all(pick, C.secret("OPENROUTER_API_KEY"),
+                                  progress=lambda i, t: status(step="ai", done=i, total=t, note=""))
+        costs.add(d, "هوش مصنوعی (عکس و متن)", len(pick), usd)
+        _save(d / "classified.json", cls)
+
+    # 4. report
+    step("report", "ساختن گزارش")
+    e = A.top([x for x in cls if x["source"] == "etsy"], n)
+    b = A.top([x for x in cls if x["source"] == "basalam"], n)
+    with (d / "products.csv").open("w", newline="", encoding="utf-8-sig") as f:
+        w = csv.DictWriter(f, CSV_COLS, extrasaction="ignore")
+        w.writeheader()
+        w.writerows(e + b)
+    when = dt.datetime.now(ZoneInfo(C.TIMEZONE)).strftime("%Y-%m-%d %H:%M")
+    return report.build(d, name, e, b, C.secret("OPENROUTER_API_KEY"),
+                        lambda s, u, usd: costs.add(d, s, u, usd), when)
+
+
+def runs() -> list[dict]:
+    base = C.DATA_DIR / "runs"
+    out = []
+    if base.exists():
+        for d in sorted(base.iterdir(), reverse=True):
+            if d.is_dir():
+                out.append({"name": d.name, "report": (d / "report.html").exists(),
+                            "usd": costs.summary(d)["usd"]})
+    return out

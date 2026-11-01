@@ -1,0 +1,34 @@
+# دست‌ساز (dastsaz)
+
+گزارش ترند جواهرات و صنایع دستی: پرفروش‌های Etsy در کنار پرفروش‌های باسلام، با ترجمه و دسته‌بندی سبک، جنس، رنگ و قیمت.
+پروژه‌ای کاملاً جدا از کراولر کاروان صنعت (product-crawler). از آن فقط وضعیت عمومی‌اش را می‌خواند تا هم‌زمان کراول نکند.
+
+## چطور کار می‌کند
+1. **باسلام**: جست‌وجوی عمومی سایت باسلام با مرتب‌سازی «پرفروش‌ترین»، آرام (۴ تا ۸ ثانیه بین هر درخواست)، از سرور خودمان.
+2. **اتسی**: از طریق سرویس Apify (ربات `automation-lab/etsy-scraper` با پروکسی خانگی)، روی سرورهای Apify. سقف خرج هر اجرا `APIFY_MAX_USD` (پیش‌فرض ۳ دلار).
+3. **هوش مصنوعی** (OpenRouter، مدل `deepseek/deepseek-v4.1-flash`): برای هر محصول یک بار، عکس + عنوان → نام فارسی، نوع، سبک، جنس، رنگ، نقش، سنگ.
+4. **گزارش**: یک صفحه‌ی فارسی + فایل CSV.
+
+قبل از شروع، `https://crawler.caravansanat.com/api/status` خوانده می‌شود؛ اگر کراولر کاروان مشغول باشد یا ساعت ۰ تا ۹ صبح تهران باشد، صبر می‌کند.
+هر مرحله ذخیره می‌شود؛ اگر برنامه وسط کار ری‌استارت شود، از همان مرحله ادامه می‌دهد و دوباره پول خرج نمی‌کند.
+
+## متغیرها (در Coolify → Environment؛ هرگز در مخزن)
+| نام | چیست |
+|---|---|
+| `APP_PASSWORD` | رمز صفحه (نام کاربری مهم نیست) |
+| `APIFY_TOKEN` | کلید Apify |
+| `OPENROUTER_API_KEY` | کلید OpenRouter (یک کلید جدا برای دست‌ساز) |
+| `DATA_DIR` | `/data` (حجم ماندگار) |
+
+اختیاری: `APIFY_MAX_USD`، `TOP_N` (۲۰۰)، `ETSY_PER_QUERY` (۴۰)، `BASALAM_PER_QUERY` (۶۰)، `USD_TOMAN` (۲۷۰۰۰۰)، `QUIET_FROM`/`QUIET_TO`.
+
+## Coolify
+- Build pack: Dockerfile، پورت ۸۰۰۰، دامنه `https://dastsaz.caravansanat.com`
+- Persistent storage: `/srv/dastsaz-data` → `/data`
+- سقف منابع: CPU ۱، RAM ۱ گیگ
+- Health check: `/healthz`
+
+## تست
+```
+pip install -r requirements.txt && python -m pytest -q
+```
