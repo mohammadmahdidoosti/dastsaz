@@ -619,7 +619,7 @@ def lab_page(b: dict, changes: list[dict] | None = None, snaps: int = 0) -> str:
             f"<form class='inline' method='post' action='/lab/update/{E(t['id'])}'>"
             + "".join(f"<label class='num'>{lab_fa}<input name='{k}' type='number' min='0' value='{n.get(k, 0)}'></label>"
                       for k, lab_fa in (("views", "بازدید"), ("saves", "ذخیره"), ("messages", "پیام"),
-                                        ("carts", "سبد"), ("orders", "سفارش")))
+                                        ("carts", "سبد"), ("orders", "سفارش"), ("noes", "رد/رد شدن")))
             + "<select name='close'><option value=''>باز</option><option value='win'>برنده، ببند</option>"
               "<option value='drop'>کنار بگذار</option><option value='stop'>متوقف</option></select>"
               "<button class='btn'>ثبت</button></form>")
@@ -628,7 +628,8 @@ def lab_page(b: dict, changes: list[dict] | None = None, snaps: int = 0) -> str:
             f"{E(L.CHANNELS.get(t['channel'], ''))} · {E(L.STAGES.get(t['stage'], ''))} · منبع: {E(L.SOURCES.get(t['source'], ''))}"
             f"{' · ' + toman(t['price']) + ' تومان' if t.get('price') else ''} · از {E(jalali(t['started']))}"
             f"{''.join(' <span class=tag>' + E(x) + '</span>' for x in t.get('tags') or [])}</div></td>"
-            f"<td>{fa(n.get('views', 0))}</td><td>{_pct(t['rate']) if t['rate'] is not None else '—'}</td>"
+            f"<td>{fa(n.get('views', 0))}</td><td>{_pct(t['rate']) if t['rate'] is not None else '—'}"
+            f"{'<div class=muted>رد: ' + _pct(t['no_rate']) + '</div>' if t.get('no_rate') else ''}</td>"
             f"<td class='v-{t['verdict']}'>{E(t['verdict_fa'])}</td>"
             f"<td>{'' if share is None else f'<div class=bar><i style=width:{round(100 * share)}%></i></div>{_pct(share)}'}</td>"
             f"<td>{form}</td></tr>")
@@ -650,6 +651,7 @@ def lab_page(b: dict, changes: list[dict] | None = None, snaps: int = 0) -> str:
               + "</table></section>")
     body = f"""<section><h2>آزمایش‌ها</h2>
 <p class='lead'>اعداد را «کل تا امروز» وارد کنید (نه فقط امروز). علاقه = پیام + سبد خرید + سفارش (+ ذخیره با وزن کم).
+«رد» یعنی سیگنال منفی: رأی «نه» در نظرسنجی استوری، یا رد شدن سریع از استوری. هر پست یا استوری فقط یک طرح، تا معلوم باشد واکنش مال کدام است.
 نرخ کنترل الان: {ctrl}. ستون «سهم نمایش» می‌گوید در پست‌ها و ویترین بعدی چقدر جا به هر طرح بدهید.</p>
 <table><tr><th>طرح</th><th>بازدید</th><th>نرخ علاقه</th><th>تصمیم</th><th>سهم نمایش</th><th>ثبت عددهای امروز</th></tr>
 {''.join(rows) or '<tr><td colspan=6 class=muted>هنوز آزمایشی نیست.</td></tr>'}</table></section>

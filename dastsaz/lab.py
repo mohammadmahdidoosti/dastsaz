@@ -37,7 +37,7 @@ STAGES = {"pretest": "پیش‌آزمون با عکس", "smallbuy": "خرید ک
 SOURCES = {"report": "گزارش (باسلام)", "etsy": "Etsy", "google": "گوگل", "suggest": "پیشنهاد جست‌وجو",
            "voice": "نظر خریداران", "needs": "نیاز کادو", "instagram": "اینستاگرام", "maker": "پیشنهاد سازنده",
            "manual": "ایده‌ی خودم"}
-FIELDS = ("views", "saves", "messages", "carts", "orders")
+FIELDS = ("views", "saves", "messages", "carts", "orders", "noes")   # noes: «نه»/skip taps — the negative signal
 EXPLORE = 0.2          # share of showcase slots always kept for brand-new ideas (under MIN_VIEWS), so new trends get seen
 _lock = threading.Lock()
 
@@ -95,6 +95,11 @@ def last(t: dict) -> dict:
 
 def interest(m: dict) -> float:
     return m.get("messages", 0) + m.get("carts", 0) + m.get("orders", 0) + SAVE_W * m.get("saves", 0)
+
+
+def no_rate(t: dict) -> float | None:
+    m = last(t)
+    return m.get("noes", 0) / m["views"] if m.get("views") else None
 
 
 def rate(t: dict) -> float | None:
@@ -162,7 +167,7 @@ def board() -> dict:
     rows = []
     for t in tests:
         code, text = verdict(t, ctrl.get(t["channel"]))
-        rows.append({**t, "now": last(t), "rate": rate(t), "verdict": code, "verdict_fa": text,
+        rows.append({**t, "now": last(t), "rate": rate(t), "no_rate": no_rate(t), "verdict": code, "verdict_fa": text,
                      "share": exp.get(t["id"])})
     by_src = defaultdict(lambda: {"tests": 0, "wins": 0})
     for r in rows:
