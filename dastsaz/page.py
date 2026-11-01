@@ -707,7 +707,7 @@ def needs_page(n: dict | None) -> str:
     t = n["table"]
     cells = "".join(f"<tr><td>{E(c['for'])}</td><td>{E(c['occasion'])}</td><td>{fa(c['n'])}</td></tr>" for c in t["cells"][:25])
     ideas = "".join(f"<tr><td>{E(i.get('need', ''))}</td><td><b>{E(i.get('design', ''))}</b></td><td>{E(i.get('search', ''))}</td>"
-                    f"<td>{E(i.get('why', ''))}</td></tr>" for i in n.get("ideas", []))
+                    f"<td>{P(i.get('why', ''))}</td></tr>" for i in n.get("ideas", []))
     said = "".join(f"<span>{E(k)} <b>{fa(v)}</b></span>" for k, v in t["ideas"][:30])
     b = t.get("budgets") or []
     bud = f"میانه‌ی بودجه‌ی گفته‌شده: {toman(b[len(b) // 2] * 1000)} تومان ({fa(len(b))} مورد)" if b else ""
