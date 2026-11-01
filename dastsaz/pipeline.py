@@ -109,7 +109,7 @@ def run(name: str, status=lambda **k: None, only: str = "") -> Path:
         step("expand", "فرصت‌یابی: جست‌وجوهای تکمیلی آرام در باسلام")
         opps = O.expand(ej, bj, progress=lambda i, t: status(step="expand", done=i, total=t, note=""))
         _save(d / "opportunities.json", opps)
-    if C.DIGIKALA and any("dk_supply" not in o for o in opps):
+    if C.DIGIKALA and any("dk_match" not in o for o in opps):
         step("expand", "فرصت‌یابی: همان جست‌وجوها در دیجی‌کالا")
         try:
             O.add_digikala(opps, progress=lambda i, t: status(step="expand", done=i, total=t, note="دیجی‌کالا"))
@@ -158,10 +158,10 @@ def run(name: str, status=lambda **k: None, only: str = "") -> Path:
         w = csv.writer(f)
         w.writerow(["جست‌وجو", "برچسب‌ها", "فروش این هفته (۱۰ پرفروش)", "فروش کل (۱۰ پرفروش)",
                     "تعداد محصول در باسلام", "اوج (٪)", "قیمت ارزان", "قیمت گران", "تعداد محصول در دیجی‌کالا",
-                    "امتیازدهنده‌های ۱۰ پرفروش دیجی‌کالا", "قیمت میانه دیجی‌کالا", "امتیاز", "دلیل"])
+                    "همین طرح در ۲۰ پرفروش دیجی‌کالا", "امتیازدهنده‌های همین طرح در دیجی‌کالا", "قیمت میانه دیجی‌کالا", "امتیاز", "دلیل"])
         for o in sorted(opps, key=lambda o: -o["score"]):
             w.writerow([o["q"], "، ".join(o["labels"]), o["week"], o["alltime"], o["supply"],
-                        round(o["momentum"] * 100), o["price_low"], o["price_high"], o.get("dk_supply"),
+                        round(o["momentum"] * 100), o["price_low"], o["price_high"], o.get("dk_match"),
                         o.get("dk_reviews"), o.get("dk_price_median"), o["score"], o["why"]])
 
     # 5. report

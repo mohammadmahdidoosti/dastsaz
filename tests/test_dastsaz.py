@@ -154,7 +154,7 @@ def test_pipeline_end_to_end(tmp_path, monkeypatch):
     assert "گزارش ترند" in html and "نکته‌ی آزمایشی" in html
     assert "لیست آزمایش این هفته" in html and "طرح آزمایشی" in html
     assert (tmp_path / "runs" / "t1" / "opportunities.csv").exists()
-    assert "۴۰ پرفروش اول دیجی‌کالا" in html and "رقیب در دیجی‌کالا" in html
+    assert "۴۰ پرفروش اول دیجی‌کالا" in html and "همین طرح در ۲۰ پرفروش دیجی‌کالا" in html
     assert "گوگل ترندز ایران" in html
     opps = json.loads((tmp_path / "runs" / "t1" / "opportunities.json").read_text(encoding="utf-8"))
     assert any(o["source"] == "google" and o["q"] == "گردنبند اسم انگلیسی" for o in opps)
@@ -226,3 +226,13 @@ def test_jalali():
     from dastsaz.report import jalali
     assert jalali("2026-11-01") == "۱۰ آبان ۱۴۰۵" and jalali("2026-03-21") == "۱ فروردین ۱۴۰۵"
     assert jalali("2026-12-15") == "۲۴ آذر ۱۴۰۵" and jalali("") == ""
+
+
+def test_digikala_match_counts_only_same_design(monkeypatch):
+    from dastsaz import opportunities as O
+    cards = [digikala.card({**DK_PRODUCT, "id": i, "title_fa": t}, "q", i) for i, t in
+             enumerate(["دستبند زنانه طرح پاپیون", "دستبند\u200cپاپیون نقره", "گردنبند پاپیون", "دستبند قلب"])]
+    monkeypatch.setattr(O.digikala, "search", lambda q, session=None, sleep=None: (cards, 900))
+    o = {"q": "دستبند پاپیون", "week": 9, "supply": 100, "momentum": 0.01, "source": "basalam", "score": 1}
+    O.add_digikala([o], session=object())
+    assert o["dk_match"] == 2 and o["dk_reviews"] == 1110

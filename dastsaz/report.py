@@ -254,11 +254,11 @@ def _price(o):
 
 
 def _dk_line(o: dict) -> str:
-    if "dk_supply" not in o:
+    if "dk_match" not in o:
         return ""
-    med = f"، قیمت میانه‌ی پرفروش‌ها {fa(round(o['dk_price_median'], -4))} تومان" if o.get("dk_price_median") else ""
+    med = f"، قیمت میانه {fa(round(o['dk_price_median'], -4))} تومان" if o.get("dk_price_median") else ""
     return (f"<br>دیجی‌کالا: <a href='{html.escape(o.get('dk_link', '#'))}' target='_blank' rel='noopener'>"
-            f"{fa(o['dk_supply'])} محصول</a>، {fa(o.get('dk_reviews', 0))} امتیازدهنده در ۱۰ پرفروش{med}")
+            f"{fa(o['dk_match'])} از ۲۰ پرفروش</a> همین طرح‌اند، با {fa(o.get('dk_reviews', 0))} امتیازدهنده{med}")
 
 
 def _trends(tr: list[dict]) -> str:
@@ -318,13 +318,13 @@ def _testlist(tl: list[dict]) -> str:
 def _opps_table(opps: list[dict], n: int = 40) -> str:
     rows = sorted(opps, key=lambda o: -o["score"])[:n]
     out = ["<table><tr><th>جست‌وجو در باسلام</th><th>فروش این هفته<br><span class='muted'>۱۰ پرفروش</span></th>"
-           "<th>تعداد رقیب</th><th>داغی تازه</th><th>بازه‌ی قیمت</th><th>رقیب در دیجی‌کالا</th>"
+           "<th>تعداد رقیب</th><th>داغی تازه</th><th>بازه‌ی قیمت</th><th>همین طرح در ۲۰ پرفروش دیجی‌کالا</th>"
            "<th>برچسب</th></tr>"]
     for o in rows:
         link = "https://basalam.com/s?q=" + __import__("urllib.parse", fromlist=["quote"]).quote(o["q"])
         out.append(f"<tr><td><a href='{link}' target='_blank' rel='noopener'>{html.escape(o['q'])}</a></td>"
                    f"<td>{fa(o['week'])}</td><td>{fa(o['supply'])}</td><td>{fa(round(o['momentum'] * 100))}٪</td>"
-                   f"<td class='num'>{_price(o)}</td><td>{fa(o['dk_supply']) if 'dk_supply' in o else '—'}</td>"
+                   f"<td class='num'>{_price(o)}</td><td>{fa(o['dk_match']) if 'dk_match' in o else '—'}</td>"
                    f"<td>{_labs(o['labels'])}</td></tr>")
     out.append("</table><p class='muted'>«داغی تازه» یعنی چند درصد از کل فروش ۱۰ پرفروش همین هفته بوده؛ "
                "عدد بالا یعنی تازه داغ شده. «تعداد رقیب» تعداد محصولاتی است که باسلام برای آن جست‌وجو دارد.</p>")

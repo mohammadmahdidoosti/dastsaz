@@ -40,6 +40,12 @@ NO_MOTIF = {"", "بدون طرح", "ساده", "سایر", "ندارد", "-"}
 EXPAND_MAX = 60
 
 
+def _plain(t: str) -> str:
+    """For matching titles: no half-spaces, Arabic ي/ك as Persian, one space."""
+    t = str(t or "").replace("\u200c", "").replace("ي", "ی").replace("ك", "ک")
+    return re.sub(r"\s+", " ", t).strip()
+
+
 def norm_motif(m: str) -> str:
     m = re.sub(r"^(طرح|نقش|شکل|فرم)\s+", "", str(m or "").strip())
     m = re.sub(r"\s+", " ", m)
@@ -142,7 +148,7 @@ def relabel(opps: list[dict]) -> list[dict]:
     lo_supply = max(500, _q([o["supply"] for o in opps], 0.25))
     mid_mom = _q([o["momentum"] for o in opps], 0.5)
     mid_week = max(3, _q([o["week"] for o in opps], 0.5))
-    hi_dk = max(50, _q([o.get("dk_reviews", 0) for o in opps if "dk_supply" in o] or [0], 0.75))
+    hi_dk = max(50, _q([o.get("dk_reviews", 0) for o in opps if "dk_match" in o] or [0], 0.75))
     for o in opps:
         lab = []
         if o["momentum"] >= max(0.02, 2 * mid_mom) and o["week"] >= mid_week:
@@ -159,8 +165,8 @@ def relabel(opps: list[dict]) -> list[dict]:
             lab.append("پرفروش ولی ضعیف")
         if o["supply"] >= 3000:
             lab.append("رقابت سنگین")
-        if "dk_supply" in o:
-            if o["dk_supply"] <= 100 and o["week"] >= mid_week:
+        if "dk_match" in o:
+            if o["dk_match"] <= 3 and o["week"] >= mid_week:
                 lab.append("در دیجی‌کالا کم‌رقیب")
             if o.get("dk_reviews", 0) >= hi_dk:
                 lab.append("در دیجی‌کالا هم پرفروش")
@@ -202,7 +208,7 @@ def run_queries(qs: list[dict], progress=None, session=None, sleep=None) -> list
 def add_digikala(opps: list[dict], progress=None, session=None, sleep=None) -> list[dict]:
     """Same searches on Digikala: how many products it has (competition there) and whether its best-sellers
     for the search are proven (number of ratings of the top 10). Only searches not done yet."""
-    todo = [o for o in opps if "dk_supply" not in o]
+    todo = [o for o in opps if "dk_match" not in o]
     if not todo:
         return opps
     kw = {"session": session or digikala._session()}
@@ -211,9 +217,13 @@ def add_digikala(opps: list[dict], progress=None, session=None, sleep=None) -> l
     for i, o in enumerate(todo):
         try:
             cards, total = digikala.search(o["q"], **kw)
-            top = cards[:10]
+            # Digikala's total stops near 900 (45 pages), so it is no measure of competition: count instead how
+            # many of its 20 best-sellers for the search really are this design (the words of the search in the title)
+            words = [w for w in _plain(o["q"]).split() if len(w) > 1]
+            match = [c for c in cards if all(w in _plain(c["title"]) for w in words)]
+            top = match[:10]
             prices = sorted(c["price_toman"] for c in top if c.get("price_toman"))
-            o.update({"dk_supply": total, "dk_reviews": sum(c.get("reviews") or 0 for c in top),
+            o.update({"dk_supply": total, "dk_match": len(match), "dk_reviews": sum(c.get("reviews") or 0 for c in top),
                       "dk_price_median": statistics.median(prices) if prices else None,
                       "dk_images": [{"src": c["image"], "url": c["url"], "title": c["title"]}
                                     for c in top if c.get("image")][:2],
