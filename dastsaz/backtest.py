@@ -210,15 +210,18 @@ def run_trends(token: str, cat: str = "jewelry") -> dict:
 REV_URL = "https://services.basalam.com/web/v1/review/product/{id}/reviews"
 
 
-def product_reviews(s, pid, since: str, sleep=time.sleep, max_pages: int = 12) -> list[str]:
+def product_reviews(s, pid, since: str, sleep=time.sleep, max_pages: int = 25) -> list[str]:
     """Review dates (YYYY-MM-DD), newest first, back to `since`."""
     out = []
     for page in range(max_pages):
         sleep(random.uniform(1.5, 3.5))
         try:
-            j = s.get(REV_URL.format(id=pid), params={"limit": 50, "offset": page * 50}, timeout=20).json()
+            j = s.get(REV_URL.format(id=pid), params={"limit": 20, "offset": page * 20}, timeout=20).json()
         except Exception as e:  # noqa: BLE001
             log.warning("reviews %s: %s", pid, e)
+            break
+        if j.get("backend_http_status_code", 200) != 200:
+            log.warning("reviews %s: %s", pid, str(j)[:200])
             break
         revs = j.get("reviews") or []
         dates = [str(r.get("createdAt") or "")[:10] for r in revs if r.get("createdAt")]
@@ -261,7 +264,7 @@ def dk_reviews(s, pid, since: str, sleep=time.sleep, max_pages: int = 25) -> lis
     return [x for x in out if x >= since]
 
 
-def run_reviews(queries: list[str] | None = None, n: int = 40, per: int = 8, progress=None,
+def run_reviews(queries: list[str] | None = None, n: int = 40, per: int = 5, progress=None,
                 sleep=time.sleep, cat: str = "jewelry", market: str = "basalam") -> dict:
     from . import basalam, digikala
     d = _dir()
@@ -288,7 +291,7 @@ def run_reviews(queries: list[str] | None = None, n: int = 40, per: int = 8, pro
             ids = [str(c["id"]) for c in cards if all(w in c.get("title", "") for w in words)][:per]
             cache["designs"][q] = ids
         for pid in cache["designs"][q]:
-            if pid not in cache["products"]:
+            if not cache["products"].get(pid):
                 cache["products"][pid] = (product_reviews(s, pid, since, sleep=sleep) if market == "basalam"
                                           else dk_reviews(s, pid, since, sleep=sleep))
         cache_f.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
