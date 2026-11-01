@@ -36,7 +36,7 @@ def card(it: dict, query: str) -> dict:
         "sales_week": None, "bought_24h": _num(it.get("boughtInLast24Hours")),
         "in_cart": _num(it.get("inCartCount")), "rating": _num(it.get("rating")),
         "reviews": _num(it.get("reviewCount")) or 0, "category": "", "shop": it.get("shop") or "",
-        "shop_city": "", "query": query, "position": it.get("position") or 0,
+        "shop_city": "", "query": query, "position": int(_num(it.get("position")) or 0),
         "tags": ", ".join(map(str, tags)) if isinstance(tags, list) else str(tags),
         "materials": ", ".join(map(str, mats)) if isinstance(mats, list) else str(mats),
     }
@@ -78,7 +78,7 @@ def fetch(token: str, queries: list[str] | None = None, per_query: int | None = 
     out: list[dict] = []
     for qi, q in enumerate(queries):
         inp = {"searchQuery": q, "maxItems": per_query, "sort": "most_relevant", "currency": "USD",
-               "locale": "en-US", "excludeDigitalDownloads": True, "enrichListingDetails": True,
+               "locale": "en-US", "excludeDigitalDownloads": True, "enrichListingDetails": C.ETSY_ENRICH,
                "proxyConfiguration": {"useApifyProxy": True, "apifyProxyGroups": ["RESIDENTIAL"]}}
         run = ap.run(inp, cap)
         if on_cost:

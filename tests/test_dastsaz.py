@@ -130,3 +130,9 @@ def test_pipeline_end_to_end(tmp_path, monkeypatch):
     pipeline.run("t1")                         # resume: no new AI calls
     assert calls["n"] == 1
     assert pipeline.runs()[0]["report"]
+
+
+def test_etsy_rank_without_details():
+    a = etsy.card({**ETSY_ITEM, "boughtInLast24Hours": None, "inCartCount": None, "reviewCount": 10, "position": 40}, "x")
+    b = etsy.card({**ETSY_ITEM, "boughtInLast24Hours": None, "inCartCount": None, "reviewCount": 3000, "position": 5}, "x")
+    assert A.top([a, b], 1)[0] is b

@@ -28,7 +28,9 @@ APIFY_MAX_USD = float(os.environ.get("APIFY_MAX_USD", "3"))   # hard cap per run
 USD_TOMAN = int(os.environ.get("USD_TOMAN", "270000"))
 
 ETSY_QUERIES = ["necklace", "earrings", "ring", "bracelet", "anklet", "brooch", "pendant", "jewelry set"]
-ETSY_PER_QUERY = int(os.environ.get("ETSY_PER_QUERY", "40"))
+ETSY_PER_QUERY = int(os.environ.get("ETSY_PER_QUERY", "50"))
+# listing-page details (bought in 24h, in carts, tags): slow and came back "unavailable" in the first run
+ETSY_ENRICH = os.environ.get("ETSY_ENRICH", "0") == "1"
 
 BASALAM_QUERIES = ["گردنبند", "گوشواره", "انگشتر", "دستبند", "پابند", "سنجاق سینه", "آویز گردنبند", "ست زیورآلات"]
 BASALAM_PER_QUERY = int(os.environ.get("BASALAM_PER_QUERY", "60"))

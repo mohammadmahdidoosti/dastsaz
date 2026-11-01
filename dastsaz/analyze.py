@@ -112,9 +112,12 @@ def classify_all(items: list[dict], key: str, progress=None) -> tuple[list[dict]
 
 
 def popularity(p: dict) -> float:
-    """Etsy: bought in 24h first, then in carts, then reviews. Basalam: sales this week, then total."""
+    """Etsy: bought in 24h and in carts when known, then reviews and Etsy's own order (it puts best-sellers
+    first). Basalam: sales this week, then total."""
     if p["source"] == "etsy":
-        return (p.get("bought_24h") or 0) * 100 + (p.get("in_cart") or 0) * 5 + math.log1p(p.get("reviews") or 0) * 3
+        pos = p.get("position") or 99
+        return ((p.get("bought_24h") or 0) * 100 + (p.get("in_cart") or 0) * 5
+                + math.log1p(p.get("reviews") or 0) * 3 + max(0, 60 - pos) * 0.15)
     return (p.get("sales_week") or 0) * 100 + (p.get("sales_total") or 0) + math.log1p(p.get("reviews") or 0)
 
 
