@@ -88,10 +88,10 @@ INSIGHT_ASK = """تو تحلیلگر بازار جواهرات دست‌ساز �
 def insights(st: dict, key: str) -> tuple[list[str], float]:
     if not key:
         return [], 0.0
-    slim = {k: st[k] for k in ("type", "style", "material", "color", "personal_etsy", "personal_basalam",
+    slim = {k: st[k] for k in ("style", "material", "color", "personal_etsy", "personal_basalam",
                                "motif_etsy", "motif_basalam")}
     slim["prices"] = st["prices"]
-    body = {"model": C.AI_MODEL, "max_tokens": 1500, "temperature": 0.3,
+    body = {"model": C.AI_MODEL, "max_tokens": 4000, "temperature": 0.3, "reasoning": {"enabled": False},
             "messages": [{"role": "user", "content": INSIGHT_ASK + json.dumps(slim, ensure_ascii=False, default=round)}]}
     try:
         r = requests.post(A.OPENROUTER, json=body, timeout=120, headers={
@@ -173,7 +173,7 @@ def _gallery(items, n=40):
             if p.get("in_cart"):
                 sig.append(f"در سبد {fa(p['in_cart'])} نفر")
             if p.get("reviews"):
-                sig.append(f"{fa(p['reviews'])} نظر")
+                sig.append(f"{fa(p['reviews'])} نظر برای فروشگاه")
             price = f"{fa(p['price_usd'], 2)} دلار" if p.get("price_usd") else ""
         else:
             if p.get("sales_week"):
@@ -208,16 +208,17 @@ def render(name: str, etsy: list[dict], bas: list[dict], st: dict, points: list[
 <p class="legend"><span><span class="bar e" style="width:20px"></span>اتسی</span>
 <span><span class="bar b" style="width:20px"></span>باسلام</span>
 <span class="gp">قرمز = در اتسی خیلی بیشتر (فرصت)</span><span class="gn">سبز = در باسلام بیشتر</span></p>
-<h2>نوع، سبک، جنس و رنگ (درصد از پرفروش‌ها)</h2>
-<div class="two"><div>{_cmp_table(st['style'], 'سبک')}</div><div>{_cmp_table(st['type'], 'نوع')}</div>
-<div>{_cmp_table(st['material'], 'جنس')}</div><div>{_cmp_table(st['color'], 'رنگ')}</div></div>
+<h2>سبک، جنس و رنگ (درصد از پرفروش‌ها)</h2>
+<div class="two"><div>{_cmp_table(st['style'], 'سبک')}</div><div>{_cmp_table(st['material'], 'جنس')}</div>
+<div>{_cmp_table(st['color'], 'رنگ')}</div></div>
+<p class="muted">سهم «نوع» (گردنبند، گوشواره و…) نشان داده نشده، چون برای هر نوع به یک اندازه جست‌وجو کرده‌ایم و سهمش ساخته‌ی روش ماست، نه ترند.</p>
 <h2>بازه‌ی قیمت</h2>{_price_table(st['prices'])}
 <h2>نقش‌ها و سنگ‌های پرتکرار</h2>
 <div class="two"><div><h3>اتسی</h3><p>نقش‌ها: {_list(st['motif_etsy'])}</p><p>سنگ‌ها: {_list(st['stone_etsy'])}</p></div>
 <div><h3>باسلام</h3><p>نقش‌ها: {_list(st['motif_basalam'])}</p><p>سنگ‌ها: {_list(st['stone_basalam'])}</p></div></div>
 <h2>۴۰ پرفروش اول اتسی</h2>{_gallery(etsy)}
 <h2>۴۰ پرفروش اول باسلام</h2>{_gallery(bas)}
-<p class="muted" style="margin-top:30px">پرفروش اتسی بر اساس تعداد خرید در ۲۴ ساعت گذشته، تعداد در سبد خرید و تعداد نظرها؛
+<p class="muted" style="margin-top:30px">پرفروش اتسی بر اساس ترتیب خود اتسی (که پرفروش‌ها را جلو می‌آورد) و تعداد نظرهای فروشگاه؛
 باسلام بر اساس فروش این هفته و فروش کل. سبک و جنس و رنگ را هوش مصنوعی از روی عکس و عنوان تشخیص داده و ممکن است چند مورد اشتباه باشد.
 هزینه به تفکیک: {steps or '—'}</p>
 </div></body></html>"""

@@ -136,3 +136,16 @@ def test_etsy_rank_without_details():
     a = etsy.card({**ETSY_ITEM, "boughtInLast24Hours": None, "inCartCount": None, "reviewCount": 10, "position": 40}, "x")
     b = etsy.card({**ETSY_ITEM, "boughtInLast24Hours": None, "inCartCount": None, "reviewCount": 3000, "position": 5}, "x")
     assert A.top([a, b], 1)[0] is b
+
+
+def test_insights_asks_without_reasoning(monkeypatch):
+    from dastsaz import report
+    sent = {}
+
+    def fake_post(url, json=None, timeout=None, headers=None):
+        sent.update(json)
+        return FakeResp({"choices": [{"message": {"content": '{"points": ["الف", "ب"]}'}}], "usage": {"cost": 0.001}})
+    monkeypatch.setattr(report.requests, "post", fake_post)
+    st = report.stats([], [])
+    pts, usd = report.insights(st, "k")
+    assert pts == ["الف", "ب"] and sent["reasoning"] == {"enabled": False} and sent["max_tokens"] >= 4000
