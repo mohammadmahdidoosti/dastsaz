@@ -24,7 +24,7 @@ from urllib.parse import quote
 import requests
 
 from . import analyze as A
-from . import basalam
+from . import basalam, digikala
 from . import config as C
 
 log = logging.getLogger(__name__)
@@ -142,6 +142,7 @@ def relabel(opps: list[dict]) -> list[dict]:
     lo_supply = max(500, _q([o["supply"] for o in opps], 0.25))
     mid_mom = _q([o["momentum"] for o in opps], 0.5)
     mid_week = max(3, _q([o["week"] for o in opps], 0.5))
+    hi_dk = max(50, _q([o.get("dk_reviews", 0) for o in opps if "dk_supply" in o] or [0], 0.75))
     for o in opps:
         lab = []
         if o["momentum"] >= max(0.02, 2 * mid_mom) and o["week"] >= mid_week:
@@ -156,6 +157,11 @@ def relabel(opps: list[dict]) -> list[dict]:
             lab.append("پرفروش ولی ضعیف")
         if o["supply"] >= 3000:
             lab.append("رقابت سنگین")
+        if "dk_supply" in o:
+            if o["dk_supply"] <= 100 and o["week"] >= mid_week:
+                lab.append("در دیجی‌کالا کم‌رقیب")
+            if o.get("dk_reviews", 0) >= hi_dk:
+                lab.append("در دیجی‌کالا هم پرفروش")
         o["labels"] = lab
     return opps
 
@@ -180,12 +186,41 @@ def expand(etsy, bas, progress=None, session=None, sleep=None) -> list[dict]:
     return relabel(out)
 
 
+def add_digikala(opps: list[dict], progress=None, session=None, sleep=None) -> list[dict]:
+    """Same searches on Digikala: how many products it has (competition there) and whether its best-sellers
+    for the search are proven (number of ratings of the top 10). Only searches not done yet."""
+    todo = [o for o in opps if "dk_supply" not in o]
+    if not todo:
+        return opps
+    kw = {"session": session or digikala._session()}
+    if sleep:
+        kw["sleep"] = sleep
+    for i, o in enumerate(todo):
+        try:
+            cards, total = digikala.search(o["q"], **kw)
+            top = cards[:10]
+            prices = sorted(c["price_toman"] for c in top if c.get("price_toman"))
+            o.update({"dk_supply": total, "dk_reviews": sum(c.get("reviews") or 0 for c in top),
+                      "dk_price_median": statistics.median(prices) if prices else None,
+                      "dk_images": [{"src": c["image"], "url": c["url"], "title": c["title"]}
+                                    for c in top if c.get("image")][:2],
+                      "dk_link": "https://www.digikala.com/search/?q=" + quote(o["q"]) + "&sort=7"})
+        except RuntimeError:
+            raise
+        except Exception as e:  # noqa: BLE001
+            log.warning("digikala expand %s: %s", o["q"], e)
+        if progress:
+            progress(i + 1, len(todo))
+    return relabel(opps)
+
+
 def pick(opps: list[dict], n: int = 15, per_seed: int = 2, per_type: int = 5) -> list[dict]:
     """Best searches for the test list: some demand or a clear global trend, not crowded, diverse."""
     ok = [o for o in opps if "رقابت سنگین" not in o["labels"] and (o["week"] >= 3 or "بازار خالی (آزمایش جسورانه)"
                                                                        in o["labels"])]
     strong = {"در حال اوج": 3, "تقاضای زیاد، رقیب کم": 4, "ترند جهانی، تازه در ایران": 2,
-              "بازار خالی (آزمایش جسورانه)": 1, "پرفروش ولی ضعیف": 1}
+              "بازار خالی (آزمایش جسورانه)": 1, "پرفروش ولی ضعیف": 1, "در دیجی‌کالا هم پرفروش": 2,
+              "در دیجی‌کالا کم‌رقیب": 1}
     ok.sort(key=lambda o: (-sum(strong.get(l, 0) for l in o["labels"]), -o["score"]))
     out, by_seed, by_type = [], Counter(), Counter()
     for o in ok:

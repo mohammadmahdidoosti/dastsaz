@@ -36,6 +36,9 @@ BASALAM_QUERIES = ["گردنبند", "گوشواره", "انگشتر", "دستب
 BASALAM_PER_QUERY = int(os.environ.get("BASALAM_PER_QUERY", "60"))
 BASALAM_DELAY = (4.0, 8.0)          # seconds between Basalam requests (slow on purpose)
 
+DIGIKALA = os.environ.get("DIGIKALA", "1") == "1"
+DIGIKALA_PER_QUERY = int(os.environ.get("DIGIKALA_PER_QUERY", "40"))
+
 TOP_N = int(os.environ.get("TOP_N", "200"))
 
 

@@ -31,7 +31,7 @@ logging.getLogger("urllib3").setLevel(logging.WARNING)
 log = logging.getLogger("app")
 APP_PASSWORD = os.environ.get("APP_PASSWORD", "")
 NAME = re.compile(r"^[\w\-]{1,60}$")
-STEP_FA = {"wait": "منتظر", "basalam": "باسلام", "etsy": "اتسی", "ai": "هوش مصنوعی", "expand": "فرصت‌یابی", "testlist": "لیست آزمایش",
+STEP_FA = {"wait": "منتظر", "basalam": "باسلام", "digikala": "دیجی‌کالا", "etsy": "اتسی", "ai": "هوش مصنوعی", "expand": "فرصت‌یابی", "testlist": "لیست آزمایش",
            "report": "گزارش"}
 
 

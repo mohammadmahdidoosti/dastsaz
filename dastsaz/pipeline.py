@@ -10,7 +10,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from . import analyze as A
-from . import basalam, costs, etsy, guard, report
+from . import basalam, costs, digikala, etsy, guard, report
 from . import opportunities as O
 from . import config as C
 
@@ -53,6 +53,18 @@ def run(name: str, status=lambda **k: None, only: str = "") -> Path:
         bas = basalam.fetch(progress=lambda i, t: status(step="basalam", done=i, total=t, note=""))
         _save(d / "basalam_raw.json", bas)
 
+    # 1b. Digikala (slow, from our server; best-seller order, no sales numbers)
+    dkr = _load(d / "digikala_raw.json")
+    if dkr is None and C.DIGIKALA:
+        step("digikala", "خواندن آرام پرفروش‌های دیجی‌کالا")
+        try:
+            dkr = digikala.fetch(progress=lambda i, t: status(step="digikala", done=i, total=t, note=""))
+        except Exception as e:  # noqa: BLE001 - Digikala is extra: the report goes on without it
+            log.warning("digikala skipped: %s", e)
+            dkr = []
+        _save(d / "digikala_raw.json", dkr)
+    dkr = dkr or []
+
     # 2. Etsy (on Apify's servers)
     ets = _load(d / "etsy_raw.json")
     if ets is None and only != "basalam":
@@ -73,6 +85,19 @@ def run(name: str, status=lambda **k: None, only: str = "") -> Path:
         costs.add(d, "هوش مصنوعی (عکس و متن)", len(pick), usd)
         _save(d / "classified.json", cls)
 
+    cdk = _load(d / "classified_dk.json")
+    if cdk is None:
+        pick_dk = A.top(dkr, n)
+        if pick_dk:
+            step("ai", "ترجمه و دسته‌بندی دیجی‌کالا")
+            cdk, usd = A.classify_all(pick_dk, C.secret("OPENROUTER_API_KEY"),
+                                      progress=lambda i, t: status(step="ai", done=i, total=t, note=""))
+            costs.add(d, "هوش مصنوعی دیجی‌کالا", len(pick_dk), usd)
+        else:
+            cdk = []
+        _save(d / "classified_dk.json", cdk)
+    k = A.top(cdk, n)
+    kj = [x for x in k if x.get("is_jewelry", True)]
     e = A.top([x for x in cls if x["source"] == "etsy"], n)
     b = A.top([x for x in cls if x["source"] == "basalam"], n)
     ej = [x for x in e if x.get("is_jewelry", True)]
@@ -84,6 +109,14 @@ def run(name: str, status=lambda **k: None, only: str = "") -> Path:
         step("expand", "فرصت‌یابی: جست‌وجوهای تکمیلی آرام در باسلام")
         opps = O.expand(ej, bj, progress=lambda i, t: status(step="expand", done=i, total=t, note=""))
         _save(d / "opportunities.json", opps)
+    if C.DIGIKALA and any("dk_supply" not in o for o in opps):
+        step("expand", "فرصت‌یابی: همان جست‌وجوها در دیجی‌کالا")
+        try:
+            O.add_digikala(opps, progress=lambda i, t: status(step="expand", done=i, total=t, note="دیجی‌کالا"))
+        except Exception as e:  # noqa: BLE001
+            log.warning("digikala expand skipped: %s", e)
+        _save(d / "opportunities.json", opps)
+        (d / "testlist.json").unlink(missing_ok=True)       # the list is chosen again with Digikala signals
     opps = O.relabel(opps)
     tl = _load(d / "testlist.json")
     if tl is None:
@@ -95,20 +128,22 @@ def run(name: str, status=lambda **k: None, only: str = "") -> Path:
     with (d / "opportunities.csv").open("w", newline="", encoding="utf-8-sig") as f:
         w = csv.writer(f)
         w.writerow(["جست‌وجو", "برچسب‌ها", "فروش این هفته (۱۰ پرفروش)", "فروش کل (۱۰ پرفروش)",
-                    "تعداد محصول در باسلام", "اوج (٪)", "قیمت ارزان", "قیمت گران", "امتیاز", "دلیل"])
+                    "تعداد محصول در باسلام", "اوج (٪)", "قیمت ارزان", "قیمت گران", "تعداد محصول در دیجی‌کالا",
+                    "امتیازدهنده‌های ۱۰ پرفروش دیجی‌کالا", "قیمت میانه دیجی‌کالا", "امتیاز", "دلیل"])
         for o in sorted(opps, key=lambda o: -o["score"]):
             w.writerow([o["q"], "، ".join(o["labels"]), o["week"], o["alltime"], o["supply"],
-                        round(o["momentum"] * 100), o["price_low"], o["price_high"], o["score"], o["why"]])
+                        round(o["momentum"] * 100), o["price_low"], o["price_high"], o.get("dk_supply"),
+                        o.get("dk_reviews"), o.get("dk_price_median"), o["score"], o["why"]])
 
     # 5. report
     step("report", "ساختن گزارش")
     with (d / "products.csv").open("w", newline="", encoding="utf-8-sig") as f:
         w = csv.DictWriter(f, CSV_COLS, extrasaction="ignore")
         w.writeheader()
-        w.writerows(e + b)
+        w.writerows(e + b + k)
     when = dt.datetime.now(ZoneInfo(C.TIMEZONE)).strftime("%Y-%m-%d %H:%M")
     return report.build(d, name, e, b, C.secret("OPENROUTER_API_KEY"),
-                        lambda s, u, usd: costs.add(d, s, u, usd), when, opps=opps, tl=tl)
+                        lambda s, u, usd: costs.add(d, s, u, usd), when, opps=opps, tl=tl, dk=kj)
 
 
 def runs() -> list[dict]:

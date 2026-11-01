@@ -5,13 +5,19 @@ import random
 import pytest
 
 from dastsaz import analyze as A
-from dastsaz import basalam, config as C, etsy, guard, pipeline
+from dastsaz import basalam, config as C, digikala, etsy, guard, pipeline
 
 
 BAS_PRODUCT = {"id": 39072910, "name": "گردنبند نقره اسم دلخواه", "price": 1200000, "primaryPrice": 1500000,
                "rating": {"average": 4.8, "count": 6}, "sales_count": 80, "sales_count_week": 7,
                "categoryTitle": "گردنبند", "photo": {"MEDIUM": "https://statics.basalam.com/x.jpg"},
                "vendor": {"name": "نقره‌کاری", "owner": {"city": "اصفهان"}}}
+
+DK_PRODUCT = {"id": 18411251, "title_fa": "گردنبند زنانه مدل پاپیون", "rating": {"rate": 81.3, "count": 555},
+              "url": {"uri": "/product/dkp-18411251/گردنبند-پاپیون"},
+              "images": {"main": {"url": ["https://dkstatics-public.digikala.com/a.jpg?x-oss-process=resize"]}},
+              "default_variant": {"price": {"selling_price": 6990000}},
+              "data_layer": {"brand": "متفرقه", "item_category5": "زیورآلات زنانه"}}
 
 ETSY_ITEM = {"listingId": "123", "name": "Dainty Gold Name Necklace", "url": "https://www.etsy.com/listing/123",
              "imageUrl": "https://i.etsystatic.com/a.jpg", "price": "24.50", "currency": "USD",
@@ -129,15 +135,20 @@ def test_pipeline_end_to_end(tmp_path, monkeypatch):
                 for i in range(10)], 120
     monkeypatch.setattr(pipeline.O.basalam, "search", fake_search)
     monkeypatch.setattr(pipeline.O.basalam, "_session", lambda: None)
+    dk = [digikala.card({**DK_PRODUCT, "id": 500 + i}, "گردنبند", i + 1) for i in range(12)]
+    monkeypatch.setattr(pipeline.digikala, "fetch", lambda **k: dk)
+    monkeypatch.setattr(pipeline.O.digikala, "search", lambda q, session=None, sleep=None: (dk[:10], 60))
+    monkeypatch.setattr(pipeline.O.digikala, "_session", lambda: None)
     monkeypatch.setattr(pipeline.O, "briefs", lambda items, key: ({0: {"i": 0, "name": "طرح آزمایشی", "brief": "ب"}}, 0.002))
     out = pipeline.run("t1")
     html = out.read_text(encoding="utf-8")
     assert "گزارش ترند" in html and "نکته‌ی آزمایشی" in html
     assert "لیست آزمایش این هفته" in html and "طرح آزمایشی" in html
     assert (tmp_path / "runs" / "t1" / "opportunities.csv").exists()
+    assert "۴۰ پرفروش اول دیجی‌کالا" in html and "رقیب در دیجی‌کالا" in html
     assert (tmp_path / "runs" / "t1" / "products.csv").exists()
     pipeline.run("t1")                         # resume: no new AI calls
-    assert calls["n"] == 1
+    assert calls["n"] == 2          # Etsy+Basalam once, Digikala once; resume adds none
     assert pipeline.runs()[0]["report"]
 
 
@@ -179,3 +190,11 @@ def test_seeds_and_signals():
     assert o["week"] == 30 and "تقاضای زیاد، رقیب کم" in o["labels"] and "در حال اوج" in o["labels"]
     assert "رقابت سنگین" in crowded["labels"] and crowded not in O.pick([crowded])
     assert O.pick([crowded, o] + quiet)[0] is o
+
+
+def test_digikala_card():
+    c = digikala.card(DK_PRODUCT, "گردنبند", 3)
+    assert c["price_toman"] == 699000 and c["rating"] == 4.06 and c["reviews"] == 555
+    assert c["url"].startswith("https://www.digikala.com/product/dkp-18411251") and c["image"].endswith("a.jpg")
+    out = digikala.card({**DK_PRODUCT, "default_variant": []}, "q", 1)
+    assert out["available"] is False and out["price_toman"] is None
