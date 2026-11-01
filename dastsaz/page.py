@@ -505,3 +505,77 @@ def render(name: str, when: str, st: dict, ex: dict, mk: list[dict], etsy: list[
 هوش مصنوعی از روی عکس و عنوان تشخیص داده و ممکن است چند مورد اشتباه باشد. «نوع» (گردنبند، گوشواره…) مقایسه نشده
 چون برای هر نوع به یک اندازه جست‌وجو شده است.<br>هزینه به تفکیک: {steps or '—'}</footer>
 </body></html>"""
+
+
+def _pct(x, sign=False) -> str:
+    if x is None:
+        return "—"
+    v = round(x * 100)
+    return ("+" if sign and v > 0 else "") + fa(v) + "٪"
+
+
+def _jm(ym: str) -> str:
+    return jalali(ym + "-15").split(" ", 1)[1] if ym else ""
+
+
+def backtest_page(res: list[dict]) -> str:
+    src = {"trends": ("گوگل ترندز ایران", "میزان جست‌وجوی هر کلمه در گوگل، ماه به ماه"),
+           "reviews": ("نظرهای خریداران باسلام", "تعداد نظرهای ثبت‌شده هر ماه برای پرفروش‌های هر طرح؛ تقریبی از فروش")}
+    blocks = []
+    for r in res:
+        sc = r.get("scores") or {}
+        base = sc.get("_base") or {}
+        ms = [(k, v) for k, v in sc.items() if not k.startswith("_")]
+        best = max((v for k, v in ms if k != "persist"), key=lambda v: v["direction"], default=None)
+        rows = "".join(
+            f"<tr{' class=hl' if k == 'ours' else ''}><td>{E(v['name'])}</td><td><b>{_pct(v['direction'])}</b></td>"
+            f"<td>{fa(round(v['error'] * 100))} درصد</td><td>{_pct(v['pick_hit'])}</td>"
+            f"<td>{_pct(v['pick_growth'], True)}</td></tr>" for k, v in ms)
+        ex = r.get("example") or []
+        exr = ""
+        if len(ex) > 1:
+            head = ex[0]
+            exr = (f"<h3>یک نمونه‌ی واقعی: پیش‌بینی در {E(_jm(head['cutoff']))} برای سه ماه بعد</h3>"
+                   "<table><tr><th>کلمه / طرح</th><th>روش گزارش گفت</th><th>پارسال همین موقع</th><th>روند اخیر</th>"
+                   "<th>واقعاً شد</th></tr>" + "".join(
+                       f"<tr><td>{E(x['name'])}</td><td>{_pct(x['ours'], True)}</td><td>{_pct(x['seasonal'], True)}</td>"
+                       f"<td>{_pct(x['momentum'], True)}</td><td><b>{_pct(x['actual'], True)}</b></td></tr>"
+                       for x in ex[1:16]) + "</table>")
+        name, what = src.get(r["source"], (r["source"], ""))
+        verdict = ""
+        if "ours" in sc and "persist" in sc:
+            o, p_ = sc["ours"], sc["persist"]
+            gain = o["direction"] - p_["direction"]
+            verdict = (f"<div class='verdict {'good' if gain > 0.05 else 'bad'}'>"
+                       f"روش گزارش در {_pct(o['direction'])} موارد جهت (بالا، پایین یا ثابت) را درست گفت؛ "
+                       f"حدس «هیچ تغییری نمی‌کند» {_pct(p_['direction'])}. "
+                       + ("یعنی روش ما واقعاً چیزی بیشتر از حدس ساده می‌فهمد." if gain > 0.05 else
+                          "یعنی روش ما فعلاً از حدس ساده بهتر نیست و باید اصلاح شود.")
+                       + (f" ۵ انتخاب اول روش گزارش در {_pct(o['pick_hit'])} موارد واقعاً رشد کردند؛ "
+                          f"به‌طور تصادفی {_pct(base.get('up'))} رشد می‌کردند." if o.get("pick_hit") is not None else "")
+                       + "</div>")
+        blocks.append(
+            f"<section><h2>{E(name)}</h2><p class='lead'>{E(what)}. بازه‌ی داده: {E(_jm(r['months'][0]) if r.get('months') else '')}"
+            f" تا {E(_jm(r['months'][1]) if r.get('months') else '')}؛ {fa(r.get('keywords', 0))} مورد، "
+            f"{fa(base.get('cases', 0))} آزمون (هر مورد در هر ماه یک آزمون). هزینه {fa(r.get('usd', 0), 3)} دلار.</p>"
+            f"{verdict}<table><tr><th>روش</th><th>جهت درست</th><th>خطای متوسط</th><th>۵ انتخاب اول که رشد کردند</th>"
+            f"<th>رشد متوسط ۵ انتخاب اول</th></tr>{rows}"
+            f"<tr class='muted'><td>انتخاب تصادفی</td><td>—</td><td>—</td><td>{_pct(base.get('up'))}</td>"
+            f"<td>{_pct(base.get('growth'), True)}</td></tr></table>{exr}</section>")
+    body = "".join(blocks) or "<p>هنوز آزمونی اجرا نشده.</p>"
+    return f"""<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>دست‌ساز — دقت سیستم</title>
+<style>{CSS}
+.verdict{{padding:12px 16px;border-radius:10px;margin:0 0 16px;font-weight:600}}.verdict.good{{background:#e3f4ef}}
+.verdict.bad{{background:#fbe9ec}}tr.hl td{{background:#fff7e6}}</style></head><body>
+<nav class="bar-top"><div class="wrap"><span class="brand">دست‌ساز</span><a href="/">خانه</a></div></nav>
+<header class="hero"><div class="wrap"><div><div class="date">آزمون روی گذشته</div><h1>سیستم پیش‌بینی چقدر درست می‌گوید؟</h1>
+<p>به چند ماه در گذشته برمی‌گردیم، هر روش فقط با داده‌ی تا آن روز سه ماه بعد را پیش‌بینی می‌کند، و بعد با
+اتفاقی که واقعاً افتاد مقایسه می‌کنیم. این کار برای هر ماه تکرار می‌شود تا شانس اثرش را از دست بدهد.</p></div></div></header>
+<main class="wrap">{body}
+<section><h2>این عددها یعنی چه</h2><ul>
+<li><b>جهت درست:</b> در چند درصد آزمون‌ها گفت «بالا می‌رود / پایین می‌آید / ثابت می‌ماند» و درست بود. تغییر کمتر از ۱۰٪ «ثابت» حساب شده.</li>
+<li><b>خطای متوسط:</b> پیش‌بینی چند درصد با واقعیت فاصله داشت. کمتر بهتر.</li>
+<li><b>۵ انتخاب اول:</b> اگر هر ماه فقط ۵ موردی را که روش بیشترین رشد برایشان گفته انتخاب می‌کردیم، چند درصدشان واقعاً رشد کردند. ردیف «انتخاب تصادفی» مبنای مقایسه است.</li>
+<li>تعداد نظرها تقریبی از فروش است و نمونه‌ها کم؛ عددها را نشانه بدانید، نه حکم قطعی.</li></ul></section>
+</main></body></html>"""

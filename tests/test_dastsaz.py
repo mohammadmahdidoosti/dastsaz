@@ -342,3 +342,26 @@ def test_maker_flag(monkeypatch):
     out = makers.details(top, sleep=lambda s: None)
     assert out[0]["id"] == "a1" and out[0]["maker"] and out[0]["province"] == "زنجان"
     assert not out[1]["maker"]
+
+
+def test_backtest_beats_flat_on_seasonal_data():
+    import math
+    from dastsaz import backtest as B, page
+    months = B._months("2021-01", "2025-12")
+    rnd = random.Random(3)
+    series = {f"k{i}": [50 + 30 * math.sin(2 * math.pi * (j + i) / 12) + rnd.uniform(-3, 3) for j in range(len(months))]
+              for i in range(12)}
+    sc = B.evaluate(series, months)
+    assert sc["ours"]["direction"] > sc["persist"]["direction"] + 0.2
+    assert sc["ours"]["pick_hit"] > sc["_base"]["up"]
+    ex = B.last_cutoff(series, months)
+    html = page.backtest_page([{"source": "trends", "months": [months[0], months[-1]], "keywords": 12,
+                                "scores": sc, "example": ex, "usd": 0.01}])
+    assert "روش گزارش" in html and "جهت درست" in html
+
+
+def test_trends_monthly_drops_partial():
+    from dastsaz import backtest as B
+    m = B.monthly([{"date": "2025-01-05", "value": 10}, {"date": "2025-01-12", "value": 20},
+                   {"date": "2025-02-02", "value": 99, "isPartial": True}])
+    assert m == {"2025-01": 15.0}

@@ -93,7 +93,7 @@ border-radius:10px;padding:12px 16px;margin-bottom:8px}
 <main class="w"><div class="now"><div id="st">...</div><div class="prog" id="pg" hidden><i></i></div>
 <p style="margin:12px 0 0"><button id="go" onclick="go()">ساختن گزارش تازه</button>
 <span class="muted">حدود نیم ساعت؛ حدود ۱٫۶ دلار.</span></p></div>
-<h2>گزارش‌ها</h2><div id="list">...</div></main>
+<h2>گزارش‌ها</h2><div id="list">...</div><p><a href="backtest">دقت سیستم پیش‌بینی (آزمون روی گذشته)</a></p></main>
 <script>
 const F=n=>String(n).replace(/[0-9]/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
 async function load(){const s=await (await fetch('api/status')).json();const j=s.job;let t;
@@ -165,6 +165,9 @@ class H(BaseHTTPRequestHandler):
             g = guard.check() if "guard" in q or not j["running"] else ""
             return self._json({"job": j, "step_fa": STEP_FA.get(j["step"], j["step"]), "runs": pipeline.runs(),
                                "guard": g})
+        if parts == ["backtest"]:
+            f = C.DATA_DIR / "backtest" / "report.html"
+            return self._send(200, f.read_bytes()) if f.exists() else self._send(404, "هنوز آزمونی اجرا نشده".encode(), "text/plain; charset=utf-8")
         if len(parts) == 2 and parts[0] in ("report", "csv") and NAME.match(parts[1]):
             d = C.DATA_DIR / "runs" / parts[1]
             if parts[0] == "report" and (d / "report.html").exists():
