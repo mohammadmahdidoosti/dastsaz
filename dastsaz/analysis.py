@@ -98,6 +98,9 @@ ASK = """تو یک تحلیلگر ارشد بازار جواهرات دست‌س
 - فقط از عددهای همین داده استفاده کن؛ هیچ عددی از خودت نساز. اگر چیزی در داده نیست، درباره‌اش ادعا نکن.
 - فارسی ساده، جمله‌های کوتاه، بدون اصطلاح فنی و بدون تعارف.
 - طرح‌های برندها (ونکلیف، تیفانی و…) را پیشنهاد نکن.
+- عددهایی که اسمشان با _pct تمام می‌شود درصدند (مثلاً «۳۶٪ پرفروش‌های اتسی»)، نه تعداد.
+- maker_brief را خطاب به تولیدکننده بنویس و فقط درباره‌ی ساختن: کدام طرح‌ها، جنس، رنگ، اندازه، چند عدد نمونه، و اینکه
+  قیمت و زمان تحویلش را بگوید. سقف قیمت خرید ما (buy_max)، قیمت فروش ما و برنامه‌ی فروش را هرگز در آن ننویس.
 
 فقط JSON بده:
 {"headline": "یک جمله: مهم‌ترین نتیجه‌ی این هفته",
@@ -113,16 +116,19 @@ def executive(st: dict, tl: list[dict], tr: list[dict], mk: list[dict], key: str
     if not key:
         return {}, 0.0
     data = {
-        "markets": mk,
-        "style_gap_etsy_minus_basalam": [{k: r[k] for k in ("name", "etsy", "basalam", "digikala")}
-                                         for r in st.get("style", [])][:8],
-        "material": [{k: r[k] for k in ("name", "etsy", "basalam", "digikala")} for r in st.get("material", [])][:8],
+        "markets": [{**{k: v for k, v in m.items() if k not in ("style", "material", "color", "personal")},
+                     "top_style_pct": m["style"], "top_material_pct": m["material"], "top_color_pct": m["color"],
+                     "personalised_pct": m["personal"]} for m in mk],
+        "style_share": [{"name": r["name"], "etsy_pct": round(r["etsy"]), "basalam_pct": round(r["basalam"]),
+                         "digikala_pct": round(r.get("digikala", 0))} for r in st.get("style", [])][:8],
+        "material_share": [{"name": r["name"], "etsy_pct": round(r["etsy"]), "basalam_pct": round(r["basalam"]),
+                            "digikala_pct": round(r.get("digikala", 0))} for r in st.get("material", [])][:8],
         "test_list": [{"design": o.get("name"), "search": o["q"], "labels": o["labels"],
                        "basalam_sales_this_week_top10": o["week"], "basalam_products": o["supply"],
                        "digikala_same_design_in_top20": o.get("dk_match"),
                        "digikala_ratings": o.get("dk_reviews"), **{k: o["eco"][k] for k in
                        ("retail", "buy_max", "test_qty", "channels")}} for o in tl],
-        "google_trends": [{"keyword": r["keyword"], "yoy_pct": r.get("yoy"), "peak_months": r.get("peak_months"),
+        "google_trends": [{"keyword": r["keyword"], "yoy_pct": round(r["yoy"]) if r.get("yoy") is not None else None, "peak_months": r.get("peak_months"),
                            "rising": [q["query"] for q in (r.get("breakout", []) + r.get("rising", []))[:3]]}
                           for r in tr if r.get("average")][:15],
     }

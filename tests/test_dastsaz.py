@@ -187,6 +187,7 @@ def test_executive_asks_without_reasoning(monkeypatch):
     ex, usd = analysis.executive(report.stats([], []), [], [], [], "k")
     assert ex["headline"] == "ت" and ex["findings"][0]["text"] == "b" and usd == 0.002
     assert sent["reasoning"] == {"enabled": False} and "عددی از خودت نساز" in sent["messages"][0]["content"]
+    assert "هرگز در آن ننویس" in sent["messages"][0]["content"]
 
 
 def test_economics_rules():
@@ -279,3 +280,8 @@ def test_relevance_drops_unrelated_results():
     lyric = O.signals({"q": "بگو هنوزم داری گردنبند", "type": "گردنبند", "term": "x", "why": "", "source": "google"},
                       cards, 50)
     assert lyric["match"] == 0 and O.pick([dict(lyric, labels=["در حال اوج"], week=50)]) == []
+
+
+def test_ai_text_gets_persian_digits():
+    from dastsaz.page import P
+    assert P("16.5 درصد و 60,000 تومان <b>") == "۱۶٫۵ درصد و ۶۰٬۰۰۰ تومان &lt;b&gt;"

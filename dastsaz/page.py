@@ -18,7 +18,16 @@ MARKET = {"etsy": ("اتسی", "gold"), "basalam": ("باسلام", "turq"), "di
 LAB_CLS = {"تقاضای زیاد، رقیب کم": "good", "در حال اوج": "hot", "ترند جهانی، تازه در ایران": "hot",
            "در دیجی‌کالا کم‌رقیب": "good", "در دیجی‌کالا هم پرفروش": "", "در گوگل در حال رشد": "hot",
            "بازار خالی (آزمایش جسورانه)": "dim", "پرفروش ولی ضعیف": "", "رقابت سنگین": "dim"}
-E = html.escape
+def E(t) -> str:
+    return html.escape(str(t))
+
+
+def P(t) -> str:
+    """AI-written text: Persian digits and decimal sign, then escaped."""
+    import re as _re
+    t = _re.sub(r"(?<=\d)\.(?=\d)", "٫", str(t or ""))
+    t = _re.sub(r"(?<=\d),(?=\d{3})", "٬", t)
+    return html.escape(t.translate(FA_DIGITS))
 
 
 def fa(n, dec: int = 0) -> str:
@@ -172,7 +181,7 @@ def _design(i: int, o: dict) -> str:
     rk = "".join(f"<div>{E(r)}</div>" for r in eco.get("risks", []))
     return f"""<article class="design">{_shots(o)}
 <div><div class="rank">طرح {fa(i)}</div><h3>{E(o.get('name') or o['q'])}</h3>{_labs(o['labels'])}
-<p class="why">{E(o.get('brief') or '')}</p><div class="ev"><div>چرا: {E(o['why'])}</div>{''.join(ev)}</div></div>
+<p class="why">{P(o.get('brief') or '')}</p><div class="ev"><div>چرا: {E(o['why'])}</div>{''.join(ev)}</div></div>
 <div class="eco"><dl><dt>قیمت فروش</dt><dd>{toman(eco.get('retail'))} تومان</dd>
 <dt>خرید از سازنده</dt><dd>حداکثر {toman(eco.get('buy_max'))}</dd>
 <dt>تعداد آزمایشی</dt><dd>{fa(eco.get('test_qty'))} عدد</dd>
@@ -354,11 +363,11 @@ def render(name: str, when: str, st: dict, ex: dict, mk: list[dict], etsy: list[
     sub = (f"پرفروش‌های {fa(st['n_etsy'])} محصول اتسی، {fa(st['n_basalam'])} باسلام"
            + (f" و {fa(st.get('n_digikala', 0))} دیجی‌کالا" if has_dk else "")
            + f" کنار هم؛ {fa(len(opps))} جست‌وجوی فرصت و {fa(len(tl))} طرح پیشنهادی برای آزمایش.")
-    findings = "".join(f"<div class='finding'><b>{E(f['title'])}</b><span>{E(f['text'])}</span></div>"
+    findings = "".join(f"<div class='finding'><b>{P(f['title'])}</b><span>{P(f['text'])}</span></div>"
                        for f in ex.get("findings", [])) or "<p class='muted'>تحلیل هوش مصنوعی این بار ساخته نشد.</p>"
-    actions = "".join(f"<li>{E(a)}</li>" for a in ex.get("actions", []))
-    risks = "".join(f"<li>{E(a)}</li>" for a in ex.get("risks", []))
-    brief = (f"<div class='brief'><b>متنی برای تولیدکننده</b>{E(ex['maker_brief'])}</div>"
+    actions = "".join(f"<li>{P(a)}</li>" for a in ex.get("actions", []))
+    risks = "".join(f"<li>{P(a)}</li>" for a in ex.get("risks", []))
+    brief = (f"<div class='brief'><b>متنی برای تولیدکننده</b>{P(ex['maker_brief'])}</div>"
              if ex.get("maker_brief") else "")
     designs = "".join(_design(i, o) for i, o in enumerate(tl, 1)) or \
         "<p class='muted'>این هفته طرحی با شرایط آزمایش پیدا نشد.</p>"
@@ -373,7 +382,7 @@ def render(name: str, when: str, st: dict, ex: dict, mk: list[dict], etsy: list[
 <nav class="bar-top"><div class="wrap"><span class="brand">دست‌ساز</span>
 {''.join(f'<a href="#{a}">{t}</a>' for t, a in nav)}</div></nav>
 <header class="hero"><div class="wrap"><div><div class="date">گزارش ترند جواهرات · {E(when)}</div>
-<h1>{E(headline)}</h1><p>{sub}</p>
+<h1>{P(headline)}</h1><p>{sub}</p>
 <div class="markets"><span><b>{fa(len(tl))}</b>طرح برای آزمایش</span>
 <span><b>{fa(sum(1 for o in opps if 'تقاضای زیاد، رقیب کم' in o['labels']))}</b>فرصت طلایی</span>
 <span><b>{fa(cost.get('usd', 0), 2)}</b>دلار هزینه‌ی گزارش</span></div></div>{pick}</div></header>
