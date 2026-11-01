@@ -11,6 +11,7 @@ from zoneinfo import ZoneInfo
 
 from . import analyze as A
 from . import basalam, costs, etsy, guard, report
+from . import opportunities as O
 from . import config as C
 
 log = logging.getLogger(__name__)
@@ -72,17 +73,41 @@ def run(name: str, status=lambda **k: None, only: str = "") -> Path:
         costs.add(d, "هوش مصنوعی (عکس و متن)", len(pick), usd)
         _save(d / "classified.json", cls)
 
-    # 4. report
-    step("report", "ساختن گزارش")
     e = A.top([x for x in cls if x["source"] == "etsy"], n)
     b = A.top([x for x in cls if x["source"] == "basalam"], n)
+    ej = [x for x in e if x.get("is_jewelry", True)]
+    bj = [x for x in b if x.get("is_jewelry", True)]
+
+    # 4. opportunity finder: slow extra Basalam searches around promising motifs / Etsy trends
+    opps = _load(d / "opportunities.json")
+    if opps is None:
+        step("expand", "فرصت‌یابی: جست‌وجوهای تکمیلی آرام در باسلام")
+        opps = O.expand(ej, bj, progress=lambda i, t: status(step="expand", done=i, total=t, note=""))
+        _save(d / "opportunities.json", opps)
+    tl = _load(d / "testlist.json")
+    if tl is None:
+        step("testlist", "ساختن لیست آزمایش هفتگی")
+        tl, usd = O.test_list(opps, ej, C.secret("OPENROUTER_API_KEY"))
+        if usd:
+            costs.add(d, "لیست آزمایش (هوش مصنوعی)", len(tl), usd)
+        _save(d / "testlist.json", tl)
+    with (d / "opportunities.csv").open("w", newline="", encoding="utf-8-sig") as f:
+        w = csv.writer(f)
+        w.writerow(["جست‌وجو", "برچسب‌ها", "فروش این هفته (۱۰ پرفروش)", "فروش کل (۱۰ پرفروش)",
+                    "تعداد محصول در باسلام", "اوج (٪)", "قیمت ارزان", "قیمت گران", "امتیاز", "دلیل"])
+        for o in sorted(opps, key=lambda o: -o["score"]):
+            w.writerow([o["q"], "، ".join(o["labels"]), o["week"], o["alltime"], o["supply"],
+                        round(o["momentum"] * 100), o["price_low"], o["price_high"], o["score"], o["why"]])
+
+    # 5. report
+    step("report", "ساختن گزارش")
     with (d / "products.csv").open("w", newline="", encoding="utf-8-sig") as f:
         w = csv.DictWriter(f, CSV_COLS, extrasaction="ignore")
         w.writeheader()
         w.writerows(e + b)
     when = dt.datetime.now(ZoneInfo(C.TIMEZONE)).strftime("%Y-%m-%d %H:%M")
     return report.build(d, name, e, b, C.secret("OPENROUTER_API_KEY"),
-                        lambda s, u, usd: costs.add(d, s, u, usd), when)
+                        lambda s, u, usd: costs.add(d, s, u, usd), when, opps=opps, tl=tl)
 
 
 def runs() -> list[dict]:

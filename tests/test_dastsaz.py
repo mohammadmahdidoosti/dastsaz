@@ -123,9 +123,18 @@ def test_pipeline_end_to_end(tmp_path, monkeypatch):
                  "stone": "", "_cost": 0.0002, "_error": ""} for i, p in enumerate(items)], 0.012
     monkeypatch.setattr(pipeline.A, "classify_all", fake_all)
     monkeypatch.setattr(pipeline.report, "insights", lambda st, key: (["نکته‌ی آزمایشی"], 0.001))
+
+    def fake_search(q, size=30, session=None, sleep=None):
+        return [basalam.card({**BAS_PRODUCT, "id": hash(q) % 1000 + i, "sales_count_week": 5}, q, i)
+                for i in range(10)], 120
+    monkeypatch.setattr(pipeline.O.basalam, "search", fake_search)
+    monkeypatch.setattr(pipeline.O.basalam, "_session", lambda: None)
+    monkeypatch.setattr(pipeline.O, "briefs", lambda items, key: ({0: {"i": 0, "name": "طرح آزمایشی", "brief": "ب"}}, 0.002))
     out = pipeline.run("t1")
     html = out.read_text(encoding="utf-8")
     assert "گزارش ترند" in html and "نکته‌ی آزمایشی" in html
+    assert "لیست آزمایش این هفته" in html and "طرح آزمایشی" in html
+    assert (tmp_path / "runs" / "t1" / "opportunities.csv").exists()
     assert (tmp_path / "runs" / "t1" / "products.csv").exists()
     pipeline.run("t1")                         # resume: no new AI calls
     assert calls["n"] == 1
@@ -149,3 +158,19 @@ def test_insights_asks_without_reasoning(monkeypatch):
     st = report.stats([], [])
     pts, usd = report.insights(st, "k")
     assert pts == ["الف", "ب"] and sent["reasoning"] == {"enabled": False} and sent["max_tokens"] >= 4000
+
+
+def test_seeds_and_signals():
+    from dastsaz import opportunities as O
+    bas = [{"motif": "طرح پاپیون", "sales_week": 9, "style": "فانتزی و بامزه", "material": "استیل"},
+           {"motif": "پاپیون", "sales_week": 4, "style": "مینیمال", "material": "استیل"},
+           {"motif": "بدون طرح", "sales_week": 50, "style": "مینیمال", "material": "استیل"}]
+    ets = [{"motif": "گل", "style": "وینتیج", "material": "روکش طلا"} for _ in range(5)]
+    sd = O.seeds(ets, bas)
+    terms = [x["term"] for x in sd]
+    assert terms[0] == "پاپیون" and "بدون طرح" not in terms and "وینتیج" in terms and "گل" in terms
+    cards = [basalam.card({**BAS_PRODUCT, "id": i, "sales_count_week": 3, "sales_count": 20}, "q", i) for i in range(10)]
+    o = O.signals({"q": "گوشواره پاپیون", "type": "گوشواره", "term": "پاپیون", "why": "", "source": "basalam"}, cards, 150)
+    assert o["week"] == 30 and "تقاضای زیاد، رقیب کم" in o["labels"] and "در حال اوج" in o["labels"]
+    crowded = O.signals({"q": "x", "type": "گردنبند", "term": "x", "why": "", "source": "basalam"}, cards, 9000)
+    assert "رقابت سنگین" in crowded["labels"] and crowded not in O.pick([crowded])

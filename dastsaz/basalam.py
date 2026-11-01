@@ -56,6 +56,34 @@ def card(p: dict, query: str, position: int) -> dict:
     }
 
 
+def _get(s, params: dict, sleep) -> dict | None:
+    for attempt in range(3):
+        try:
+            r = s.get(URL, params=params, timeout=25)
+            if r.status_code == 200:
+                return r.json()
+            log.warning("basalam %s HTTP %s", params.get("q"), r.status_code)
+            if r.status_code == 403:
+                raise RuntimeError("باسلام درخواست را مسدود کرد (403)")
+        except RuntimeError:
+            raise
+        except Exception as e:  # noqa: BLE001
+            log.warning("basalam %s: %s", params.get("q"), e)
+        sleep(20 * (attempt + 1))
+    return None
+
+
+def search(q: str, size: int = PAGE, session=None, sleep=time.sleep) -> tuple[list[dict], int]:
+    """One slow page of best-sellers for q, and how many products Basalam has for q in all
+    (its 'meta.count', capped by Basalam at 10000): the supply side of an opportunity."""
+    s = session or _session()
+    sleep(random.uniform(*C.BASALAM_DELAY))
+    body = _get(s, {"q": q, "sort": "sales", "from": 0, "size": size}, sleep) or {}
+    rows = body.get("products") or []
+    total = int((body.get("meta") or {}).get("count") or len(rows))
+    return [card(p, q, i + 1) for i, p in enumerate(rows)], total
+
+
 def fetch(queries: list[str] | None = None, per_query: int | None = None, progress=None,
           session=None, sleep=time.sleep) -> list[dict]:
     queries = queries or C.BASALAM_QUERIES
@@ -68,22 +96,7 @@ def fetch(queries: list[str] | None = None, per_query: int | None = None, progre
         for start in range(0, per_query, PAGE):
             sleep(random.uniform(*C.BASALAM_DELAY))
             params = {"q": q, "sort": "sales", "from": start, "size": min(PAGE, per_query - start)}
-            body = None
-            for attempt in range(3):
-                try:
-                    r = s.get(URL, params=params, timeout=25)
-                    if r.status_code == 200:
-                        body = r.json()
-                        break
-                    log.warning("basalam %s HTTP %s", q, r.status_code)
-                    if r.status_code == 403:
-                        raise RuntimeError("باسلام درخواست را مسدود کرد (403)")
-                except RuntimeError:
-                    raise
-                except Exception as e:  # noqa: BLE001
-                    log.warning("basalam %s: %s", q, e)
-                sleep(20 * (attempt + 1))
-            rows = (body or {}).get("products") or []
+            rows = (_get(s, params, sleep) or {}).get("products") or []
             for p in rows:
                 pos += 1
                 c = card(p, q, pos)

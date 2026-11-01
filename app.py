@@ -31,7 +31,8 @@ logging.getLogger("urllib3").setLevel(logging.WARNING)
 log = logging.getLogger("app")
 APP_PASSWORD = os.environ.get("APP_PASSWORD", "")
 NAME = re.compile(r"^[\w\-]{1,60}$")
-STEP_FA = {"wait": "منتظر", "basalam": "باسلام", "etsy": "اتسی", "ai": "هوش مصنوعی", "report": "گزارش"}
+STEP_FA = {"wait": "منتظر", "basalam": "باسلام", "etsy": "اتسی", "ai": "هوش مصنوعی", "expand": "فرصت‌یابی", "testlist": "لیست آزمایش",
+           "report": "گزارش"}
 
 
 class Job:
@@ -82,7 +83,7 @@ let t=j.running?`در حال ساخت «${j.run}» — مرحله: ${s.step_fa}$
 :(j.error?`<span class=err>خطا در «${j.run}»: ${j.error}</span>`:(j.run?`آخرین گزارش «${j.run}» آماده شد.`:'آماده.'));
 if(s.guard)t+=`<br><span class=muted>منتظر: ${s.guard}</span>`;
 document.getElementById('st').innerHTML=t;document.getElementById('go').disabled=j.running;
-document.getElementById('list').innerHTML=s.runs.map(r=>r.report?`<p><a href="report/${r.name}" target=_blank>${r.name}</a> — هزینه ${F(r.usd)} دلار · <a href="csv/${r.name}">فایل اکسل (CSV)</a></p>`:`<p>${r.name} (ناتمام)</p>`).join('')||'هنوز گزارشی نیست.'}
+document.getElementById('list').innerHTML=s.runs.map(r=>r.report?`<p><a href="report/${r.name}" target=_blank>${r.name}</a> — هزینه ${F(r.usd)} دلار · <a href="csv/${r.name}">محصولات (CSV)</a> · <a href="csv/${r.name}?f=opportunities">فرصت‌ها (CSV)</a></p>`:`<p>${r.name} (ناتمام)</p>`).join('')||'هنوز گزارشی نیست.'}
 async function go(){const r=await (await fetch('api/run',{method:'POST'})).json();if(r.error)alert(r.error);load()}
 load();setInterval(load,10000);
 </script></body></html>"""
@@ -141,9 +142,10 @@ class H(BaseHTTPRequestHandler):
             d = C.DATA_DIR / "runs" / parts[1]
             if parts[0] == "report" and (d / "report.html").exists():
                 return self._send(200, (d / "report.html").read_bytes())
-            if parts[0] == "csv" and (d / "products.csv").exists():
-                return self._send(200, (d / "products.csv").read_bytes(), "text/csv; charset=utf-8",
-                                  {"Content-Disposition": f'attachment; filename="dastsaz-{parts[1]}.csv"'})
+            f = "opportunities" if parse_qs(u.query).get("f") == ["opportunities"] else "products"
+            if parts[0] == "csv" and (d / f"{f}.csv").exists():
+                return self._send(200, (d / f"{f}.csv").read_bytes(), "text/csv; charset=utf-8",
+                                  {"Content-Disposition": f'attachment; filename="dastsaz-{parts[1]}-{f}.csv"'})
         return self._send(404, "پیدا نشد".encode(), "text/plain; charset=utf-8")
 
     def do_POST(self):

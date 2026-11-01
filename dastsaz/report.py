@@ -126,6 +126,13 @@ th,td{padding:7px 10px;border-bottom:1px solid #f0e9df;text-align:right}th{backg
 .p img{width:100%;aspect-ratio:1;object-fit:cover;background:#eee;display:block}.p div{padding:8px}
 .p a{color:inherit;text-decoration:none}.tag{display:inline-block;background:#f4ede3;border-radius:6px;padding:0 6px;margin:2px 0 0 2px;font-size:11px}
 .legend span{margin-left:14px;font-size:13px}.muted{color:#8a7f74;font-size:12px}
+.tl{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+.t{background:#fff;border:1px solid #ece3d6;border-radius:12px;padding:12px;font-size:13px}
+.t h3{margin:0 0 4px;font-size:16px}.t .imgs{display:flex;gap:6px;margin:8px 0}
+.t .imgs a{flex:1}.t .imgs img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;background:#eee}
+.lab{display:inline-block;border-radius:6px;padding:0 7px;margin:2px 0 0 3px;font-size:11px;background:#fbe9dc;color:#9a4a1c}
+.lab.g{background:#e3f1ec;color:#2f6f5e}.lab.r{background:#eee;color:#666}
+.num{white-space:nowrap}
 """
 
 
@@ -191,8 +198,60 @@ def _gallery(items, n=40):
     return "".join(out)
 
 
+LAB_CLS = {"تقاضای زیاد، رقیب کم": "g", "در حال اوج": "", "ترند جهانی، تازه در ایران": "",
+           "بازار خالی (آزمایش جسورانه)": "r", "پرفروش ولی ضعیف": "", "رقابت سنگین": "r"}
+
+
+def _labs(labels):
+    return "".join(f"<span class='lab {LAB_CLS.get(l, '')}'>{html.escape(l)}</span>" for l in labels)
+
+
+def _price(o):
+    if not o.get("price_low"):
+        return "—"
+    return f"{fa(round(o['price_low'], -4))} تا {fa(round(o['price_high'], -4))} تومان"
+
+
+def _testlist(tl: list[dict]) -> str:
+    if not tl:
+        return "<p class='muted'>این بار طرحی برای آزمایش پیدا نشد.</p>"
+    out = ["<div class='tl'>"]
+    for i, o in enumerate(tl, 1):
+        imgs = (o.get("images") or [])[:2] + (o.get("etsy_refs") or [])[:2]
+        im = "".join(f"<a href='{html.escape(x['url'])}' target='_blank' rel='noopener' title='{html.escape(x['title'])}'>"
+                     f"<img loading='lazy' src='{html.escape(x['src'])}' alt=''></a>" for x in imgs[:4])
+        weak = ""
+        if o.get("weak"):
+            weak = "<br><span class='muted'>پرفروش‌هایی با امتیاز پایین دارد؛ نسخه‌ی بهتر جا دارد.</span>"
+        out.append(
+            f"<div class='t'><h3>{fa(i)}. {html.escape(o['name'])}</h3>{_labs(o['labels'])}"
+            f"<div class='imgs'>{im}</div>"
+            f"<div>{html.escape(o.get('brief') or '')}</div>"
+            f"<p class='muted' style='margin:6px 0 0'>چرا: {html.escape(o['why'])}.<br>"
+            f"جست‌وجوی «<a href='{html.escape(o['basalam_link'])}' target='_blank' rel='noopener'>{html.escape(o['q'])}</a>» "
+            f"در باسلام: <span class='num'>{fa(o['week'])} فروش این هفته</span> در ۱۰ پرفروش، "
+            f"<span class='num'>{fa(o['supply'])} محصول</span> رقیب.<br>"
+            f"قیمت پیشنهادی: <b>{_price(o)}</b>{weak}</p></div>")
+    out.append("</div>")
+    return "".join(out)
+
+
+def _opps_table(opps: list[dict], n: int = 40) -> str:
+    rows = sorted(opps, key=lambda o: -o["score"])[:n]
+    out = ["<table><tr><th>جست‌وجو در باسلام</th><th>فروش این هفته<br><span class='muted'>۱۰ پرفروش</span></th>"
+           "<th>تعداد رقیب</th><th>داغی تازه</th><th>بازه‌ی قیمت</th><th>برچسب</th></tr>"]
+    for o in rows:
+        link = "https://basalam.com/s?q=" + __import__("urllib.parse", fromlist=["quote"]).quote(o["q"])
+        out.append(f"<tr><td><a href='{link}' target='_blank' rel='noopener'>{html.escape(o['q'])}</a></td>"
+                   f"<td>{fa(o['week'])}</td><td>{fa(o['supply'])}</td><td>{fa(round(o['momentum'] * 100))}٪</td>"
+                   f"<td class='num'>{_price(o)}</td><td>{_labs(o['labels'])}</td></tr>")
+    out.append("</table><p class='muted'>«داغی تازه» یعنی چند درصد از کل فروش ۱۰ پرفروش همین هفته بوده؛ "
+               "عدد بالا یعنی تازه داغ شده. «تعداد رقیب» تعداد محصولاتی است که باسلام برای آن جست‌وجو دارد.</p>")
+    return "".join(out)
+
+
 def render(name: str, etsy: list[dict], bas: list[dict], st: dict, points: list[str], cost: dict,
-           when: str) -> str:
+           when: str, opps: list[dict] | None = None, tl: list[dict] | None = None) -> str:
     ins = "".join(f"<li>{html.escape(p)}</li>" for p in points) or "<li>جمع‌بندی هوش مصنوعی ساخته نشد.</li>"
     steps = "، ".join(f"{k}: {fa(v['usd'], 3)}$" for k, v in cost.get("steps", {}).items())
     return f"""<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8">
@@ -204,7 +263,11 @@ def render(name: str, etsy: list[dict], bas: list[dict], st: dict, points: list[
 <div class="card">شخصی‌سازی‌شده در اتسی<b>{fa(st['personal_etsy'])}٪</b></div>
 <div class="card">شخصی‌سازی‌شده در باسلام<b>{fa(st['personal_basalam'])}٪</b></div>
 <div class="card">هزینه‌ی این گزارش<b>{fa(cost.get('usd', 0), 2)} $</b></div></div>
+{('<h2>لیست آزمایش این هفته</h2><p class="muted">روش Shein در مقیاس کوچک: از هر طرح فقط ۵ تا ۲۰ عدد بسازید، '
+   'یک تا دو هفته فروش را بسنجید و فقط برنده‌ها را دوباره سفارش دهید. عکس‌ها مرجع ترند هستند؛ طرح‌ها را عیناً کپی نکنید.</p>'
+   + _testlist(tl)) if tl is not None else ''}
 <h2>جمع‌بندی برای صحبت با تولیدکننده</h2><ul class="ins">{ins}</ul>
+{('<h2>همه‌ی فرصت‌ها</h2>' + _opps_table(opps)) if opps else ''}
 <p class="legend"><span><span class="bar e" style="width:20px"></span>اتسی</span>
 <span><span class="bar b" style="width:20px"></span>باسلام</span>
 <span class="gp">قرمز = در اتسی خیلی بیشتر (فرصت)</span><span class="gn">سبز = در باسلام بیشتر</span></p>
@@ -224,7 +287,8 @@ def render(name: str, etsy: list[dict], bas: list[dict], st: dict, points: list[
 </div></body></html>"""
 
 
-def build(run_dir: Path, name: str, etsy: list[dict], bas: list[dict], key: str, cost_add, when: str) -> Path:
+def build(run_dir: Path, name: str, etsy: list[dict], bas: list[dict], key: str, cost_add, when: str,
+          opps: list[dict] | None = None, tl: list[dict] | None = None) -> Path:
     etsy = [x for x in etsy if x.get("is_jewelry", True)]
     bas = [x for x in bas if x.get("is_jewelry", True)]
     st = stats(etsy, bas)
@@ -232,7 +296,7 @@ def build(run_dir: Path, name: str, etsy: list[dict], bas: list[dict], key: str,
     if usd:
         cost_add("جمع‌بندی", 1, usd)
     from . import costs
-    page = render(name, etsy, bas, st, points, costs.summary(run_dir), when)
+    page = render(name, etsy, bas, st, points, costs.summary(run_dir), when, opps=opps, tl=tl)
     (run_dir / "stats.json").write_text(json.dumps({**st, "points": points}, ensure_ascii=False, default=str,
                                                    indent=1), encoding="utf-8")
     p = run_dir / "report.html"
