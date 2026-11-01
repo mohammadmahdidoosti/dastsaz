@@ -25,7 +25,13 @@ def test_guard_busy():
     assert guard.caravan_busy({"lanes": {"site": {"running": True}}, "autopilot": {"current": None}}) == ""
 
 
-def test_quiet_hours():
+def test_guard_off_by_default():
+    assert C.GUARD is False and guard.check() == ""
+
+
+def test_quiet_hours(monkeypatch):
+    monkeypatch.setattr(C, "QUIET_FROM", 0)
+    monkeypatch.setattr(C, "QUIET_TO", 9)
     tz = dt.timezone.utc
     assert guard.quiet_now(dt.datetime(2026, 1, 1, 3, tzinfo=tz))
     assert not guard.quiet_now(dt.datetime(2026, 1, 1, 12, tzinfo=tz))

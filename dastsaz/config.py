@@ -9,9 +9,11 @@ DATA_DIR = Path(os.environ.get("DATA_DIR", Path(__file__).resolve().parent.paren
 # Caravan Sanat crawler: we only READ its public status, never touch it
 CARAVAN_STATUS_URL = os.environ.get("CARAVAN_STATUS_URL", "https://crawler.caravansanat.com/api/status")
 
-# Dastsaz never crawls in these Tehran hours (the Caravan night crawl's time)
-QUIET_FROM = int(os.environ.get("QUIET_FROM", "0"))     # 00:00
-QUIET_TO = int(os.environ.get("QUIET_TO", "9"))         # 09:00
+# Waiting for the Caravan crawler / quiet night hours: OFF by default (owner's decision 2026-11-01:
+# speed first, Dastsaz is light and crawls other sites). Turn on with GUARD=1 if ever needed.
+GUARD = os.environ.get("GUARD", "0") == "1"
+QUIET_FROM = int(os.environ.get("QUIET_FROM", "0"))     # used only when GUARD=1
+QUIET_TO = int(os.environ.get("QUIET_TO", "0"))         # equal hours = no quiet time
 TIMEZONE = "Asia/Tehran"
 
 # AI through OpenRouter (same service the Caravan crawler uses)

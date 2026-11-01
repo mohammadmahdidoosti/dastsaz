@@ -73,14 +73,14 @@ button:disabled{background:#ccc}a{color:#8a5a00}.err{color:#b00}.muted{color:#8a
 <body><h1>دست‌ساز — گزارش ترند جواهرات</h1>
 <div class="box" id="st">...</div>
 <div class="box"><button id="go" onclick="go()">ساختن گزارش جدید</button>
-<p class="muted">کراول آرام است و فقط وقتی کراولر کاروان صنعت آزاد است و بیرون از ساعت ۰ تا ۹ صبح اجرا می‌شود.</p></div>
+<p class="muted">کراول باسلام آرام است؛ اتسی روی سرورهای Apify اجرا می‌شود.</p></div>
 <div class="box"><h3>گزارش‌ها</h3><div id="list">...</div></div>
 <script>
 const F=n=>String(n).replace(/[0-9]/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
 async function load(){const s=await (await fetch('api/status')).json();const j=s.job;
 let t=j.running?`در حال ساخت «${j.run}» — مرحله: ${s.step_fa}${j.total?` (${F(j.done)} از ${F(j.total)})`:''}<br><span class=muted>${j.note||''}</span>`
 :(j.error?`<span class=err>خطا در «${j.run}»: ${j.error}</span>`:(j.run?`آخرین گزارش «${j.run}» آماده شد.`:'آماده.'));
-t+=`<br><span class=muted>کراولر کاروان: ${s.guard||'آزاد'}</span>`;
+if(s.guard)t+=`<br><span class=muted>منتظر: ${s.guard}</span>`;
 document.getElementById('st').innerHTML=t;document.getElementById('go').disabled=j.running;
 document.getElementById('list').innerHTML=s.runs.map(r=>r.report?`<p><a href="report/${r.name}" target=_blank>${r.name}</a> — هزینه ${F(r.usd)} دلار · <a href="csv/${r.name}">فایل اکسل (CSV)</a></p>`:`<p>${r.name} (ناتمام)</p>`).join('')||'هنوز گزارشی نیست.'}
 async function go(){const r=await (await fetch('api/run',{method:'POST'})).json();if(r.error)alert(r.error);load()}

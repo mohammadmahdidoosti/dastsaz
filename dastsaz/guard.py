@@ -19,6 +19,8 @@ log = logging.getLogger(__name__)
 
 
 def quiet_now(now: dt.datetime | None = None) -> bool:
+    if C.QUIET_FROM == C.QUIET_TO:
+        return False
     h = (now or dt.datetime.now(ZoneInfo(C.TIMEZONE))).hour
     if C.QUIET_FROM <= C.QUIET_TO:
         return C.QUIET_FROM <= h < C.QUIET_TO
@@ -38,6 +40,8 @@ def caravan_busy(status: dict) -> str:
 
 
 def check() -> str:
+    if not C.GUARD:
+        return ""
     if quiet_now():
         return f"ساعت آرام شب ({C.QUIET_FROM}:00 تا {C.QUIET_TO}:00 تهران)"
     try:
