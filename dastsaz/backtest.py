@@ -290,7 +290,7 @@ def run_reviews(queries: list[str] | None = None, n: int = 40, per: int = 5, pro
             words = q.split()
             ids = [str(c["id"]) for c in cards if all(w in c.get("title", "") for w in words)][:per]
             cache["designs"][q] = ids
-        for pid in cache["designs"][q]:
+        for pid in cache["designs"][q][:per]:
             if not cache["products"].get(pid):
                 cache["products"][pid] = (product_reviews(s, pid, since, sleep=sleep) if market == "basalam"
                                           else dk_reviews(s, pid, since, sleep=sleep))
@@ -303,7 +303,7 @@ def run_reviews(queries: list[str] | None = None, n: int = 40, per: int = 5, pro
         if q not in queries:
             continue
         cnt = defaultdict(int)
-        for pid in ids:
+        for pid in ids[:per]:
             for x in cache["products"].get(pid, []):
                 cnt[x[:7]] += 1
         s_ = [float(cnt.get(mo, 0)) for mo in months]
