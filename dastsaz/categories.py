@@ -3,7 +3,9 @@
 Base list: Etsy's full category tree (dastsaz/etsy_categories.txt, ~3000 names). Once, AI turns each into the Persian
 words Iranians search on Basalam/Digikala and says whether a small Iranian maker could make or source it.
 Every week, per category (one slow search each, free): Basalam weekly sales of the top matching products, number of
-competing products, Digikala total; week-over-week change and life stage. Monthly (optional, ~$0.3): Google Trends
+competing products, Digikala reviews of matching best-sellers, Google suggestions; plus Google Ads volume if uploaded.
+One store alone is biased (Basalam buyers differ from Digikala and Instagram buyers), so the board ranks by the average
+rank over all sources and shows in how many sources a category is strong; week-over-week change and life stage. Monthly (optional, ~$0.3): Google Trends
 Iran 5 years -> season and long-run direction, and the same accuracy test at category level.
 """
 from __future__ import annotations
@@ -84,14 +86,15 @@ def categories(min_fit: int = 1) -> list[dict]:
 
 def measure(cats: list[dict], progress=None, sleep=time.sleep) -> dict:
     """One slow Basalam search (+ one Digikala) per category."""
-    sb, sd = basalam._session(), digikala._session()
+    import requests
+    sb, sd, sg = basalam._session(), digikala._session(), requests.Session()
     snap = {"date": dt.date.today().isoformat(), "cats": {}}
     for i, c in enumerate(cats):
         q = c["fa"]
         row = {"top": c["top"], "name": c["name"], "fit": c["fit"]}
+        words = [w for w in _plain(q).split() if len(w) > 1]
         try:
             cards, total = basalam.search(q, size=20, session=sb, sleep=sleep)
-            words = [w for w in _plain(q).split() if len(w) > 1]
             match = [x for x in cards if all(w in _plain(x.get("title")) for w in words)][:15]
             row.update({"supply": total, "match": len(match), "week": sum(x["sales_week"] for x in match),
                         "alltime": sum(x["sales_total"] for x in match),
@@ -104,9 +107,16 @@ def measure(cats: list[dict], progress=None, sleep=time.sleep) -> dict:
         if C.DIGIKALA:
             try:
                 dcards, dtotal = digikala.search(q, session=sd, sleep=lambda *_: time.sleep(random.uniform(1, 2)))
-                row.update({"dk_total": dtotal, "dk_reviews": sum(x.get("reviews") or 0 for x in dcards[:10])})
+                dm = [x for x in dcards if all(w in _plain(x.get("title")) for w in words)][:10]
+                row.update({"dk_total": dtotal, "dk_match": len(dm), "dk_reviews": sum(x.get("reviews") or 0 for x in dm)})
             except Exception as e:  # noqa: BLE001
                 log.warning("radar digikala %s: %s", q, e)
+        try:
+            from .needs import google_suggest
+            sug = google_suggest(sg, q)
+            row["g_suggest"] = sum(1 for x in sug if all(w in _plain(x) for w in words))
+        except Exception as e:  # noqa: BLE001
+            log.warning("radar google %s: %s", q, e)
         snap["cats"][q] = row
         if progress:
             progress(i + 1, len(cats))
@@ -118,12 +128,48 @@ def history() -> list[dict]:
     return [json.loads(f.read_text(encoding="utf-8")) for f in sorted(_dir().glob("20*.json"))]
 
 
-def board(hist: list[dict] | None = None) -> list[dict]:
-    """Latest week per category, with demand per competitor, week-over-week change and life stage."""
+SOURCES = [("week", "باسلام"), ("dk_reviews", "دیجی‌کالا"), ("g_suggest", "گوگل"), ("ads", "Ads"), ("ig", "اینستاگرام")]
+
+
+def _ads_map() -> dict:
+    try:
+        from . import ads
+        return {_plain(r["keyword"]): r.get("avg") for r in ads.latest()[1] if r.get("avg") is not None}
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+def combine(rows: list[dict]) -> list[dict]:
+    """Each source ranks the categories (0 = last, 1 = first); score = average over the sources that have a number.
+    agree = in how many sources the category is in the top third; strong = names of those sources."""
+    for key, _ in SOURCES:
+        vals = sorted(r[key] for r in rows if r.get(key) is not None)
+        n = len(vals)
+        if n < 2 or vals[0] == vals[-1]:
+            continue
+        for r in rows:
+            v = r.get(key)
+            if v is None:
+                continue
+            below = sum(1 for x in vals if x < v)
+            same = sum(1 for x in vals if x == v)
+            r.setdefault("pct", {})[key] = (below + (same - 1) / 2) / (n - 1)
+    for r in rows:
+        p = r.get("pct") or {}
+        r["score"] = sum(p.values()) / len(p) if p else 0.0
+        r["n_src"] = len(p)
+        r["strong"] = [name for key, name in SOURCES if p.get(key, 0) >= 2 / 3]
+        r["agree"] = len(r["strong"])
+    return sorted(rows, key=lambda r: (-r["score"], -r["gap"]))
+
+
+def board(hist: list[dict] | None = None, ads_map: dict | None = None) -> list[dict]:
+    """Latest week per category: demand per competitor, week-over-week change, life stage and the multi-source score."""
     from .snapshot import stage
     hist = hist if hist is not None else history()
     if not hist:
         return []
+    ads_map = _ads_map() if ads_map is None else ads_map
     cur, prev = hist[-1]["cats"], (hist[-2]["cats"] if len(hist) > 1 else {})
     rows = []
     for q, r in cur.items():
@@ -132,10 +178,15 @@ def board(hist: list[dict] | None = None) -> list[dict]:
         p = prev.get(q) or {}
         ch = (r["week"] - p["week"]) / p["week"] if p.get("week") else None
         sup = (r["supply"] - p["supply"]) / p["supply"] if p.get("supply") else 0.0
-        rows.append({"q": q, **r, "per_seller": r["week"] / max(r.get("match") or 1, 1),
-                     "gap": r["week"] / max(r.get("supply") or 1, 1) * 1000,
-                     "change": ch, "stage": stage(ch, sup, r.get("supply") or 0) if p else "اولین هفته"})
-    return sorted(rows, key=lambda r: -(r["gap"]))
+        row = {"q": q, **r, "per_seller": r["week"] / max(r.get("match") or 1, 1),
+               "gap": r["week"] / max(r.get("supply") or 1, 1) * 1000,
+               "change": ch, "stage": stage(ch, sup, r.get("supply") or 0) if p else "اولین هفته"}
+        if "dk_match" not in r:          # older weeks: Digikala reviews were not filtered for relevance
+            row.pop("dk_reviews", None)
+        if row.get("ads") is None and _plain(q) in ads_map:
+            row["ads"] = ads_map[_plain(q)]
+        rows.append(row)
+    return combine(rows)
 
 
 def run(progress=None, sleep=time.sleep, n: int = 250) -> dict:

@@ -800,17 +800,27 @@ def radar_page(rows: list[dict], n_cats: int, weeks: int, trends: dict | None = 
     if trends:
         for x in (trends.get("example") or [])[1:]:
             seas[x["name"]] = x
+    def src(r, key):
+        v = r.get(key)
+        return "—" if v is None else fa(v)
+
     tr = "".join(
         f"<tr><td><b>{E(r['q'])}</b><div class='muted'>{E(r['name'])} · {E(r['top'])}</div></td>"
+        f"<td><b>{fa(round(r.get('score', 0) * 100))}</b></td>"
+        f"<td>{E('، '.join(r.get('strong') or [])) or '—'}<div class='muted'>{fa(r.get('agree', 0))} از {fa(r.get('n_src', 0))} منبع</div></td>"
         f"<td>{fa(r['week'])}</td><td>{fa(r.get('supply'))}</td><td>{fa(round(r['gap'], 1))}</td>"
+        f"<td>{src(r, 'dk_reviews')}</td><td>{src(r, 'g_suggest')}</td><td>{src(r, 'ads')}</td>"
         f"<td>{_pct(r['change'], True) if r.get('change') is not None else '—'}</td><td>{E(r['stage'])}</td>"
-        f"<td>{toman(r.get('price'))}</td><td>{fa(r.get('dk_total'))}</td>"
+        f"<td>{toman(r.get('price'))}</td>"
         f"<td>{_pct(seas[r['q']]['season_avg'], True) if r['q'] in seas and seas[r['q']].get('season_avg') is not None else '—'}</td></tr>"
         for r in rows[:150])
-    body = (f"<section><h2>دسته‌ها به ترتیب «فرصت»</h2><p class='lead'>{fa(n_cats)} دسته از فهرست کامل Etsy، به فارسیِ جست‌وجوی "
-            f"ایرانی‌ها. «فرصت» = فروش این هفته‌ی پرفروش‌های باسلام به ازای هر هزار محصول رقیب: تقاضای زیاد با رقیب کم. "
-            f"{fa(weeks)} هفته اندازه‌گیری شده؛ تغییر هفتگی و مرحله از هفته‌ی دوم معنا دارد. ستون آخر: انتظار فصلی "
-            f"سه ماه آینده از گوگل (اگر اجرا شده).</p>"
-            f"<table><tr><th>دسته</th><th>فروش هفته</th><th>رقیب</th><th>فرصت</th><th>تغییر هفتگی</th><th>مرحله</th>"
-            f"<th>قیمت میانه</th><th>دیجی‌کالا</th><th>فصل ۳ ماه آینده</th></tr>{tr}</table></section>")
+    body = (f"<section><h2>دسته‌ها به ترتیب نمره‌ی چندمنبعی</h2><p class='lead'>{fa(n_cats)} دسته از فهرست کامل Etsy، به فارسیِ جست‌وجوی "
+            f"ایرانی‌ها. یک فروشگاه به‌تنهایی یک‌طرفه است (مشتری باسلام با مشتری دیجی‌کالا و اینستاگرام فرق دارد)، پس هر منبع "
+            f"دسته‌ها را جدا رتبه می‌دهد و «نمره» میانگین رتبه‌ها از ۱۰۰ است. «قوی در» = منبع‌هایی که دسته در یک‌سوم بالای آن‌هاست؛ "
+            f"دسته‌ای که در همه‌ی منبع‌ها قوی است مطمئن‌ترین است، و دسته‌ای که فقط در یک منبع قوی است کانال فروشش را نشان می‌دهد.</p>"
+            f"<p class='muted'>باسلام = فروش این هفته‌ی محصولات مرتبط · دیجی‌کالا = نظرهای پرفروش‌های مرتبط (اندازه‌ی بازار عمومی) · "
+            f"گوگل = چند پیشنهاد جست‌وجوی گوگل این عبارت را دارد (۰ تا ۱۰) · Ads = جست‌وجوی ماهانه از فایل Keyword Planner (اگر بارگذاری شده) · "
+            f"«فرصت» = فروش باسلام به ازای هر هزار رقیب. {fa(weeks)} هفته اندازه‌گیری شده؛ تغییر هفتگی از هفته‌ی دوم معنا دارد.</p>"
+            f"<table><tr><th>دسته</th><th>نمره</th><th>قوی در</th><th>فروش هفته باسلام</th><th>رقیب</th><th>فرصت</th>"
+            f"<th>دیجی‌کالا</th><th>گوگل</th><th>Ads</th><th>تغییر هفتگی</th><th>مرحله</th><th>قیمت میانه</th><th>فصل ۳ ماه آینده</th></tr>{tr}</table></section>")
     return _shell("رادار دسته‌ها", "شکار دسته", "کدام دسته‌ها بزرگ می‌شوند و کجا رقیب کم است؛ فرصت‌یابی عمیق برای دسته‌های برتر.", body)

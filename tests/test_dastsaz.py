@@ -568,3 +568,36 @@ def test_schedule_due():
     assert S.due(sat, {"snapshot": "2026-11-07"}) == []
     assert S.due(sat.replace(hour=1), {}) == []
     assert S.due(dt.datetime(2026, 11, 3, 4, 0, tzinfo=S.TZ), {}) == ["radar"]
+
+
+def test_radar_multi_source_score():
+    from dastsaz import categories as K, page
+    cats = {"شال": {"top": "C", "name": "Scarves", "fit": 2, "supply": 10000, "match": 15, "week": 130,
+                    "dk_match": 5, "dk_reviews": 100, "g_suggest": 2},
+            "گردنبند": {"top": "J", "name": "Necklaces", "fit": 2, "supply": 5000, "match": 15, "week": 20,
+                        "dk_match": 8, "dk_reviews": 9000, "g_suggest": 10},
+            "مهر ناخن": {"top": "B", "name": "Nail", "fit": 2, "supply": 30, "match": 5, "week": 5,
+                         "dk_match": 0, "dk_reviews": 0, "g_suggest": 0},
+            "دفتر": {"top": "P", "name": "Notebooks", "fit": 2, "supply": 900, "match": 3, "week": 0,
+                     "dk_total": 900, "dk_reviews": 80000}}          # old week: unfiltered Digikala -> ignored
+    rows = K.board([{"date": "2026-11-02", "cats": cats}], ads_map={"گردنبند": 9900, "شال": 300})
+    top = rows[0]
+    assert top["q"] == "گردنبند" and "دیجی‌کالا" in top["strong"] and "Ads" in top["strong"]
+    assert "dk_reviews" not in next(r for r in rows if r["q"] == "دفتر")
+    assert rows[-1]["q"] in ("دفتر", "مهر ناخن") and rows[-1]["score"] < top["score"]
+    assert all(0 <= r["score"] <= 1 for r in rows)
+    assert "نمره" in page.radar_page(rows, 4, 1)
+
+
+def test_radar_measure_filters_digikala(tmp_path, monkeypatch):
+    from dastsaz import categories as K, basalam, digikala, needs
+    monkeypatch.setattr(C, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(C, "DIGIKALA", True)
+    monkeypatch.setattr(basalam, "search", lambda q, **k: ([{"title": "مهر ناخن طرح گل", "sales_week": 4, "sales_total": 9,
+                                                             "price_toman": 100}], 30))
+    monkeypatch.setattr(digikala, "search", lambda q, **k: ([{"title": "مهر ناخن", "reviews": 50},
+                                                              {"title": "خودکار", "reviews": 9999}], 2))
+    monkeypatch.setattr(needs, "google_suggest", lambda s, q: ["مهر ناخن", "مهر ناخن طرح", "مهر چوبی"])
+    snap = K.measure([{"top": "B", "name": "Nail", "fit": 2, "fa": "مهر ناخن"}], sleep=lambda *_: None)
+    r = snap["cats"]["مهر ناخن"]
+    assert r["week"] == 4 and r["dk_reviews"] == 50 and r["dk_match"] == 1 and r["g_suggest"] == 2
