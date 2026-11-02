@@ -1,6 +1,6 @@
 """The category radar: which whole categories are growing in Iran, so we hunt where the market gets bigger.
 
-Base list: Etsy's full category tree (data/etsy_categories.txt, ~3000 names). Once, AI turns each into the Persian
+Base list: Etsy's full category tree (dastsaz/etsy_categories.txt, ~3000 names). Once, AI turns each into the Persian
 words Iranians search on Basalam/Digikala and says whether a small Iranian maker could make or source it.
 Every week, per category (one slow search each, free): Basalam weekly sales of the top matching products, number of
 competing products, Digikala total; week-over-week change and life stage. Monthly (optional, ~$0.3): Google Trends
@@ -23,7 +23,7 @@ log = logging.getLogger(__name__)
 TOP = ["Accessories", "Art & Collectibles", "Bags & Purses", "Bath & Beauty", "Books, Films & Music", "Clothing",
        "Craft Supplies & Tools", "Electronics & Accessories", "Home & Living", "Jewellery", "Paper & Party Supplies",
        "Pet Supplies", "Shoes", "Toys & Games", "Weddings"]
-RAW = Path(__file__).resolve().parent.parent / "data" / "etsy_categories.txt"
+RAW = Path(__file__).resolve().parent / "etsy_categories.txt"
 
 ASK = """این‌ها دسته‌های محصول در Etsy است (top = دسته‌ی اصلی). برای هر کدام، به فارسی:
 - fa: همان عبارتی که یک ایرانی برای خرید این محصول در باسلام یا دیجی‌کالا جست‌وجو می‌کند (۱ تا ۳ کلمه، رایج، بدون برند)
