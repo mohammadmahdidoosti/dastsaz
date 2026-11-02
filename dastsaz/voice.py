@@ -36,7 +36,7 @@ ASK_CHUNK = """این‌ها نظرهای خریداران جواهر و بدل�
 ASK_MERGE = """این‌ها موضوع‌های نظر خریداران جواهر است که از چند دسته‌ی جدا آمده. موضوع‌های هم‌معنی را یکی کن و count ها را جمع بزن.
 برای هر موضوع نهایی یک fix هم بنویس: یک جمله‌ی عملی برای سازنده (جنس، اندازه، آبکاری، بسته‌بندی، توضیح محصول) که نسخه‌ی ما را بهتر کند.
 برای praise، fix یعنی چه چیزی را حتماً حفظ کنیم. فقط از همین داده.
-فقط JSON: {"themes": [{"theme": "", "kind": "", "count": 0, "examples": [], "fix": ""}]} به ترتیب count."""
+حداکثر ۲۵ موضوع. فقط JSON: {"themes": [{"theme": "", "kind": "", "count": 0, "fix": ""}]} به ترتیب count."""
 
 
 def _dir():
@@ -95,9 +95,22 @@ def cluster(rows: list[dict], key: str) -> tuple[list[dict], float]:
         parts += out.get("themes") or []
     if not parts:
         return [], usd
-    out, c = ai.ask_json(ASK_MERGE, parts, key, max_tokens=4000)
+    examples = {}
+    for t in parts:
+        examples.setdefault(t.get("theme"), t.get("examples") or [])
+    slim = [{"theme": t.get("theme"), "kind": t.get("kind"), "count": t.get("count")} for t in parts if t.get("theme")]
+    out, c = ai.ask_json(ASK_MERGE, slim, key, max_tokens=6000)
     usd += c
     themes = [t for t in out.get("themes") or [] if t.get("theme")]
+    if not themes:                         # merge failed: group by the exact names
+        agg = {}
+        for t in slim:
+            a = agg.setdefault(t["theme"], {"theme": t["theme"], "kind": t.get("kind"), "count": 0, "fix": ""})
+            a["count"] += int(t.get("count") or 0)
+        themes = list(agg.values())
+    for t in themes:
+        if not t.get("examples"):
+            t["examples"] = examples.get(t["theme"], [])
     total = len(rows) or 1
     for t in themes:
         t["count"] = int(t.get("count") or 0)
@@ -123,9 +136,14 @@ def ig_intent(posts: list[dict] | None = None) -> list[dict]:
     return sorted(out, key=lambda r: (-r["intent"], -(r["likes"] or 0)))
 
 
-def run(progress=None, sleep=time.sleep) -> dict:
+def run(progress=None, sleep=time.sleep, reuse: bool = True) -> dict:
     ds = designs()
-    rows = collect(ds, progress=progress, sleep=sleep)
+    raw = _dir() / "reviews.json"
+    if reuse and raw.exists() and time.time() - raw.stat().st_mtime < 7 * 86400:
+        rows = json.loads(raw.read_text(encoding="utf-8"))      # re-group last week's reviews without reading again
+    else:
+        rows = collect(ds, progress=progress, sleep=sleep)
+        raw.write_text(json.dumps(rows, ensure_ascii=False), encoding="utf-8")
     themes, usd = cluster(rows, C.secret("OPENROUTER_API_KEY"))
     stars = Counter(int(r["stars"]) for r in rows if isinstance(r.get("stars"), (int, float)) and r["stars"])
     res = {"date": dt.date.today().isoformat(), "reviews": len(rows), "designs": [o["q"] for o in ds],

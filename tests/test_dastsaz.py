@@ -476,3 +476,10 @@ def test_metals_record(tmp_path, monkeypatch):
     metals.record({"price_dollar_rl": {"toman": 91000}, "geram18": {"toman": 2500000}})
     lines = (tmp_path / "macro" / "daily.jsonl").read_text().splitlines()
     assert len(lines) == 1 and '"price_dollar_rl": 91000' in lines[0]
+
+
+def test_ai_parse_repairs_cut_answers():
+    from dastsaz.ai import _parse
+    assert _parse('x {"themes": [{"a": 1}, {"a": 2}]} y') == {"themes": [{"a": 1}, {"a": 2}]}
+    assert _parse('{"themes": [{"a": 1}, {"a": 2}, {"a": ') == {"themes": [{"a": 1}, {"a": 2}]}
+    assert _parse("no json") == {}
