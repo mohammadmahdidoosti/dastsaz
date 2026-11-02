@@ -14,6 +14,7 @@ import datetime as dt
 import json
 import logging
 import random
+import re
 import time
 from pathlib import Path
 
@@ -190,11 +191,56 @@ def board(hist: list[dict] | None = None, ads_map: dict | None = None) -> list[d
 
 
 def run(progress=None, sleep=time.sleep, n: int = 250) -> dict:
-    """Weekly: the best-suited categories (fit 2 first), at most n, ~7 s each (Basalam is read gently)."""
+    """Weekly: the best-suited categories (fit 2 first), at most n, ~7 s each (Basalam is read gently);
+    then Instagram hashtags for the same categories if an Apify key is set (~$0.35)."""
     if not categories(0):
         build(C.secret("OPENROUTER_API_KEY"))
     cats = (categories(2) + [c for c in categories(1) if c["fit"] == 1])[:n]
-    return measure(cats, progress=progress, sleep=sleep)
+    snap = measure(cats, progress=progress, sleep=sleep)
+    if C.secret("APIFY_TOKEN"):
+        try:
+            instagram()
+        except Exception as e:  # noqa: BLE001
+            log.warning("radar instagram: %s", e)
+    return history()[-1] if history() else snap
+
+
+IG_ACTOR = "apify~instagram-hashtag-stats"
+
+
+def hashtag(q: str) -> str:
+    return re.sub(r"\s+", "_", _plain(q))
+
+
+def instagram(token: str | None = None, max_usd: float = 1.0, ap=None) -> int:
+    """Instagram hashtag size and posts per day for every category in the latest radar week; written into that week."""
+    from .etsy import Apify
+    hist = history()
+    if not hist:
+        return 0
+    f = sorted(_dir().glob("20*.json"))[-1]
+    snap = json.loads(f.read_text(encoding="utf-8"))
+    tags = {hashtag(q): q for q in snap["cats"]}
+    ap = ap or Apify(token or C.secret("APIFY_TOKEN"))
+    run = ap.run({"hashtags": list(tags)}, max_usd, actor=IG_ACTOR)
+    items = ap.items(run["defaultDatasetId"]) if run.get("defaultDatasetId") else []
+    got = 0
+    for it in items:
+        name = _plain(str(it.get("name") or "").lstrip("#"))
+        q = tags.get(name) or tags.get(hashtag(name))
+        if not q:
+            continue
+        posts = it.get("postsCount")
+        day = it.get("postsPerDay")
+        row = snap["cats"][q]
+        row["ig_posts"] = int(posts) if isinstance(posts, (int, float)) else None
+        row["ig_day"] = float(day) if isinstance(day, (int, float)) else None
+        row["ig"] = row["ig_day"] if row["ig_day"] is not None else row["ig_posts"]
+        got += 1
+    snap["ig_usd"] = ap.cost(run)
+    f.write_text(json.dumps(snap, ensure_ascii=False), encoding="utf-8")
+    log.info("radar instagram: %d of %d hashtags, $%.2f", got, len(tags), snap["ig_usd"])
+    return got
 
 
 def trends(n: int = 150) -> dict:

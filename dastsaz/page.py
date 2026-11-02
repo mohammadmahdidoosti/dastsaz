@@ -809,7 +809,7 @@ def radar_page(rows: list[dict], n_cats: int, weeks: int, trends: dict | None = 
         f"<td><b>{fa(round(r.get('score', 0) * 100))}</b></td>"
         f"<td>{E('، '.join(r.get('strong') or [])) or '—'}<div class='muted'>{fa(r.get('agree', 0))} از {fa(r.get('n_src', 0))} منبع</div></td>"
         f"<td>{fa(r['week'])}</td><td>{fa(r.get('supply'))}</td><td>{fa(round(r['gap'], 1))}</td>"
-        f"<td>{src(r, 'dk_reviews')}</td><td>{src(r, 'g_suggest')}</td><td>{src(r, 'ads')}</td>"
+        f"<td>{src(r, 'dk_reviews')}</td><td>{src(r, 'g_suggest')}</td><td>{src(r, 'ads')}</td><td>{src(r, 'ig_posts')}<div class='muted'>{src(r, 'ig_day')} در روز</div></td>"
         f"<td>{_pct(r['change'], True) if r.get('change') is not None else '—'}</td><td>{E(r['stage'])}</td>"
         f"<td>{toman(r.get('price'))}</td>"
         f"<td>{_pct(seas[r['q']]['season_avg'], True) if r['q'] in seas and seas[r['q']].get('season_avg') is not None else '—'}</td></tr>"
@@ -819,8 +819,8 @@ def radar_page(rows: list[dict], n_cats: int, weeks: int, trends: dict | None = 
             f"دسته‌ها را جدا رتبه می‌دهد و «نمره» میانگین رتبه‌ها از ۱۰۰ است. «قوی در» = منبع‌هایی که دسته در یک‌سوم بالای آن‌هاست؛ "
             f"دسته‌ای که در همه‌ی منبع‌ها قوی است مطمئن‌ترین است، و دسته‌ای که فقط در یک منبع قوی است کانال فروشش را نشان می‌دهد.</p>"
             f"<p class='muted'>باسلام = فروش این هفته‌ی محصولات مرتبط · دیجی‌کالا = نظرهای پرفروش‌های مرتبط (اندازه‌ی بازار عمومی) · "
-            f"گوگل = چند پیشنهاد جست‌وجوی گوگل این عبارت را دارد (۰ تا ۱۰) · Ads = جست‌وجوی ماهانه از فایل Keyword Planner (اگر بارگذاری شده) · "
+            f"گوگل = چند پیشنهاد جست‌وجوی گوگل این عبارت را دارد (۰ تا ۱۰) · Ads = جست‌وجوی ماهانه از فایل Keyword Planner (اگر بارگذاری شده) · اینستاگرام = تعداد پست‌های هشتگ و پست تازه در روز (نمره با پست در روز) · "
             f"«فرصت» = فروش باسلام به ازای هر هزار رقیب. {fa(weeks)} هفته اندازه‌گیری شده؛ تغییر هفتگی از هفته‌ی دوم معنا دارد.</p>"
             f"<table><tr><th>دسته</th><th>نمره</th><th>قوی در</th><th>فروش هفته باسلام</th><th>رقیب</th><th>فرصت</th>"
-            f"<th>دیجی‌کالا</th><th>گوگل</th><th>Ads</th><th>تغییر هفتگی</th><th>مرحله</th><th>قیمت میانه</th><th>فصل ۳ ماه آینده</th></tr>{tr}</table></section>")
+            f"<th>دیجی‌کالا</th><th>گوگل</th><th>Ads</th><th>اینستاگرام</th><th>تغییر هفتگی</th><th>مرحله</th><th>قیمت میانه</th><th>فصل ۳ ماه آینده</th></tr>{tr}</table></section>")
     return _shell("رادار دسته‌ها", "شکار دسته", "کدام دسته‌ها بزرگ می‌شوند و کجا رقیب کم است؛ فرصت‌یابی عمیق برای دسته‌های برتر.", body)

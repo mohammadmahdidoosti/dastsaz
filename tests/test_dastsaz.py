@@ -601,3 +601,28 @@ def test_radar_measure_filters_digikala(tmp_path, monkeypatch):
     snap = K.measure([{"top": "B", "name": "Nail", "fit": 2, "fa": "مهر ناخن"}], sleep=lambda *_: None)
     r = snap["cats"]["مهر ناخن"]
     assert r["week"] == 4 and r["dk_reviews"] == 50 and r["dk_match"] == 1 and r["g_suggest"] == 2
+
+
+def test_radar_instagram_hashtags(tmp_path, monkeypatch):
+    import json as J
+    from dastsaz import categories as K
+    monkeypatch.setattr(C, "DATA_DIR", tmp_path)
+    (K._dir() / "categories.json").write_text("[]", encoding="utf-8")
+    (K._dir() / "2026-11-02.json").write_text(J.dumps({"date": "2026-11-02", "cats": {
+        "مهر ناخن": {"week": 5, "supply": 30}, "آویز لباس": {"week": 24, "supply": 968}}}, ensure_ascii=False), encoding="utf-8")
+
+    class FakeAp:
+        def run(self, inp, usd, actor=None):
+            assert set(inp["hashtags"]) == {"مهر_ناخن", "آویز_لباس"}
+            return {"defaultDatasetId": "d"}
+
+        def items(self, d):
+            return [{"name": "#مهر_ناخن", "postsCount": 52000, "postsPerDay": 40}, {"name": "x", "postsCount": 1}]
+
+        def cost(self, run):
+            return 0.01
+
+    assert K.instagram(ap=FakeAp()) == 1
+    rows = K.board(ads_map={})
+    r = next(x for x in rows if x["q"] == "مهر ناخن")
+    assert r["ig_posts"] == 52000 and r["ig"] == 40
