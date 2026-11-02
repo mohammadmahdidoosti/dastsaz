@@ -630,3 +630,11 @@ def test_radar_instagram_hashtags(tmp_path, monkeypatch):
     r = next(x for x in rows if x["q"] == "مهر ناخن")
     assert r["ig"] == 1.0 and r["ig_sellers"] == 2 and r["ig_likes"] == 4
     assert next(x for x in rows if x["q"] == "آویز لباس")["ig_day"] is None
+
+
+def test_radar_pick_spreads_groups():
+    from dastsaz import categories as K
+    cats = [{"top": "A", "fa": f"الف {i}", "fit": 2} for i in range(10)] + \
+           [{"top": "J", "fa": "گردنبند", "fit": 2}, {"top": "J", "fa": "گردنبند", "fit": 1}, {"top": "J", "fa": "دستبند", "fit": 1}]
+    got = K.pick(cats, 4)
+    assert [c["fa"] for c in got if c["top"] == "J"] == ["گردنبند", "دستبند"] and len(got) == 4

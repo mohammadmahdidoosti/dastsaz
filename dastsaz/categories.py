@@ -190,13 +190,31 @@ def board(hist: list[dict] | None = None, ads_map: dict | None = None) -> list[d
     return combine(rows)
 
 
-def run(progress=None, sleep=time.sleep, n: int = 250) -> dict:
+def pick(cats: list[dict], n: int) -> list[dict]:
+    """n categories spread evenly over Etsy's main groups (jewellery, home, toys...), best fit first in each group,
+    one per Persian search term. Taking the first n of the list would read only the first groups."""
+    groups: dict[str, list] = {}
+    seen: set[str] = set()
+    for c in sorted(cats, key=lambda c: -c["fit"]):
+        k = _plain(c["fa"])
+        if k and k not in seen:
+            seen.add(k)
+            groups.setdefault(c["top"], []).append(c)
+    out, i = [], 0
+    while len(out) < n and any(i < len(g) for g in groups.values()):
+        for g in groups.values():
+            if i < len(g) and len(out) < n:
+                out.append(g[i])
+        i += 1
+    return out
+
+
+def run(progress=None, sleep=time.sleep, n: int = 400) -> dict:
     """Weekly: the best-suited categories (fit 2 first), at most n, ~7 s each (Basalam is read gently);
     then Instagram hashtags for the same categories if an Apify key is set (~$0.35)."""
     if not categories(0):
         build(C.secret("OPENROUTER_API_KEY"))
-    cats = (categories(2) + [c for c in categories(1) if c["fit"] == 1])[:n]
-    snap = measure(cats, progress=progress, sleep=sleep)
+    snap = measure(pick(categories(1), n), progress=progress, sleep=sleep)
     if C.secret("APIFY_TOKEN"):
         try:
             instagram()
