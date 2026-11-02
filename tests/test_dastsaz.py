@@ -558,3 +558,13 @@ def test_categories_list_and_board(tmp_path, monkeypatch):
     rows = K.board(hist)
     assert rows[0]["change"] == 0.6 and rows[0]["stage"] == "نوظهور" and round(rows[0]["gap"], 1) == 78.4
     assert "قاب گوشی" in page.radar_page(rows, 1, 2)
+
+
+def test_schedule_due():
+    import datetime as dt
+    from dastsaz import schedule as S
+    sat = dt.datetime(2026, 11, 7, 3, 0, tzinfo=S.TZ)
+    assert S.due(sat, {}) == ["snapshot"]
+    assert S.due(sat, {"snapshot": "2026-11-07"}) == []
+    assert S.due(sat.replace(hour=1), {}) == []
+    assert S.due(dt.datetime(2026, 11, 3, 4, 0, tzinfo=S.TZ), {}) == ["radar"]

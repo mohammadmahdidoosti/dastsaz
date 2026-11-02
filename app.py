@@ -25,7 +25,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from dastsaz import config as C
-from dastsaz import ads, categories, guard, lab, needs, page, pipeline, snapshot, telegram, voice
+from dastsaz import ads, categories, guard, schedule, lab, needs, page, pipeline, snapshot, telegram, voice
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S")
 logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -307,6 +307,8 @@ def main():
     C.DATA_DIR.mkdir(parents=True, exist_ok=True)
     port = int(os.environ.get("PORT", "8000"))
     log.info("dastsaz on :%d, data in %s, password %s", port, C.DATA_DIR, "set" if APP_PASSWORD else "NOT SET")
+    schedule.start(lambda name, fn: JOB.start(name, task=fn),
+                   {"snapshot": lambda p: snapshot.take(progress=p), "radar": lambda p: categories.run(progress=p)})
     ThreadingHTTPServer(("0.0.0.0", port), H).serve_forever()
 
 
