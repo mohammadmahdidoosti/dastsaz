@@ -556,5 +556,5 @@ def test_categories_list_and_board(tmp_path, monkeypatch):
             {"date": "2026-11-08", "cats": {"قاب گوشی": {"top": "E", "name": "Phone Cases", "fit": 2, "supply": 1020,
                                                          "match": 10, "week": 80, "alltime": 980}}}]
     rows = K.board(hist)
-    assert rows[0]["change"] == 0.6 and rows[0]["stage"] == "در اوج" and round(rows[0]["gap"], 1) == 78.4
+    assert rows[0]["change"] == 0.6 and rows[0]["stage"] == "نوظهور" and round(rows[0]["gap"], 1) == 78.4
     assert "قاب گوشی" in page.radar_page(rows, 1, 2)
