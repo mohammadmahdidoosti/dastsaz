@@ -617,7 +617,10 @@ def test_radar_instagram_hashtags(tmp_path, monkeypatch):
             return {"defaultDatasetId": "d"}
 
         def items(self, d):
-            return [{"name": "#مهر_ناخن", "postsCount": 52000, "postsPerDay": 40}, {"name": "x", "postsCount": 1}]
+            u = "https://www.instagram.com/explore/tags/%D9%85%D9%87%D8%B1_%D9%86%D8%A7%D8%AE%D9%86"
+            return [{"inputUrl": u, "timestamp": "2026-11-02T00:00:00.000Z", "ownerUsername": "a", "likesCount": 4},
+                    {"inputUrl": u, "timestamp": "2026-11-01T00:00:00.000Z", "ownerUsername": "b", "likesCount": 10},
+                    {"inputUrl": u, "timestamp": "2026-10-31T00:00:00.000Z", "ownerUsername": "a", "likesCount": 2}]
 
         def cost(self, run):
             return 0.01
@@ -625,4 +628,5 @@ def test_radar_instagram_hashtags(tmp_path, monkeypatch):
     assert K.instagram(ap=FakeAp()) == 1
     rows = K.board(ads_map={})
     r = next(x for x in rows if x["q"] == "مهر ناخن")
-    assert r["ig_posts"] == 52000 and r["ig"] == 40
+    assert r["ig"] == 1.0 and r["ig_sellers"] == 2 and r["ig_likes"] == 4
+    assert next(x for x in rows if x["q"] == "آویز لباس")["ig_day"] is None

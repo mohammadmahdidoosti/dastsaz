@@ -118,7 +118,7 @@ button.sm{font-size:13px;padding:4px 12px;background:var(--turq);margin:4px 2px}
 <button class="sm" onclick="task('needs')">نیازهای کادو (۵ دقیقه)</button>
 <button class="sm" onclick="task('telegram')">تلگرام</button>
 <button class="sm" onclick="task('radar')">رادار دسته‌ها (حدود ۳۰ دقیقه)</button>
-<button class="sm" onclick="task('radar_ig')">اینستاگرامِ دسته‌ها (حدود ۰٫۴ دلار)</button>
+<button class="sm" onclick="task('radar_ig')">اینستاگرامِ ۶۰ دسته‌ی بالا (حدود ۱٫۵ دلار)</button>
 <button class="sm" onclick="task('radar_trends')">گوگلِ دسته‌ها (ماهانه، حدود ۰٫۵ دلار)</button></p>
 <h2>گزارش‌ها</h2><div id="list">...</div></main>
 <script>
