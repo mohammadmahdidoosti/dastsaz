@@ -530,3 +530,31 @@ def test_attribute_backtest(tmp_path, monkeypatch):
     (tmp_path / "backtest" / "reviews_raw_jewelry.json").write_text(json.dumps({"products": prods, "designs": des}))
     r = B.run_attributes()
     assert r["keywords"] == 12 and "ours" in r["scores"]
+
+
+def test_lab_channels_and_same_design(tmp_path, monkeypatch):
+    from dastsaz import lab, page
+    monkeypatch.setattr(C, "DATA_DIR", tmp_path)
+    a = lab.add("دستبند جفتی اسم", "ig_story", "needs")
+    b = lab.add("دستبند جفتی اسم", "tg_ad", "needs")
+    lab.update(a["id"], {"views": 400, "messages": 4})
+    lab.update(b["id"], {"views": 400, "messages": 16, "cost": 800000})
+    bd = lab.board()
+    assert bd["channels"]["tg_ad"]["cost_per"] == 50000 and "دستبند جفتی اسم" in bd["multi"]
+    html = page.lab_page(bd)
+    assert "یک طرح، چند کانال" in html and "هزینه برای هر علاقه‌مند" in html
+
+
+def test_categories_list_and_board(tmp_path, monkeypatch):
+    from dastsaz import categories as K, page
+    monkeypatch.setattr(C, "DATA_DIR", tmp_path)
+    l = K.etsy_list("Accessories\nHair Accessories\nHeadbands\nArt & Collectibles\nPrints\nHeadbands\n")
+    assert l[0] == {"top": "Accessories", "name": "Hair Accessories"} and {"top": "Art & Collectibles", "name": "Headbands"} in l
+    assert len(l) == 4
+    hist = [{"date": "2026-11-01", "cats": {"قاب گوشی": {"top": "E", "name": "Phone Cases", "fit": 2, "supply": 1000,
+                                                         "match": 10, "week": 50, "alltime": 900}}},
+            {"date": "2026-11-08", "cats": {"قاب گوشی": {"top": "E", "name": "Phone Cases", "fit": 2, "supply": 1020,
+                                                         "match": 10, "week": 80, "alltime": 980}}}]
+    rows = K.board(hist)
+    assert rows[0]["change"] == 0.6 and rows[0]["stage"] == "در اوج" and round(rows[0]["gap"], 1) == 78.4
+    assert "قاب گوشی" in page.radar_page(rows, 1, 2)

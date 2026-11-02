@@ -548,7 +548,8 @@ def backtest_page(res: list[dict]) -> str:
                        f"<td>{_pct(x['momentum'], True)}</td><td><b>{_pct(x['actual'], True)}</b></td></tr>"
                        for x in ex[1:16]) + "</table>")
         name, what = src.get(r["source"], (r["source"], ""))
-        name += " — " + {"jewelry": "جواهر", "kitchen": "لوازم آشپزخانه (دسته‌ی کنترل)"}.get(r.get("cat", "jewelry"), "")
+        name += " — " + {"jewelry": "جواهر", "kitchen": "لوازم آشپزخانه (دسته‌ی کنترل)",
+                         "categories": "در سطح دسته (رادار)"}.get(r.get("cat", "jewelry"), "")
         verdict = ""
         if "ours" in sc and "persist" in sc:
             o, p_ = sc["ours"], sc["persist"]
@@ -602,7 +603,7 @@ label.num{{display:flex;flex-direction:column;font-size:12px;color:var(--soft)}}
 .bar{{height:8px;background:#e8eaee;border-radius:4px;min-width:80px}}.bar i{{display:block;height:8px;border-radius:4px;background:#13877f}}
 {extra_css}</style></head><body>
 <nav class="bar-top"><div class="wrap"><span class="brand">دست‌ساز</span><a href="/">خانه</a><a href="/lab">آزمایشگاه</a>
-<a href="/voice">صدای مشتری</a><a href="/needs">نیازهای کادو</a><a href="/telegram">تلگرام</a><a href="/ads">ادز</a>
+<a href="/voice">صدای مشتری</a><a href="/needs">نیازهای کادو</a><a href="/radar">رادار دسته‌ها</a><a href="/telegram">تلگرام</a><a href="/ads">ادز</a>
 <a href="/backtest">دقت سیستم</a></div></nav>
 <header class="hero"><div class="wrap"><div><div class="date">{E(kicker)}</div><h1>{E(title)}</h1><p>{lead}</p></div></div></header>
 <main class="wrap">{body}</main></body></html>"""
@@ -622,7 +623,7 @@ def lab_page(b: dict, changes: list[dict] | None = None, snaps: int = 0, ideas: 
             f"<form class='inline' method='post' action='/lab/update/{E(t['id'])}'>"
             + "".join(f"<label class='num'>{lab_fa}<input name='{k}' type='number' min='0' value='{n.get(k, 0)}'></label>"
                       for k, lab_fa in (("views", "بازدید"), ("saves", "ذخیره"), ("messages", "پیام"),
-                                        ("carts", "سبد"), ("orders", "سفارش"), ("noes", "رد/رد شدن")))
+                                        ("carts", "سبد"), ("orders", "سفارش"), ("noes", "رد/رد شدن"), ("cost", "هزینه (تومان)")))
             + "<select name='close'><option value=''>باز</option><option value='win'>برنده، ببند</option>"
               "<option value='drop'>کنار بگذار</option><option value='stop'>متوقف</option></select>"
               "<button class='btn'>ثبت</button></form>")
@@ -644,6 +645,20 @@ def lab_page(b: dict, changes: list[dict] | None = None, snaps: int = 0, ideas: 
     tags = "".join(f"<tr><td>{E(k)}</td><td>{fa(v['tests'])}</td><td>{fa(v['wins'])}</td><td>{fa(v['drops'])}</td>"
                    f"<td>{_pct(v['wins'] / v['tests'])}</td></tr>"
                    for k, v in sorted(b.get("tags", {}).items(), key=lambda kv: -kv[1]["tests"]))
+    chs = "".join(f"<tr><td>{E(L.CHANNELS.get(k, k))}</td><td>{fa(v['tests'])}</td><td>{fa(v['wins'])}</td>"
+                  f"<td>{_pct(v['rate']) if v['rate'] is not None else '—'}</td>"
+                  f"<td>{toman(v['cost_per']) + ' تومان' if v.get('cost_per') else '—'}</td></tr>"
+                  for k, v in sorted(b.get("channels", {}).items(), key=lambda kv: -kv[1]["tests"]))
+    multi = "".join(f"<tr><td>{E(name)}</td><td>" + "، ".join(
+        f"{E(L.CHANNELS.get(x['channel'], x['channel']))}: {_pct(x['rate']) if x['rate'] is not None else '—'}"
+        for x in sorted(v, key=lambda x: -(x['rate'] or 0))) + "</td></tr>" for name, v in b.get("multi", {}).items())
+    dist = (f"<section><h2>توزیع: کدام کانال</h2><p class='lead'>ایده‌ی خوب در کانال اشتباه، نتیجه‌ی بد می‌دهد. "
+            f"یک طرح را هم‌زمان در ۲ تا ۳ کانال بگذارید (برای هر کانال یک آزمایش با همان اسم) تا معلوم شود مشکل از طرح است یا کانال. "
+            f"«هزینه برای هر علاقه‌مند» معیار مقایسه‌ی کانال‌های پولی است.</p>"
+            f"<table><tr><th>کانال</th><th>آزمایش</th><th>برنده</th><th>نرخ علاقه</th><th>هزینه برای هر علاقه‌مند</th></tr>"
+            f"{chs or '<tr><td colspan=5 class=muted>—</td></tr>'}</table>"
+            + (f"<h3>یک طرح، چند کانال</h3><table><tr><th>طرح</th><th>نرخ علاقه در هر کانال</th></tr>{multi}</table>" if multi else "")
+            + "</section>")
     ch = ""
     if changes:
         ch = ("<section><h2>تغییر فروش نسبت به هفته‌ی پیش (باسلام)</h2><table><tr><th>جست‌وجو</th><th>هفته‌ی پیش</th>"
@@ -667,6 +682,7 @@ def lab_page(b: dict, changes: list[dict] | None = None, snaps: int = 0, ideas: 
 <input class='w' name='note' placeholder='یادداشت'>
 <button class='btn'>اضافه کن</button></form></section>
 {ideas}
+{dist}
 <section><h2>کدام منبع ایده برنده می‌سازد</h2><p class='lead'>با هر آزمایش این جدول دقیق‌تر می‌شود؛ همین «حافظه»ی ماشین است.</p>
 <table><tr><th>منبع</th><th>آزمایش</th><th>برنده</th><th>درصد برد</th></tr>{src or '<tr><td colspan=4 class=muted>—</td></tr>'}</table></section>
 {ch}
@@ -737,7 +753,8 @@ def ideas_box(needs_ideas: list[dict], themes: list[dict], tg: list[dict]) -> st
                 f"<input type='hidden' name='query' value='{E(query)}'><input type='hidden' name='source' value='{source}'>"
                 f"<input type='hidden' name='note' value='{E(note)}'><input type='hidden' name='channel' value='instagram'>"
                 f"<button class='btn'>به آزمایشگاه</button></form>")
-    rows = [f"<tr><td>{E(i.get('design', ''))}<div class='muted'>{E(i.get('need', ''))}</div></td><td>نیاز کادو</td>"
+    rows = [f"<tr><td>{E(i.get('design', ''))}<div class='muted'>{E(i.get('need', ''))}"
+            f"{'<br>کانال پیشنهادی: ' + E('، '.join(i.get('channels') or [])) if i.get('channels') else ''}</div></td><td>نیاز کادو</td>"
             f"<td>{add(i.get('design', ''), i.get('search', ''), 'needs', i.get('need', ''))}</td></tr>" for i in needs_ideas[:12]]
     rows += [f"<tr><td>نسخه‌ی بهتر: {E(t.get('fix', ''))}<div class='muted'>{E(t['theme'])} ({fa(t['count'])} نظر)</div></td>"
              f"<td>نظر خریداران</td><td>{add('نسخه‌ی بهتر — ' + t['theme'], '', 'voice', t.get('fix', ''))}</td></tr>"
@@ -776,3 +793,24 @@ def telegram_page(chs: list[str], counts: dict, recent: list[dict]) -> str:
                f"نسبت به بازدید معمول همان کانال.</p><table><tr><th>طرح</th><th>پست</th><th>امتیاز</th><th>کانال‌ها</th></tr>"
                f"{rows}</table></section>" if rows else ""))
     return _shell("تلگرام", "کانال‌های جواهر", "کانال‌های عمومی تلگرام: چه طرحی را جلو می‌برند و چند ماه زودتر از فروش باسلام خبر می‌دهند.", body)
+
+
+def radar_page(rows: list[dict], n_cats: int, weeks: int, trends: dict | None = None) -> str:
+    seas = {}
+    if trends:
+        for x in (trends.get("example") or [])[1:]:
+            seas[x["name"]] = x
+    tr = "".join(
+        f"<tr><td><b>{E(r['q'])}</b><div class='muted'>{E(r['name'])} · {E(r['top'])}</div></td>"
+        f"<td>{fa(r['week'])}</td><td>{fa(r.get('supply'))}</td><td>{fa(round(r['gap'], 1))}</td>"
+        f"<td>{_pct(r['change'], True) if r.get('change') is not None else '—'}</td><td>{E(r['stage'])}</td>"
+        f"<td>{toman(r.get('price'))}</td><td>{fa(r.get('dk_total'))}</td>"
+        f"<td>{_pct(seas[r['q']]['season_avg'], True) if r['q'] in seas and seas[r['q']].get('season_avg') is not None else '—'}</td></tr>"
+        for r in rows[:150])
+    body = (f"<section><h2>دسته‌ها به ترتیب «فرصت»</h2><p class='lead'>{fa(n_cats)} دسته از فهرست کامل Etsy، به فارسیِ جست‌وجوی "
+            f"ایرانی‌ها. «فرصت» = فروش این هفته‌ی پرفروش‌های باسلام به ازای هر هزار محصول رقیب: تقاضای زیاد با رقیب کم. "
+            f"{fa(weeks)} هفته اندازه‌گیری شده؛ تغییر هفتگی و مرحله از هفته‌ی دوم معنا دارد. ستون آخر: انتظار فصلی "
+            f"سه ماه آینده از گوگل (اگر اجرا شده).</p>"
+            f"<table><tr><th>دسته</th><th>فروش هفته</th><th>رقیب</th><th>فرصت</th><th>تغییر هفتگی</th><th>مرحله</th>"
+            f"<th>قیمت میانه</th><th>دیجی‌کالا</th><th>فصل ۳ ماه آینده</th></tr>{tr}</table></section>")
+    return _shell("رادار دسته‌ها", "شکار دسته", "کدام دسته‌ها بزرگ می‌شوند و کجا رقیب کم است؛ فرصت‌یابی عمیق برای دسته‌های برتر.", body)

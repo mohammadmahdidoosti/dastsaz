@@ -48,7 +48,7 @@ KITCHEN_QUERIES = ["قابلمه گرانیتی", "ماهیتابه سنگی", "
                    "قوری مسی", "ادویه دان", "تخته گوشت چوبی", "ظرف سفالی", "کاسه سفالی", "لیوان سرامیکی",
                    "دیزی سنگی", "سماور ذغالی", "سرویس چاقو", "جاقاشقی", "ظرف درب دار", "سینی چوبی",
                    "قندان", "رومیزی"]
-CATS = {"jewelry": "جواهر", "kitchen": "لوازم آشپزخانه (دسته‌ی کنترل)"}
+CATS = {"jewelry": "جواهر", "kitchen": "لوازم آشپزخانه (دسته‌ی کنترل)", "categories": "همه‌ی دسته‌ها"}
 METHODS = {"persist": "ثابت (هیچ تغییری نمی‌کند)", "momentum": "روند اخیر ادامه پیدا می‌کند",
            "seasonal": "پارسال همین موقع", "season_avg": "میانگین فصل در همه‌ی سال‌های قبل",
            "ours": "روش گزارش (فصل + روند سالانه)"}
@@ -182,18 +182,18 @@ def trends_series(items: list[dict]) -> tuple[dict[str, list[float]], list[str]]
     return series, months
 
 
-def run_trends(token: str, cat: str = "jewelry") -> dict:
+def run_trends(token: str, cat: str = "jewelry", kws: list[str] | None = None) -> dict:
     from .etsy import Apify
     d = _dir()
     raw = d / ("trends_raw.json" if cat == "jewelry" else f"trends_raw_{cat}.json")
-    kws = TREND_KWS if cat == "jewelry" else KITCHEN_KWS
+    kws = kws or (TREND_KWS if cat == "jewelry" else KITCHEN_KWS)
     if raw.exists() and time.time() - raw.stat().st_mtime < 7 * 86400:
         items = json.loads(raw.read_text(encoding="utf-8"))
         usd = 0.0
     else:
         ap = Apify(token)
         run = ap.run({"keywords": kws, "geo": "IR", "timeRange": "today 5-y", "includeRelatedQueries": False,
-                      "includeInterestOverTime": True}, 0.3, actor=TREND_ACTOR)
+                      "includeInterestOverTime": True}, min(0.6, 0.003 * len(kws) + 0.05), actor=TREND_ACTOR)
         items = ap.items(run["defaultDatasetId"]) if run.get("defaultDatasetId") else []
         usd = ap.cost(run)
         raw.write_text(json.dumps(items, ensure_ascii=False), encoding="utf-8")

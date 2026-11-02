@@ -32,13 +32,15 @@ WIN_ABS = 0.01
 WIN_X = 1.5
 DROP_X = 0.5
 SAVE_W = 0.3
-CHANNELS = {"basalam": "غرفه‌ی باسلام", "instagram": "پیج اینستاگرام", "telegram": "کانال تلگرام", "other": "سایر"}
+CHANNELS = {"basalam": "غرفه‌ی باسلام", "instagram": "پیج اینستاگرام", "ig_story": "استوری اینستاگرام",
+            "telegram": "کانال تلگرام خودمان", "tg_ad": "پست تبلیغی در کانال دیگران", "twitter": "توییتر",
+            "divar": "دیوار", "other": "سایر"}
 STAGES = {"pretest": "پیش‌آزمون با عکس", "smallbuy": "خرید کم", "reorder": "سفارش دوباره"}
 SOURCES = {"report": "گزارش (باسلام)", "etsy": "Etsy", "google": "گوگل", "suggest": "پیشنهاد جست‌وجو",
            "voice": "نظر خریداران", "needs": "نیاز کادو", "instagram": "اینستاگرام", "telegram": "تلگرام",
            "trendyol": "ترندیول (ترکیه)", "ads": "گوگل ادز", "maker": "پیشنهاد سازنده",
            "manual": "ایده‌ی خودم"}
-FIELDS = ("views", "saves", "messages", "carts", "orders", "noes")   # noes: «نه»/skip taps — the negative signal
+FIELDS = ("views", "saves", "messages", "carts", "orders", "noes", "cost")   # noes: «نه»/skip taps; cost: toman spent on showing it
 EXPLORE = 0.2          # share of showcase slots always kept for brand-new ideas (under MIN_VIEWS), so new trends get seen
 _lock = threading.Lock()
 
@@ -186,4 +188,23 @@ def board() -> dict:
             s["tests"] += 1
             s["wins"] += r["verdict"] == "win"
             s["drops"] += r["verdict"] == "drop"
-    return {"rows": rows, "control": ctrl, "sources": dict(by_src), "tags": dict(by_tag)}
+    by_ch = defaultdict(lambda: {"tests": 0, "wins": 0, "views": 0, "interest": 0.0, "cost": 0})
+    for r in rows:
+        if r["control"]:
+            continue
+        c = by_ch[r["channel"]]
+        c["tests"] += 1
+        c["wins"] += r["verdict"] == "win"
+        c["views"] += r["now"].get("views", 0)
+        c["interest"] += interest(r["now"])
+        c["cost"] += r["now"].get("cost", 0)
+    for c in by_ch.values():
+        c["rate"] = c["interest"] / c["views"] if c["views"] else None
+        c["cost_per"] = c["cost"] / c["interest"] if c["interest"] else None
+    same = defaultdict(list)                  # one design shown in several channels: was it the idea or the channel?
+    for r in rows:
+        if not r["control"]:
+            same[r["name"]].append(r)
+    multi = {k: v for k, v in same.items() if len({x["channel"] for x in v}) > 1}
+    return {"rows": rows, "control": ctrl, "sources": dict(by_src), "tags": dict(by_tag), "channels": dict(by_ch),
+            "multi": multi}

@@ -25,7 +25,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from dastsaz import config as C
-from dastsaz import ads, guard, lab, needs, page, pipeline, snapshot, telegram, voice
+from dastsaz import ads, categories, guard, lab, needs, page, pipeline, snapshot, telegram, voice
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S")
 logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -35,7 +35,8 @@ STATIC = Path(__file__).resolve().parent / "static"
 NAME = re.compile(r"^[\w\-]{1,60}$")
 STEP_FA = {"wait": "منتظر", "basalam": "باسلام", "digikala": "دیجی‌کالا", "etsy": "اتسی", "ai": "هوش مصنوعی", "expand": "فرصت‌یابی", "testlist": "لیست آزمایش", "trends": "گوگل ترندز", "suggest": "پیشنهادهای جست‌وجو",
            "reviews": "نظر خریداران", "makers": "سازنده‌ها", "snapshot": "عکس هفتگی فروش",
-           "voice": "صدای مشتری", "needs": "نیازهای کادو", "telegram": "تلگرام",
+           "voice": "صدای مشتری", "needs": "نیازهای کادو", "telegram": "تلگرام", "radar": "رادار دسته‌ها",
+           "radar_trends": "گوگلِ دسته‌ها",
            "report": "گزارش"}
 
 
@@ -107,6 +108,7 @@ button.sm{font-size:13px;padding:4px 12px;background:var(--turq);margin:4px 2px}
 <div class="tools"><a class="tool" href="lab"><b>آزمایشگاه</b><span>ثبت آزمایش‌ها، تصمیم برنده/کنار، سهم نمایش</span></a>
 <a class="tool" href="voice"><b>صدای مشتری</b><span>شکایت‌ها و خواسته‌های خریداران</span></a>
 <a class="tool" href="needs"><b>نیازهای کادو</b><span>مردم برای چه کسی و چه مناسبتی دنبال کادو هستند</span></a>
+<a class="tool" href="radar"><b>رادار دسته‌ها</b><span>کدام دسته‌ها بزرگ می‌شوند</span></a>
 <a class="tool" href="telegram"><b>تلگرام</b><span>کانال‌ها چه طرحی را جلو می‌برند</span></a>
 <a class="tool" href="ads"><b>گوگل ادز</b><span>بارگذاری خروجی ماهانه</span></a>
 <a class="tool" href="backtest"><b>دقت سیستم</b><span>آزمون روی گذشته</span></a></div>
@@ -114,7 +116,9 @@ button.sm{font-size:13px;padding:4px 12px;background:var(--turq);margin:4px 2px}
 <button class="sm" onclick="task('snapshot')">عکس هفتگی فروش (۶ دقیقه)</button>
 <button class="sm" onclick="task('voice')">صدای مشتری (۲۰ دقیقه)</button>
 <button class="sm" onclick="task('needs')">نیازهای کادو (۵ دقیقه)</button>
-<button class="sm" onclick="task('telegram')">تلگرام</button></p>
+<button class="sm" onclick="task('telegram')">تلگرام</button>
+<button class="sm" onclick="task('radar')">رادار دسته‌ها (حدود ۳۰ دقیقه)</button>
+<button class="sm" onclick="task('radar_trends')">گوگلِ دسته‌ها (ماهانه، حدود ۰٫۵ دلار)</button></p>
 <h2>گزارش‌ها</h2><div id="list">...</div></main>
 <script>
 const F=n=>String(n).replace(/[0-9]/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
@@ -191,6 +195,12 @@ class H(BaseHTTPRequestHandler):
         if parts == ["lab"]:
             return self._send(200, page.lab_page(lab.board(), snapshot.changes(), len(snapshot.history()),
                                                  _ideas()).encode())
+        if parts == ["radar"]:
+            tf = C.DATA_DIR / "backtest" / "trends_categories.json"
+            import json as _j
+            return self._send(200, page.radar_page(categories.board(), len(categories.categories(1)),
+                                                   len(categories.history()),
+                                                   _j.loads(tf.read_text(encoding="utf-8")) if tf.exists() else None).encode())
         if parts == ["ads"]:
             return self._send(200, page.ads_page(*ads.latest()).encode())
         if parts == ["telegram"]:
@@ -262,7 +272,8 @@ class H(BaseHTTPRequestHandler):
         if u.path == "/api/task":
             name = (parse_qs(u.query).get("name") or [""])[0]
             fn = {"snapshot": lambda p: snapshot.take(progress=p), "voice": lambda p: voice.run(progress=p),
-                  "needs": lambda p: needs.run(progress=p), "telegram": lambda p: telegram.run(progress=p)}.get(name)
+                  "needs": lambda p: needs.run(progress=p), "telegram": lambda p: telegram.run(progress=p),
+                  "radar": lambda p: categories.run(progress=p), "radar_trends": lambda p: categories.trends()}.get(name)
             if not fn:
                 return self._json({"error": "نامعتبر"}, 400)
             err = JOB.start(name, task=fn)
