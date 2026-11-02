@@ -25,7 +25,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from dastsaz import config as C
-from dastsaz import guard, lab, needs, page, pipeline, snapshot, voice
+from dastsaz import ads, guard, lab, needs, page, pipeline, snapshot, telegram, voice
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S")
 logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -35,7 +35,7 @@ STATIC = Path(__file__).resolve().parent / "static"
 NAME = re.compile(r"^[\w\-]{1,60}$")
 STEP_FA = {"wait": "منتظر", "basalam": "باسلام", "digikala": "دیجی‌کالا", "etsy": "اتسی", "ai": "هوش مصنوعی", "expand": "فرصت‌یابی", "testlist": "لیست آزمایش", "trends": "گوگل ترندز", "suggest": "پیشنهادهای جست‌وجو",
            "reviews": "نظر خریداران", "makers": "سازنده‌ها", "snapshot": "عکس هفتگی فروش",
-           "voice": "صدای مشتری", "needs": "نیازهای کادو",
+           "voice": "صدای مشتری", "needs": "نیازهای کادو", "telegram": "تلگرام",
            "report": "گزارش"}
 
 
@@ -107,11 +107,14 @@ button.sm{font-size:13px;padding:4px 12px;background:var(--turq);margin:4px 2px}
 <div class="tools"><a class="tool" href="lab"><b>آزمایشگاه</b><span>ثبت آزمایش‌ها، تصمیم برنده/کنار، سهم نمایش</span></a>
 <a class="tool" href="voice"><b>صدای مشتری</b><span>شکایت‌ها و خواسته‌های خریداران</span></a>
 <a class="tool" href="needs"><b>نیازهای کادو</b><span>مردم برای چه کسی و چه مناسبتی دنبال کادو هستند</span></a>
+<a class="tool" href="telegram"><b>تلگرام</b><span>کانال‌ها چه طرحی را جلو می‌برند</span></a>
+<a class="tool" href="ads"><b>گوگل ادز</b><span>بارگذاری خروجی ماهانه</span></a>
 <a class="tool" href="backtest"><b>دقت سیستم</b><span>آزمون روی گذشته</span></a></div>
 <p class="muted">اجرای دستی (هر کدام جدا؛ با هم اجرا نمی‌شوند):
 <button class="sm" onclick="task('snapshot')">عکس هفتگی فروش (۶ دقیقه)</button>
 <button class="sm" onclick="task('voice')">صدای مشتری (۲۰ دقیقه)</button>
-<button class="sm" onclick="task('needs')">نیازهای کادو (۵ دقیقه)</button></p>
+<button class="sm" onclick="task('needs')">نیازهای کادو (۵ دقیقه)</button>
+<button class="sm" onclick="task('telegram')">تلگرام</button></p>
 <h2>گزارش‌ها</h2><div id="list">...</div></main>
 <script>
 const F=n=>String(n).replace(/[0-9]/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
@@ -186,7 +189,15 @@ class H(BaseHTTPRequestHandler):
             return self._json({"job": j, "step_fa": STEP_FA.get(j["step"], j["step"]), "runs": pipeline.runs(),
                                "guard": g})
         if parts == ["lab"]:
-            return self._send(200, page.lab_page(lab.board(), snapshot.changes(), len(snapshot.history())).encode())
+            return self._send(200, page.lab_page(lab.board(), snapshot.changes(), len(snapshot.history()),
+                                                 _ideas()).encode())
+        if parts == ["ads"]:
+            return self._send(200, page.ads_page(*ads.latest()).encode())
+        if parts == ["telegram"]:
+            designs = _designs()
+            return self._send(200, page.telegram_page(telegram.channels(),
+                                                      {c: len(p) for c, p in telegram.posts().items()},
+                                                      telegram.recent(designs)).encode())
         if parts == ["voice"]:
             return self._send(200, page.voice_page(voice.latest()).encode())
         if parts == ["needs"]:
@@ -204,6 +215,18 @@ class H(BaseHTTPRequestHandler):
                                   {"Content-Disposition": f'attachment; filename="dastsaz-{parts[1]}-{f}.csv"'})
         return self._send(404, "پیدا نشد".encode(), "text/plain; charset=utf-8")
 
+    def _upload(self) -> bytes:
+        """The one file of a multipart form (Keyword Planner csv, a few hundred KB at most)."""
+        n = min(int(self.headers.get("Content-Length") or 0), 5_000_000)
+        raw = self.rfile.read(n) if n else b""
+        m = re.search(rb"boundary=([^;]+)", (self.headers.get("Content-Type") or "").encode())
+        if not m:
+            return b""
+        for part in raw.split(b"--" + m.group(1).strip(b'"')):
+            if b"filename=" in part and b"\r\n\r\n" in part:
+                return part.split(b"\r\n\r\n", 1)[1].rsplit(b"\r\n", 1)[0]
+        return b""
+
     def _form(self) -> dict:
         n = min(int(self.headers.get("Content-Length") or 0), 20000)
         raw = self.rfile.read(n).decode("utf-8", "replace") if n else ""
@@ -217,6 +240,12 @@ class H(BaseHTTPRequestHandler):
             return
         u = urlparse(self.path)
         parts = [p for p in u.path.split("/") if p]
+        if parts == ["ads", "upload"]:
+            ads.save(self._upload())
+            return self._back("/ads")
+        if parts == ["telegram", "channels"]:
+            telegram.set_channels(self._form().get("channels", "").split())
+            return self._back("/telegram")
         if parts == ["lab", "add"]:
             f = self._form()
             if f.get("name", "").strip():
@@ -233,7 +262,7 @@ class H(BaseHTTPRequestHandler):
         if u.path == "/api/task":
             name = (parse_qs(u.query).get("name") or [""])[0]
             fn = {"snapshot": lambda p: snapshot.take(progress=p), "voice": lambda p: voice.run(progress=p),
-                  "needs": lambda p: needs.run(progress=p)}.get(name)
+                  "needs": lambda p: needs.run(progress=p), "telegram": lambda p: telegram.run(progress=p)}.get(name)
             if not fn:
                 return self._json({"error": "نامعتبر"}, 400)
             err = JOB.start(name, task=fn)
@@ -246,6 +275,21 @@ class H(BaseHTTPRequestHandler):
             err = JOB.start(name, (q.get("only") or [""])[0])
             return self._json({"error": err} if err else {"ok": True, "run": name})
         return self._json({"error": "not found"}, 404)
+
+
+def _designs() -> list[str]:
+    import json as _j
+    runs = sorted((C.DATA_DIR / "runs").glob("*/opportunities.json"), key=lambda p: p.stat().st_mtime)
+    return [o["q"] for o in _j.loads(runs[-1].read_text(encoding="utf-8"))] if runs else []
+
+
+def _ideas() -> str:
+    n, v = needs.latest() or {}, voice.latest() or {}
+    try:
+        tg = telegram.recent(_designs())
+    except Exception:  # noqa: BLE001
+        tg = []
+    return page.ideas_box(n.get("ideas") or [], v.get("themes") or [], tg)
 
 
 def main():

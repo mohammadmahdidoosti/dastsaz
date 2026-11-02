@@ -524,7 +524,9 @@ def _jm(ym: str) -> str:
 def backtest_page(res: list[dict]) -> str:
     src = {"trends": ("گوگل ترندز ایران", "میزان جست‌وجوی هر کلمه در گوگل، ماه به ماه"),
            "reviews": ("نظرهای خریداران باسلام", "تعداد نظرهای ثبت‌شده هر ماه برای پرفروش‌های هر طرح؛ تقریبی از فروش"),
-           "reviews_dk": ("نظرهای خریداران دیجی‌کالا", "تعداد نظرهای ثبت‌شده هر ماه برای پرفروش‌های هر طرح؛ تقریبی از فروش")}
+           "reviews_dk": ("نظرهای خریداران دیجی‌کالا", "تعداد نظرهای ثبت‌شده هر ماه برای پرفروش‌های هر طرح؛ تقریبی از فروش"),
+           "reviews_attr": ("باسلام، در سطح موتیف", "همه‌ی طرح‌های یک موتیف (مثل «پاپیون» یا «اسم») با هم؛ آیا موتیف از تک‌طرح قابل‌پیش‌بینی‌تر است؟"),
+           "reviews_attr_dk": ("دیجی‌کالا، در سطح موتیف", "همه‌ی طرح‌های یک موتیف با هم")}
     blocks = []
     for r in res:
         sc = r.get("scores") or {}
@@ -600,7 +602,8 @@ label.num{{display:flex;flex-direction:column;font-size:12px;color:var(--soft)}}
 .bar{{height:8px;background:#e8eaee;border-radius:4px;min-width:80px}}.bar i{{display:block;height:8px;border-radius:4px;background:#13877f}}
 {extra_css}</style></head><body>
 <nav class="bar-top"><div class="wrap"><span class="brand">دست‌ساز</span><a href="/">خانه</a><a href="/lab">آزمایشگاه</a>
-<a href="/voice">صدای مشتری</a><a href="/needs">نیازهای کادو</a><a href="/backtest">دقت سیستم</a></div></nav>
+<a href="/voice">صدای مشتری</a><a href="/needs">نیازهای کادو</a><a href="/telegram">تلگرام</a><a href="/ads">ادز</a>
+<a href="/backtest">دقت سیستم</a></div></nav>
 <header class="hero"><div class="wrap"><div><div class="date">{E(kicker)}</div><h1>{E(title)}</h1><p>{lead}</p></div></div></header>
 <main class="wrap">{body}</main></body></html>"""
 
@@ -609,7 +612,7 @@ def _opts(d: dict, sel: str = "") -> str:
     return "".join(f"<option value='{E(k)}'{' selected' if k == sel else ''}>{E(v)}</option>" for k, v in d.items())
 
 
-def lab_page(b: dict, changes: list[dict] | None = None, snaps: int = 0) -> str:
+def lab_page(b: dict, changes: list[dict] | None = None, snaps: int = 0, ideas: str = "") -> str:
     from . import lab as L
     rows = []
     for t in sorted(b["rows"], key=lambda r: (bool(r["closed"]), r["channel"], -(r["rate"] or 0))):
@@ -663,6 +666,7 @@ def lab_page(b: dict, changes: list[dict] | None = None, snaps: int = 0) -> str:
 <input class='w' name='tags' placeholder='ویژگی‌ها با ویرگول: پاپیون، طلایی، زیر ۳۰۰، کادو، اسم‌دار'>
 <input class='w' name='note' placeholder='یادداشت'>
 <button class='btn'>اضافه کن</button></form></section>
+{ideas}
 <section><h2>کدام منبع ایده برنده می‌سازد</h2><p class='lead'>با هر آزمایش این جدول دقیق‌تر می‌شود؛ همین «حافظه»ی ماشین است.</p>
 <table><tr><th>منبع</th><th>آزمایش</th><th>برنده</th><th>درصد برد</th></tr>{src or '<tr><td colspan=4 class=muted>—</td></tr>'}</table></section>
 {ch}
@@ -724,3 +728,51 @@ def needs_page(n: dict | None) -> str:
                   "هر نیاز پرتکرار یک ایده‌ی آزمایش است.", body,
                   ".chips{display:flex;flex-wrap:wrap;gap:6px}.chips span{background:#fff;border:1px solid var(--line);"
                   "border-radius:999px;padding:2px 12px}")
+
+
+def ideas_box(needs_ideas: list[dict], themes: list[dict], tg: list[dict]) -> str:
+    """Ready-made test ideas with a one-click «add to lab» (source kept, so the lab learns which source wins)."""
+    def add(name, query, source, note=""):
+        return (f"<form class='inline' method='post' action='/lab/add'><input type='hidden' name='name' value='{E(name)}'>"
+                f"<input type='hidden' name='query' value='{E(query)}'><input type='hidden' name='source' value='{source}'>"
+                f"<input type='hidden' name='note' value='{E(note)}'><input type='hidden' name='channel' value='instagram'>"
+                f"<button class='btn'>به آزمایشگاه</button></form>")
+    rows = [f"<tr><td>{E(i.get('design', ''))}<div class='muted'>{E(i.get('need', ''))}</div></td><td>نیاز کادو</td>"
+            f"<td>{add(i.get('design', ''), i.get('search', ''), 'needs', i.get('need', ''))}</td></tr>" for i in needs_ideas[:12]]
+    rows += [f"<tr><td>نسخه‌ی بهتر: {E(t.get('fix', ''))}<div class='muted'>{E(t['theme'])} ({fa(t['count'])} نظر)</div></td>"
+             f"<td>نظر خریداران</td><td>{add('نسخه‌ی بهتر — ' + t['theme'], '', 'voice', t.get('fix', ''))}</td></tr>"
+             for t in themes if t.get("kind") in ("complaint", "wish") and t.get("fix")][:8]
+    rows += [f"<tr><td>{E(t['q'])}<div class='muted'>{fa(t['posts'])} پست در {E('، '.join(t['channels'][:3]))}</div></td>"
+             f"<td>تلگرام (۳۰ روز اخیر)</td><td>{add(t['q'], t['q'], 'telegram')}</td></tr>" for t in tg[:8]]
+    if not rows:
+        return ""
+    return ("<section><h2>ایده‌های آماده برای آزمایش</h2><p class='lead'>از «نیازهای کادو»، «صدای مشتری» و تلگرام. "
+            "با یک کلیک به آزمایشگاه می‌روند و منبعشان ثبت می‌شود.</p><table><tr><th>ایده</th><th>منبع</th><th></th></tr>"
+            + "".join(rows) + "</table></section>")
+
+
+def ads_page(date: str, rows: list[dict]) -> str:
+    tr = "".join(f"<tr><td>{E(r['keyword'])}</td><td>{fa(r['avg'])}</td><td>{_pct((r['three_month'] or 0) / 100, True) if r['three_month'] is not None else '—'}</td>"
+                 f"<td>{_pct((r['yoy'] or 0) / 100, True) if r['yoy'] is not None else '—'}</td><td>{E(r['competition'])}</td></tr>"
+                 for r in sorted(rows, key=lambda r: -(r['avg'] or 0)))
+    body = (f"<section><h2>بارگذاری خروجی ماهانه</h2><p class='lead'>در Keyword Planner گوگل ادز، کلمه‌ها را بزنید، مکان را "
+            f"«همه‌ی کشورها» بگذارید و دکمه‌ی دانلود (فایل csv) را بزنید؛ همان فایل را اینجا بدهید.</p>"
+            f"<form method='post' action='/ads/upload' enctype='multipart/form-data'><input type='file' name='file' accept='.csv' required> "
+            f"<button class='btn'>بارگذاری</button></form></section>"
+            + (f"<section><h2>آخرین خروجی ({E(jalali(date))})</h2><table><tr><th>کلمه</th><th>جست‌وجوی ماهانه</th>"
+               f"<th>۳ ماه اخیر</th><th>نسبت به پارسال</th><th>رقابت</th></tr>{tr}</table></section>" if rows else ""))
+    return _shell("گوگل ادز", "جست‌وجو بیرون از ایران", "فارسی‌زبان‌های بیرون از ایران و بازارهای خارجی؛ نشانه‌ی کمکی، نه اصلی.", body)
+
+
+def telegram_page(chs: list[str], counts: dict, recent: list[dict]) -> str:
+    rows = "".join(f"<tr><td>{E(r['q'])}</td><td>{fa(r['posts'])}</td><td>{fa(round(r['score'], 1))}</td>"
+                   f"<td>{E('، '.join(r['channels']))}</td></tr>" for r in recent[:30])
+    cnt = "، ".join(f"{E(c)}: {fa(counts.get(c, 0))} پست" for c in chs) or "هنوز کانالی ثبت نشده"
+    body = (f"<section><h2>کانال‌ها</h2><p class='lead'>{cnt}</p><form method='post' action='/telegram/channels'>"
+            f"<textarea name='channels' rows='5' style='width:100%;font:inherit'>{E(chr(10).join(chs))}</textarea>"
+            f"<p class='muted'>هر خط یک کانال عمومی (مثل @name یا t.me/name). فقط کانال‌های عمومی خوانده می‌شوند.</p>"
+            f"<button class='btn'>ذخیره</button></form></section>"
+            + (f"<section><h2>طرح‌هایی که کانال‌ها در ۳۰ روز اخیر جلو بردند</h2><p class='lead'>امتیاز = بازدید پست‌های آن طرح "
+               f"نسبت به بازدید معمول همان کانال.</p><table><tr><th>طرح</th><th>پست</th><th>امتیاز</th><th>کانال‌ها</th></tr>"
+               f"{rows}</table></section>" if rows else ""))
+    return _shell("تلگرام", "کانال‌های جواهر", "کانال‌های عمومی تلگرام: چه طرحی را جلو می‌برند و چند ماه زودتر از فروش باسلام خبر می‌دهند.", body)

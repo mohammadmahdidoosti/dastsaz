@@ -483,3 +483,50 @@ def test_ai_parse_repairs_cut_answers():
     assert _parse('x {"themes": [{"a": 1}, {"a": 2}]} y') == {"themes": [{"a": 1}, {"a": 2}]}
     assert _parse('{"themes": [{"a": 1}, {"a": 2}, {"a": ') == {"themes": [{"a": 1}, {"a": 2}]}
     assert _parse("no json") == {}
+
+
+TG_HTML = """<div class="tgme_widget_message_wrap js-widget_message_wrap"><div class="tgme_widget_message js-widget_message"
+data-post="bijou_shop/120" data-view="x"><a class="tgme_widget_message_photo_wrap" style="width:800px;background-image:url('https://cdn/x.jpg')"></a>
+<div class="tgme_widget_message_text js-message_text" dir="auto">گردنبند <b>پاپیون</b> استیل<br/>قیمت ۲۰۰</div>
+<span class="tgme_widget_message_views">1.2K</span><time datetime="2026-10-05T10:00:00+00:00" class="time">10:00</time></div></div>
+<div class="tgme_widget_message_wrap js-widget_message_wrap"><div class="tgme_widget_message js-widget_message"
+data-post="bijou_shop/119"><div class="tgme_widget_message_text js-message_text" dir="auto">دستبند اسم</div>
+<span class="tgme_widget_message_views">340</span><time datetime="2026-09-01T09:00:00+00:00" class="time">9</time></div></div>"""
+
+
+def test_telegram_parse_and_push(tmp_path, monkeypatch):
+    from dastsaz import telegram
+    monkeypatch.setattr(C, "DATA_DIR", tmp_path)
+    ps = telegram.parse(TG_HTML)
+    assert [p["id"] for p in ps] == [120, 119] and ps[0]["views"] == 1200 and ps[0]["date"] == "2026-10-05"
+    assert "پاپیون" in ps[0]["text"] and ps[0]["image"] == "https://cdn/x.jpg"
+    assert telegram.set_channels(["@bijou_shop", "https://t.me/other_ch", "bad name!"]) == ["bijou_shop", "other_ch"]
+    (tmp_path / "telegram" / "posts.json").write_text(json.dumps({"bijou_shop": ps}, ensure_ascii=False), encoding="utf-8")
+    p = telegram.push(["گردنبند پاپیون", "دستبند اسم"])
+    assert p["گردنبند پاپیون"]["2026-10"] > p["دستبند اسم"]["2026-09"]
+
+
+def test_ads_csv_parse(tmp_path, monkeypatch):
+    from dastsaz import ads
+    monkeypatch.setattr(C, "DATA_DIR", tmp_path)
+    txt = ("Keyword Stats 2026-11-02\nOct 1, 2025 - Sep 30, 2026\nKeyword\tCurrency\tAvg. monthly searches\t"
+           "Three month change\tYoY change\tCompetition\tSearches: Aug 2026\tSearches: Sep 2026\n"
+           "گردنبند استیل\tUSD\t90\t29%\t-18%\tMedium\t80\t110\nگوشواره\tUSD\t9,900\t-17%\t-84%\tMedium\t9000\t8100\n")
+    assert ads.save(txt.encode("utf-16")) == 2
+    d, rows = ads.latest()
+    assert rows[1]["avg"] == 9900 and rows[0]["three_month"] == 29 and rows[0]["months"]["Sep 2026"] == 110
+
+
+def test_attribute_backtest(tmp_path, monkeypatch):
+    from dastsaz import backtest as B
+    monkeypatch.setattr(C, "DATA_DIR", tmp_path)
+    (tmp_path / "backtest").mkdir()
+    months = B._months("2024-08", "2026-10")
+    prods, des = {}, {}
+    for i in range(24):
+        q = f"گردنبند طرح{i % 12}" if i < 12 else f"دستبند طرح{i % 12}"
+        prods[str(i)] = [m + "-10" for j, m in enumerate(months) for _ in range(3 + (j + i) % 4)]
+        des[q] = [str(i)]
+    (tmp_path / "backtest" / "reviews_raw_jewelry.json").write_text(json.dumps({"products": prods, "designs": des}))
+    r = B.run_attributes()
+    assert r["keywords"] == 12 and "ours" in r["scores"]

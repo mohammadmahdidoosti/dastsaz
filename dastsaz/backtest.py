@@ -316,6 +316,32 @@ def run_reviews(queries: list[str] | None = None, n: int = 40, per: int = 5, pro
     return res
 
 
+def run_attributes(cat: str = "jewelry", market: str = "basalam") -> dict:
+    """Same test, but per motif (all designs that share it summed): is a motif easier to forecast than one design?"""
+    from collections import defaultdict as dd
+    from .signals import motif_words
+    d = _dir()
+    tag = "" if market == "basalam" else "dk_"
+    raw = json.loads((d / f"reviews_raw_{tag}{cat}.json").read_text(encoding="utf-8"))
+    today = dt.date.today()
+    months = _months((today.replace(day=1) - dt.timedelta(days=30 * 26)).isoformat()[:7],
+                     (today.replace(day=1) - dt.timedelta(days=1)).isoformat()[:7])
+    groups = dd(lambda: dd(int))
+    for q, ids in raw["designs"].items():
+        key = " ".join(motif_words(q))
+        for pid in ids[:5]:
+            for x in raw["products"].get(pid, []):
+                groups[key][x[:7]] += 1
+    series = {k: [float(c.get(m, 0)) for m in months] for k, c in groups.items()}
+    series = {k: v for k, v in series.items() if sum(v[-6:]) >= 6}
+    res = {"source": "reviews_attr" if market == "basalam" else "reviews_attr_dk", "cat": cat,
+           "when": today.isoformat(), "usd": 0.0, "keywords": len(series),
+           "months": [months[0], months[-1]], "scores": evaluate(series, months),
+           "example": last_cutoff(series, months)}
+    (d / f"{res['source']}_{cat}.json").write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
+    return res
+
+
 def _months(a: str, b: str) -> list[str]:
     y, m = map(int, a.split("-"))
     out = []
@@ -337,7 +363,7 @@ def latest_queries(n: int) -> list[str]:
 # ---------------------------------------------------------------- page
 def results() -> list[dict]:
     d = C.DATA_DIR / "backtest"
-    names = [f"{s}_{c}.json" for s in ("trends", "reviews", "reviews_dk") for c in CATS]
+    names = [f"{s}_{c}.json" for s in ("trends", "reviews", "reviews_dk", "reviews_attr", "reviews_attr_dk") for c in CATS]
     return [json.loads((d / f).read_text(encoding="utf-8")) for f in names if (d / f).exists()]
 
 
@@ -349,6 +375,9 @@ def main(argv: list[str]) -> None:
         r = run_trends(C.secret("APIFY_TOKEN"), cat)
     elif what == "page":
         r = {"scores": {}}
+    elif what == "attributes":
+        r = run_attributes(cat)
+        run_attributes(cat, "digikala")
     else:
         r = run_reviews(progress=lambda i, t: print(f"{i}/{t}", flush=True), cat=cat,
                         market="digikala" if what == "reviews_dk" else "basalam")

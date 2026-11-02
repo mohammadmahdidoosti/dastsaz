@@ -35,7 +35,8 @@ SAVE_W = 0.3
 CHANNELS = {"basalam": "غرفه‌ی باسلام", "instagram": "پیج اینستاگرام", "telegram": "کانال تلگرام", "other": "سایر"}
 STAGES = {"pretest": "پیش‌آزمون با عکس", "smallbuy": "خرید کم", "reorder": "سفارش دوباره"}
 SOURCES = {"report": "گزارش (باسلام)", "etsy": "Etsy", "google": "گوگل", "suggest": "پیشنهاد جست‌وجو",
-           "voice": "نظر خریداران", "needs": "نیاز کادو", "instagram": "اینستاگرام", "maker": "پیشنهاد سازنده",
+           "voice": "نظر خریداران", "needs": "نیاز کادو", "instagram": "اینستاگرام", "telegram": "تلگرام",
+           "trendyol": "ترندیول (ترکیه)", "ads": "گوگل ادز", "maker": "پیشنهاد سازنده",
            "manual": "ایده‌ی خودم"}
 FIELDS = ("views", "saves", "messages", "carts", "orders", "noes")   # noes: «نه»/skip taps — the negative signal
 EXPLORE = 0.2          # share of showcase slots always kept for brand-new ideas (under MIN_VIEWS), so new trends get seen
