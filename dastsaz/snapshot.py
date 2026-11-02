@@ -14,6 +14,7 @@ import time
 from . import basalam
 from . import config as C
 from . import lab
+from .opportunities import _plain
 
 log = logging.getLogger(__name__)
 
@@ -45,8 +46,10 @@ def take(queries: list[str] | None = None, progress=None, sleep=time.sleep) -> d
     snap = {"date": dt.date.today().isoformat(), "searches": {}}
     for i, q in enumerate(queries):
         try:
-            cards, total = basalam.search(q, size=10, session=s, sleep=sleep)
-            snap["searches"][q] = {"supply": total, "week": sum(c["sales_week"] for c in cards),
+            cards, total = basalam.search(q, size=20, session=s, sleep=sleep)
+            words = [w for w in _plain(q).split() if len(w) > 1]
+            cards = [c for c in cards if all(w in _plain(c.get("title")) for w in words)][:10]   # only this design
+            snap["searches"][q] = {"supply": total, "match": len(cards), "week": sum(c["sales_week"] for c in cards),
                                    "alltime": sum(c["sales_total"] for c in cards),
                                    "products": [{"id": c["id"], "week": c["sales_week"], "total": c["sales_total"],
                                                  "price": c["price_toman"]} for c in cards]}
