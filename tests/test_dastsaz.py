@@ -639,3 +639,12 @@ def test_radar_pick_spreads_groups():
     got = K.pick(cats, 70)
     fas = [c["fa"] for c in got]
     assert fas.count("گردنبند") == 1 and "گوشواره" in fas and "دستبند" in fas and "الف 0" in fas
+
+
+def test_translation_test(tmp_path, monkeypatch):
+    from dastsaz import categories as K
+    monkeypatch.setattr(C, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(K, "_probe", lambda q, *a: {"q": q, "bs_match": 1 if q == "کلاه" else 0, "bs_week": 3, "dk_match": 0, "g": 1})
+    monkeypatch.setattr(K, "categories", lambda m=1: [{"top": "Accessories", "name": "Hats & Head Coverings", "fa": "پوشش سر", "fit": 1}])
+    res = K.translation_test()
+    assert res["claude"]["bs_found"] > res["ai"]["bs_found"] and res["differ"] >= 1

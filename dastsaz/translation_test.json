@@ -1,0 +1,902 @@
+[
+{
+"top": "Accessories",
+"name": "Hair Picks",
+"claude": "شانه مو",
+"claude_fit": 1
+},
+{
+"top": "Accessories",
+"name": "Halloween Sweets Bags",
+"claude": "پاکت شکلات هالووین",
+"claude_fit": 0
+},
+{
+"top": "Accessories",
+"name": "Hats & Head Coverings",
+"claude": "کلاه",
+"claude_fit": 2
+},
+{
+"top": "Accessories",
+"name": "Bolo Ties",
+"claude": "کراوات بولو",
+"claude_fit": 0
+},
+{
+"top": "Accessories",
+"name": "Bouquets & Corsages",
+"claude": "گل سینه",
+"claude_fit": 2
+},
+{
+"top": "Accessories",
+"name": "Corsages",
+"claude": "گل سینه عروس",
+"claude_fit": 2
+},
+{
+"top": "Accessories",
+"name": "Umbrellas & Rain Accessories",
+"claude": "چتر",
+"claude_fit": 1
+},
+{
+"top": "Accessories",
+"name": "Patches & Appliques",
+"claude": "وصله لباس",
+"claude_fit": 2
+},
+{
+"top": "Accessories",
+"name": "Capes",
+"claude": "شنل",
+"claude_fit": 2
+},
+{
+"top": "Accessories",
+"name": "Headbands",
+"claude": "هدبند",
+"claude_fit": 2
+},
+{
+"top": "Art & Collectibles",
+"name": "Ink",
+"claude": "جوهر خوشنویسی",
+"claude_fit": 1
+},
+{
+"top": "Art & Collectibles",
+"name": "Figurines & Knick Knacks",
+"claude": "مجسمه دکوری",
+"claude_fit": 2
+},
+{
+"top": "Art & Collectibles",
+"name": "Mixed Media & Collage",
+"claude": "تابلو ترکیبی",
+"claude_fit": 2
+},
+{
+"top": "Art & Collectibles",
+"name": "Figurines",
+"claude": "مجسمه کوچک",
+"claude_fit": 2
+},
+{
+"top": "Art & Collectibles",
+"name": "Collectible Glass",
+"claude": "ظرف شیشه ای دکوری",
+"claude_fit": 1
+},
+{
+"top": "Art & Collectibles",
+"name": "Sports Collectibles",
+"claude": "کلکسیون ورزشی",
+"claude_fit": 0
+},
+{
+"top": "Art & Collectibles",
+"name": "Tatting & Lace",
+"claude": "تور دستباف",
+"claude_fit": 2
+},
+{
+"top": "Art & Collectibles",
+"name": "Sashiko",
+"claude": "گلدوزی ژاپنی",
+"claude_fit": 1
+},
+{
+"top": "Art & Collectibles",
+"name": "Memorabilia",
+"claude": "یادگاری",
+"claude_fit": 0
+},
+{
+"top": "Art & Collectibles",
+"name": "Doll Furniture",
+"claude": "مبلمان عروسک",
+"claude_fit": 2
+},
+{
+"top": "Bags & Purses",
+"name": "Brush Storage",
+"claude": "کیف براش",
+"claude_fit": 2
+},
+{
+"top": "Bags & Purses",
+"name": "Chequebook Covers",
+"claude": "جلد دسته چک",
+"claude_fit": 2
+},
+{
+"top": "Bags & Purses",
+"name": "Pouches & Coin Purses",
+"claude": "کیف پول سکه",
+"claude_fit": 2
+},
+{
+"top": "Bags & Purses",
+"name": "Shoe Bags",
+"claude": "کیف کفش",
+"claude_fit": 2
+},
+{
+"top": "Bags & Purses",
+"name": "Refillable Containers",
+"claude": "ظرف عطر سفری",
+"claude_fit": 1
+},
+{
+"top": "Bags & Purses",
+"name": "Clutches & Evening Bags",
+"claude": "کیف مجلسی",
+"claude_fit": 2
+},
+{
+"top": "Bags & Purses",
+"name": "Money Clips",
+"claude": "گیره پول",
+"claude_fit": 2
+},
+{
+"top": "Bags & Purses",
+"name": "Travel Wallets",
+"claude": "کیف پاسپورت",
+"claude_fit": 2
+},
+{
+"top": "Bags & Purses",
+"name": "Laundry & Lingerie Bags",
+"claude": "کیسه لباسشویی",
+"claude_fit": 1
+},
+{
+"top": "Bags & Purses",
+"name": "Business Card Cases",
+"claude": "جاکارتی",
+"claude_fit": 2
+},
+{
+"top": "Bath & Beauty",
+"name": "Nursing",
+"claude": "شیر دهی",
+"claude_fit": 0
+},
+{
+"top": "Bath & Beauty",
+"name": "Massage Tools",
+"claude": "ابزار ماساژ",
+"claude_fit": 1
+},
+{
+"top": "Bath & Beauty",
+"name": "Wigs",
+"claude": "کلاه گیس",
+"claude_fit": 1
+},
+{
+"top": "Bath & Beauty",
+"name": "Nail Kits",
+"claude": "ست مانیکور",
+"claude_fit": 1
+},
+{
+"top": "Bath & Beauty",
+"name": "Shaving Brushes & Cups",
+"claude": "فرچه اصلاح",
+"claude_fit": 1
+},
+{
+"top": "Bath & Beauty",
+"name": "Eyes",
+"claude": "سایه چشم",
+"claude_fit": 0
+},
+{
+"top": "Bath & Beauty",
+"name": "Aromatherapy",
+"claude": "روغن ماساژ",
+"claude_fit": 1
+},
+{
+"top": "Bath & Beauty",
+"name": "Pomades, Waxes & Gels",
+"claude": "واکس مو",
+"claude_fit": 1
+},
+{
+"top": "Bath & Beauty",
+"name": "Cuticle Pushers",
+"claude": "پوست کنار ناخن",
+"claude_fit": 0
+},
+{
+"top": "Bath & Beauty",
+"name": "Spa Kits & Gifts",
+"claude": "پک هدیه آرایشی",
+"claude_fit": 2
+},
+{
+"top": "Books, Films & Music",
+"name": "Ringtones",
+"claude": "آهنگ زنگ",
+"claude_fit": 0
+},
+{
+"top": "Books, Films & Music",
+"name": "Didgeridoos",
+"claude": "دیجریدو",
+"claude_fit": 0
+},
+{
+"top": "Books, Films & Music",
+"name": "Literary Fiction",
+"claude": "رمان",
+"claude_fit": 0
+},
+{
+"top": "Books, Films & Music",
+"name": "Children's Books",
+"claude": "کتاب کودک",
+"claude_fit": 0
+},
+{
+"top": "Books, Films & Music",
+"name": "Mandolins",
+"claude": "ماندولین",
+"claude_fit": 0
+},
+{
+"top": "Books, Films & Music",
+"name": "Harps & Lyres",
+"claude": "چنگ",
+"claude_fit": 0
+},
+{
+"top": "Books, Films & Music",
+"name": "Pedals",
+"claude": "پدال گیتار",
+"claude_fit": 0
+},
+{
+"top": "Books, Films & Music",
+"name": "Mystery & Thriller",
+"claude": "کتاب جنایی",
+"claude_fit": 0
+},
+{
+"top": "Books, Films & Music",
+"name": "Drums & Percussion",
+"claude": "تمبک",
+"claude_fit": 1
+},
+{
+"top": "Books, Films & Music",
+"name": "Book Sets & Collections",
+"claude": "مجموعه کتاب",
+"claude_fit": 0
+},
+{
+"top": "Clothing",
+"name": "Suits",
+"claude": "کت و شلوار",
+"claude_fit": 1
+},
+{
+"top": "Clothing",
+"name": "Socks",
+"claude": "جوراب",
+"claude_fit": 1
+},
+{
+"top": "Clothing",
+"name": "Dress Socks",
+"claude": "جوراب مردانه",
+"claude_fit": 1
+},
+{
+"top": "Clothing",
+"name": "Rash Guards",
+"claude": "لباس شنا",
+"claude_fit": 0
+},
+{
+"top": "Clothing",
+"name": "Lingerie Sets",
+"claude": "لباس زیر ست",
+"claude_fit": 0
+},
+{
+"top": "Clothing",
+"name": "Slips",
+"claude": "زیرپوش",
+"claude_fit": 0
+},
+{
+"top": "Clothing",
+"name": "Boot Cuffs",
+"claude": "ساق پا بافتنی",
+"claude_fit": 2
+},
+{
+"top": "Clothing",
+"name": "Sleep Masks",
+"claude": "چشم بند خواب",
+"claude_fit": 2
+},
+{
+"top": "Clothing",
+"name": "Boxers",
+"claude": "شورت مردانه",
+"claude_fit": 0
+},
+{
+"top": "Clothing",
+"name": "Trousers & Capris",
+"claude": "شلوار",
+"claude_fit": 1
+},
+{
+"top": "Craft Supplies & Tools",
+"name": "Suction Cups",
+"claude": "بادکش",
+"claude_fit": 0
+},
+{
+"top": "Craft Supplies & Tools",
+"name": "Ribbon",
+"claude": "روبان",
+"claude_fit": 1
+},
+{
+"top": "Craft Supplies & Tools",
+"name": "Rubber Cement",
+"claude": "چسب لاستیکی",
+"claude_fit": 0
+},
+{
+"top": "Craft Supplies & Tools",
+"name": "Photo & Imaging Paper",
+"claude": "کاغذ عکس",
+"claude_fit": 0
+},
+{
+"top": "Craft Supplies & Tools",
+"name": "Roving",
+"claude": "پشم تابیده",
+"claude_fit": 1
+},
+{
+"top": "Craft Supplies & Tools",
+"name": "Punches",
+"claude": "پانچ کاغذ",
+"claude_fit": 0
+},
+{
+"top": "Craft Supplies & Tools",
+"name": "Callipers",
+"claude": "کولیس",
+"claude_fit": 0
+},
+{
+"top": "Craft Supplies & Tools",
+"name": "Chisels",
+"claude": "مغار",
+"claude_fit": 0
+},
+{
+"top": "Craft Supplies & Tools",
+"name": "Patterns & Blueprints",
+"claude": "الگو خیاطی",
+"claude_fit": 1
+},
+{
+"top": "Craft Supplies & Tools",
+"name": "Trays & Boards",
+"claude": "سینی",
+"claude_fit": 2
+},
+{
+"top": "Electronics & Accessories",
+"name": "Steering Wheel Covers",
+"claude": "روکش فرمان",
+"claude_fit": 1
+},
+{
+"top": "Electronics & Accessories",
+"name": "Tablet & E-Reader Cases",
+"claude": "کیف تبلت",
+"claude_fit": 2
+},
+{
+"top": "Electronics & Accessories",
+"name": "Batteries",
+"claude": "باتری",
+"claude_fit": 0
+},
+{
+"top": "Electronics & Accessories",
+"name": "Cameras",
+"claude": "دوربین",
+"claude_fit": 0
+},
+{
+"top": "Electronics & Accessories",
+"name": "Electronics Cases",
+"claude": "کیف لوازم جانبی",
+"claude_fit": 1
+},
+{
+"top": "Electronics & Accessories",
+"name": "Laptop Decals",
+"claude": "برچسب لپ تاپ",
+"claude_fit": 2
+},
+{
+"top": "Electronics & Accessories",
+"name": "Lenses",
+"claude": "لنز",
+"claude_fit": 0
+},
+{
+"top": "Electronics & Accessories",
+"name": "TV & Projection",
+"claude": "پروژکتور",
+"claude_fit": 0
+},
+{
+"top": "Electronics & Accessories",
+"name": "Keyboards",
+"claude": "کیبورد",
+"claude_fit": 0
+},
+{
+"top": "Electronics & Accessories",
+"name": "Lenses & Filters",
+"claude": "فیلتر لنز",
+"claude_fit": 0
+},
+{
+"top": "Home & Living",
+"name": "Lamp Sets",
+"claude": "آباژور",
+"claude_fit": 2
+},
+{
+"top": "Home & Living",
+"name": "Home Bar",
+"claude": "لوازم کافه بار",
+"claude_fit": 1
+},
+{
+"top": "Home & Living",
+"name": "Sheets & Pillowcases",
+"claude": "روبالشی",
+"claude_fit": 2
+},
+{
+"top": "Home & Living",
+"name": "Cookies",
+"claude": "کوکی",
+"claude_fit": 0
+},
+{
+"top": "Home & Living",
+"name": "Outdoor Planters",
+"claude": "گلدان حیاطی",
+"claude_fit": 2
+},
+{
+"top": "Home & Living",
+"name": "Seeds & Seed Bombs",
+"claude": "بذر گل",
+"claude_fit": 1
+},
+{
+"top": "Home & Living",
+"name": "Coffee Stencils",
+"claude": "شابلون قهوه",
+"claude_fit": 2
+},
+{
+"top": "Home & Living",
+"name": "Scoops",
+"claude": "پیمانه",
+"claude_fit": 1
+},
+{
+"top": "Home & Living",
+"name": "Pans",
+"claude": "تابه",
+"claude_fit": 0
+},
+{
+"top": "Home & Living",
+"name": "Fortune Cups & China",
+"claude": "ظرف چینی",
+"claude_fit": 1
+},
+{
+"top": "Jewellery",
+"name": "Multi-Strand Necklaces",
+"claude": "گردنبند چند ردیفه",
+"claude_fit": 2
+},
+{
+"top": "Jewellery",
+"name": "Solitaire Rings",
+"claude": "انگشتر تک نگین",
+"claude_fit": 2
+},
+{
+"top": "Jewellery",
+"name": "Crystal Necklaces",
+"claude": "گردنبند سنگ",
+"claude_fit": 2
+},
+{
+"top": "Jewellery",
+"name": "Nipple Jewellery",
+"claude": "پیرسینگ",
+"claude_fit": 0
+},
+{
+"top": "Jewellery",
+"name": "Shoulder Jewellery",
+"claude": "زنجیر شانه",
+"claude_fit": 1
+},
+{
+"top": "Jewellery",
+"name": "Chandbalis",
+"claude": "گوشواره هندی",
+"claude_fit": 2
+},
+{
+"top": "Jewellery",
+"name": "Lockets",
+"claude": "گردنبند قاب عکس",
+"claude_fit": 2
+},
+{
+"top": "Jewellery",
+"name": "Watch Necklaces",
+"claude": "گردنبند ساعت",
+"claude_fit": 1
+},
+{
+"top": "Jewellery",
+"name": "Smart Jewellery",
+"claude": "انگشتر هوشمند",
+"claude_fit": 0
+},
+{
+"top": "Jewellery",
+"name": "Lip Rings",
+"claude": "پیرسینگ لب",
+"claude_fit": 0
+},
+{
+"top": "Paper & Party Supplies",
+"name": "Bookkeeping Templates",
+"claude": "فرم حسابداری",
+"claude_fit": 0
+},
+{
+"top": "Paper & Party Supplies",
+"name": "Balloons",
+"claude": "بادکنک",
+"claude_fit": 1
+},
+{
+"top": "Paper & Party Supplies",
+"name": "Flashcards",
+"claude": "فلش کارت",
+"claude_fit": 1
+},
+{
+"top": "Paper & Party Supplies",
+"name": "Postcards",
+"claude": "کارت پستال",
+"claude_fit": 2
+},
+{
+"top": "Paper & Party Supplies",
+"name": "Personal Finance Templates",
+"claude": "دفتر بودجه",
+"claude_fit": 1
+},
+{
+"top": "Paper & Party Supplies",
+"name": "Wall Calendars",
+"claude": "تقویم دیواری",
+"claude_fit": 2
+},
+{
+"top": "Paper & Party Supplies",
+"name": "Garlands, Flags & Bunting",
+"claude": "ریسه تولد",
+"claude_fit": 2
+},
+{
+"top": "Paper & Party Supplies",
+"name": "Résumé Templates",
+"claude": "قالب رزومه",
+"claude_fit": 0
+},
+{
+"top": "Paper & Party Supplies",
+"name": "Moving Cards",
+"claude": "کارت تبریک",
+"claude_fit": 2
+},
+{
+"top": "Paper & Party Supplies",
+"name": "Hanukkah Cards",
+"claude": "کارت تبریک حنوکا",
+"claude_fit": 0
+},
+{
+"top": "Pet Supplies",
+"name": "Bag Holders & Scoops",
+"claude": "کیسه مدفوع سگ",
+"claude_fit": 0
+},
+{
+"top": "Pet Supplies",
+"name": "Pet Carriers & Houses",
+"claude": "باکس حمل حیوانات",
+"claude_fit": 1
+},
+{
+"top": "Pet Supplies",
+"name": "Pet Jackets & Hoodies",
+"claude": "لباس سگ",
+"claude_fit": 2
+},
+{
+"top": "Pet Supplies",
+"name": "Pet Harnesses & Backpacks",
+"claude": "قلاده",
+"claude_fit": 2
+},
+{
+"top": "Pet Supplies",
+"name": "Pet Clothing, Accessories & Shoes",
+"claude": "لباس حیوانات",
+"claude_fit": 2
+},
+{
+"top": "Pet Supplies",
+"name": "Pet Booties",
+"claude": "کفش سگ",
+"claude_fit": 1
+},
+{
+"top": "Pet Supplies",
+"name": "Pet Steps",
+"claude": "پله حیوانات",
+"claude_fit": 1
+},
+{
+"top": "Pet Supplies",
+"name": "Muzzles",
+"claude": "پوزه بند",
+"claude_fit": 1
+},
+{
+"top": "Pet Supplies",
+"name": "Pet Urns",
+"claude": "ظرف خاکستر حیوان",
+"claude_fit": 0
+},
+{
+"top": "Pet Supplies",
+"name": "Coops",
+"claude": "لانه مرغ",
+"claude_fit": 0
+},
+{
+"top": "Shoes",
+"name": "Ice Skates",
+"claude": "کفش اسکیت",
+"claude_fit": 0
+},
+{
+"top": "Shoes",
+"name": "Slouch Boots",
+"claude": "بوت ساق بلند",
+"claude_fit": 0
+},
+{
+"top": "Shoes",
+"name": "Sport Sandals",
+"claude": "صندل ورزشی",
+"claude_fit": 0
+},
+{
+"top": "Shoes",
+"name": "Girls' Shoes",
+"claude": "کفش دخترانه",
+"claude_fit": 0
+},
+{
+"top": "Shoes",
+"name": "Fisherman",
+"claude": "کفش ماهیگیری",
+"claude_fit": 0
+},
+{
+"top": "Shoes",
+"name": "Winter Boots",
+"claude": "بوت زمستانی",
+"claude_fit": 0
+},
+{
+"top": "Shoes",
+"name": "Huaraches",
+"claude": "صندل چرمی",
+"claude_fit": 1
+},
+{
+"top": "Shoes",
+"name": "Booties & Ankle Boots",
+"claude": "نیم بوت",
+"claude_fit": 0
+},
+{
+"top": "Shoes",
+"name": "Roller Blades",
+"claude": "اسکیت",
+"claude_fit": 0
+},
+{
+"top": "Shoes",
+"name": "Shoe Clips",
+"claude": "گیره کفش",
+"claude_fit": 2
+},
+{
+"top": "Toys & Games",
+"name": "Field Hockey",
+"claude": "هاکی",
+"claude_fit": 0
+},
+{
+"top": "Toys & Games",
+"name": "Yoga",
+"claude": "مت یوگا",
+"claude_fit": 1
+},
+{
+"top": "Toys & Games",
+"name": "Tricycles",
+"claude": "سه چرخه",
+"claude_fit": 0
+},
+{
+"top": "Toys & Games",
+"name": "Pinball",
+"claude": "پین بال",
+"claude_fit": 0
+},
+{
+"top": "Toys & Games",
+"name": "Rowing",
+"claude": "قایق رانی",
+"claude_fit": 0
+},
+{
+"top": "Toys & Games",
+"name": "Wind-Up Toys",
+"claude": "اسباب بازی کوکی",
+"claude_fit": 1
+},
+{
+"top": "Toys & Games",
+"name": "Checkers",
+"claude": "دوز",
+"claude_fit": 1
+},
+{
+"top": "Toys & Games",
+"name": "Miniature Food",
+"claude": "مینیاتور خوراکی",
+"claude_fit": 2
+},
+{
+"top": "Toys & Games",
+"name": "Stuffed Animals & Plushies",
+"claude": "عروسک پولیشی",
+"claude_fit": 2
+},
+{
+"top": "Toys & Games",
+"name": "Sand & Water Toys",
+"claude": "اسباب بازی ساحلی",
+"claude_fit": 0
+},
+{
+"top": "Weddings",
+"name": "Wedding Garters",
+"claude": "بند جوراب عروس",
+"claude_fit": 1
+},
+{
+"top": "Weddings",
+"name": "Suits",
+"claude": "کت و شلوار دامادی",
+"claude_fit": 0
+},
+{
+"top": "Weddings",
+"name": "Accessories",
+"claude": "اکسسوری عروس",
+"claude_fit": 2
+},
+{
+"top": "Weddings",
+"name": "Wreaths",
+"claude": "تاج گل",
+"claude_fit": 2
+},
+{
+"top": "Weddings",
+"name": "Plants",
+"claude": "گل عروس",
+"claude_fit": 2
+},
+{
+"top": "Weddings",
+"name": "Drink & Bar Accessories",
+"claude": "جام عروس",
+"claude_fit": 1
+},
+{
+"top": "Weddings",
+"name": "Cake Toppers",
+"claude": "تاپر کیک",
+"claude_fit": 2
+},
+{
+"top": "Weddings",
+"name": "Guest Books",
+"claude": "دفتر یادبود عروسی",
+"claude_fit": 2
+},
+{
+"top": "Weddings",
+"name": "Bridesmaids' Gifts",
+"claude": "هدیه ساقدوش",
+"claude_fit": 2
+},
+{
+"top": "Weddings",
+"name": "Women's Suits",
+"claude": "کت و شلوار زنانه",
+"claude_fit": 1
+}
+]

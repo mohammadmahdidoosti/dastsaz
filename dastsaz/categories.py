@@ -295,3 +295,57 @@ def trends(n: int = 150) -> dict:
     rows = board()
     kws = [r["q"] for r in rows[:n]] or [c["fa"] for c in categories(2)[:n]]
     return backtest.run_trends(C.secret("APIFY_TOKEN"), "categories", kws=kws)
+
+
+def _probe(q: str, sb, sd, sg, sleep) -> dict:
+    """One term on Basalam, Digikala and Google: does it find matching products / searches?"""
+    from .needs import google_suggest
+    words = [w for w in _plain(q).split() if len(w) > 1]
+    out = {"q": q}
+    try:
+        cards, total = basalam.search(q, size=20, session=sb, sleep=sleep)
+        m = [x for x in cards if all(w in _plain(x.get("title")) for w in words)]
+        out.update({"bs_match": len(m), "bs_week": sum(x["sales_week"] for x in m[:15])})
+    except Exception as e:  # noqa: BLE001
+        log.warning("probe basalam %s: %s", q, e)
+    try:
+        dc, _ = digikala.search(q, session=sd, sleep=lambda *_: time.sleep(random.uniform(1, 2)))
+        out["dk_match"] = sum(1 for x in dc if all(w in _plain(x.get("title")) for w in words))
+    except Exception as e:  # noqa: BLE001
+        log.warning("probe digikala %s: %s", q, e)
+    out["g"] = sum(1 for x in google_suggest(sg, q) if all(w in _plain(x) for w in words))
+    return out
+
+
+def translation_test(progress=None, sleep=time.sleep) -> dict:
+    """Same 150 Etsy categories, two Persian names: the bulk AI's and Claude's (dastsaz/translation_test.json).
+    Which name finds more matching products on Basalam/Digikala and more Google searches?"""
+    import requests
+    sample = json.loads((Path(__file__).resolve().parent / "translation_test.json").read_text(encoding="utf-8"))
+    ai_fa = {(c["top"], c["name"]): c for c in categories(0)}
+    sb, sd, sg = basalam._session(), digikala._session(), requests.Session()
+    rows, cache = [], {}
+    for i, c in enumerate(sample):
+        a = ai_fa.get((c["top"], c["name"])) or {}
+        row = {"top": c["top"], "name": c["name"], "ai": a.get("fa") or "", "ai_fit": a.get("fit"),
+               "claude": c["claude"], "claude_fit": c["claude_fit"]}
+        for side in ("ai", "claude"):
+            q = row[side]
+            if q and _plain(q) not in cache:
+                cache[_plain(q)] = _probe(q, sb, sd, sg, sleep)
+            row[side + "_r"] = cache.get(_plain(q)) if q else {}
+        rows.append(row)
+        if progress:
+            progress(i + 1, len(sample))
+
+    def summary(side):
+        rs = [r[side + "_r"] for r in rows if r[side + "_r"]]
+        n = len(rs) or 1
+        return {"n": len(rs), "bs_found": sum(1 for r in rs if r.get("bs_match")) / n,
+                "dk_found": sum(1 for r in rs if r.get("dk_match")) / n, "google_found": sum(1 for r in rs if r.get("g")) / n,
+                "bs_week": sum(r.get("bs_week") or 0 for r in rs)}
+    diff = [r for r in rows if _plain(r["ai"]) != _plain(r["claude"])]
+    res = {"date": C.today().isoformat(), "ai": summary("ai"), "claude": summary("claude"), "differ": len(diff),
+           "fit_same": sum(1 for r in rows if r["ai_fit"] == r["claude_fit"]), "rows": rows}
+    (_dir() / "translation_test_result.json").write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
+    return res
