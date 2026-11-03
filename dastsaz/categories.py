@@ -149,12 +149,24 @@ def history() -> list[dict]:
 SOURCES = [("week", "باسلام"), ("dk_reviews", "دیجی‌کالا"), ("ads", "Ads"), ("ig", "اینستاگرام")]
 
 
+ADS_SNAPSHOT = Path(__file__).resolve().parent / "ads_snapshot.json"
+
+
 def _ads_map() -> dict:
+    """Monthly Google searches per term: the Keyword Planner snapshot in the repo (Persian-speaking countries),
+    overridden by any newer file uploaded on /ads."""
+    out = {}
+    try:
+        snap = json.loads(ADS_SNAPSHOT.read_text(encoding="utf-8"))
+        out = {_plain(r["keyword"]): r.get("avg") for r in snap["rows"] if r.get("avg") is not None}
+    except Exception:  # noqa: BLE001
+        pass
     try:
         from . import ads
-        return {_plain(r["keyword"]): r.get("avg") for r in ads.latest()[1] if r.get("avg") is not None}
+        out.update({_plain(r["keyword"]): r.get("avg") for r in ads.latest()[1] if r.get("avg") is not None})
     except Exception:  # noqa: BLE001
-        return {}
+        pass
+    return out
 
 
 def combine(rows: list[dict]) -> list[dict]:

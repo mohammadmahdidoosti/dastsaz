@@ -1,0 +1,2766 @@
+{
+"date": "2026-11-03",
+"where": "Afghanistan, Tajikistan, Germany, Canada, Sweden, Turkey (Persian-speaking; all-locations mixes in Arabic/Urdu)",
+"rows": [
+{
+"keyword": "آبرنگ",
+"avg": 390.0,
+"three_month": 22.0,
+"yoy": -34.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "آغوشی نوزاد",
+"avg": 210.0,
+"three_month": 0.0,
+"yoy": -46.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "آلبوم",
+"avg": 260.0,
+"three_month": -19.0,
+"yoy": -33.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "آویز",
+"avg": 260.0,
+"three_month": 24.0,
+"yoy": -56.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "آویز آینه ماشین",
+"avg": 30.0,
+"three_month": 0.0,
+"yoy": -67.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "آویز تخت نوزاد",
+"avg": 30.0,
+"three_month": 0.0,
+"yoy": -40.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "آویز پنجره",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": null,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "آویز چارم",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "آویز گردنبند",
+"avg": 30.0,
+"three_month": 33.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "آویز گوشی",
+"avg": 210.0,
+"three_month": -35.0,
+"yoy": -65.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "آینه جیبی",
+"avg": 40.0,
+"three_month": 25.0,
+"yoy": -44.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "اسباب بازی حیوانات",
+"avg": 50.0,
+"three_month": 40.0,
+"yoy": -50.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "اسباب بازی سگ",
+"avg": 50.0,
+"three_month": -20.0,
+"yoy": -64.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "اسباب بازی مینیاتوری",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": -50.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "اسباب بازی همستر",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "اسباب بازی پرنده",
+"avg": 20.0,
+"three_month": 0.0,
+"yoy": -50.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "اسباب بازی چوبی",
+"avg": 40.0,
+"three_month": -20.0,
+"yoy": -43.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "اسباب بازی گربه",
+"avg": 140.0,
+"three_month": -33.0,
+"yoy": -33.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "استیکر ناخن",
+"avg": 40.0,
+"three_month": -20.0,
+"yoy": -56.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "اسکراب لب",
+"avg": 90.0,
+"three_month": -36.0,
+"yoy": -59.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "اسکین لپ تاپ",
+"avg": 30.0,
+"three_month": 0.0,
+"yoy": -60.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "اسکین گوشی",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "النگو",
+"avg": 1600.0,
+"three_month": -41.0,
+"yoy": -75.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "انگشتر",
+"avg": 3600.0,
+"three_month": -23.0,
+"yoy": -81.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "انگشتر عقیق",
+"avg": 720.0,
+"three_month": 0.0,
+"yoy": -18.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "انگشتر مردانه",
+"avg": 720.0,
+"three_month": 0.0,
+"yoy": -18.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "انگشتر نقره",
+"avg": 590.0,
+"three_month": 0.0,
+"yoy": -18.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "اکسسوری حیوانات",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "اکسسوری عروس",
+"avg": 20.0,
+"three_month": 50.0,
+"yoy": -57.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "اکسسوری ماشین",
+"avg": 110.0,
+"three_month": 0.0,
+"yoy": -58.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "اکسسوری مو",
+"avg": 110.0,
+"three_month": 55.0,
+"yoy": -35.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "اکسسوری مو عروس",
+"avg": 10.0,
+"three_month": null,
+"yoy": null,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "بادبزن عروسی",
+"avg": 10.0,
+"three_month": -100.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "بادی نوزاد",
+"avg": 40.0,
+"three_month": -25.0,
+"yoy": -40.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "بازوبند",
+"avg": 110.0,
+"three_month": 0.0,
+"yoy": -46.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "بازی تاس",
+"avg": 70.0,
+"three_month": 0.0,
+"yoy": -64.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "بازی فکری",
+"avg": 720.0,
+"three_month": -19.0,
+"yoy": -75.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "بازی کارتی",
+"avg": 30.0,
+"three_month": -50.0,
+"yoy": -71.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "بافتنی",
+"avg": 590.0,
+"three_month": -19.0,
+"yoy": -33.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "بالم لب",
+"avg": 880.0,
+"three_month": 0.0,
+"yoy": -54.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "باکس حمل حیوانات",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "باکس هدیه",
+"avg": 170.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "برچسب تبلت",
+"avg": 10.0,
+"three_month": null,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "برچسب لپ تاپ",
+"avg": 70.0,
+"three_month": 0.0,
+"yoy": -64.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "برچسب ناخن",
+"avg": 50.0,
+"three_month": -29.0,
+"yoy": -64.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "برچسب چمدان",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "برچسب کیبورد",
+"avg": 70.0,
+"three_month": 75.0,
+"yoy": -22.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "برچسب گوشی",
+"avg": 20.0,
+"three_month": 50.0,
+"yoy": -40.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "بسته بندی کادو",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": -50.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "بشقاب دیواری",
+"avg": 10.0,
+"three_month": 100.0,
+"yoy": -60.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "بلوز بافتنی",
+"avg": 20.0,
+"three_month": 100.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "بلوز بچه",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": null,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "بمب حمام",
+"avg": 40.0,
+"three_month": -60.0,
+"yoy": -33.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "بند دوربین",
+"avg": 20.0,
+"three_month": 0.0,
+"yoy": -67.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "بند قلاده",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "بند ماسک",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "بند پرده",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "بند پستانک",
+"avg": 20.0,
+"three_month": 0.0,
+"yoy": -33.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "بند کیف",
+"avg": 50.0,
+"three_month": -43.0,
+"yoy": -56.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "بند گیتار",
+"avg": 20.0,
+"three_month": 100.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "بولرو",
+"avg": 140.0,
+"three_month": -47.0,
+"yoy": -36.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "بوم نقاشی",
+"avg": 480.0,
+"three_month": -19.0,
+"yoy": -56.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "بوکمارک",
+"avg": 70.0,
+"three_month": -18.0,
+"yoy": -36.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "تابلو",
+"avg": 880.0,
+"three_month": 0.0,
+"yoy": -12.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "تابلو نقاشی",
+"avg": 260.0,
+"three_month": 52.0,
+"yoy": 23.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "تاج عروس",
+"avg": 320.0,
+"three_month": 22.0,
+"yoy": -34.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "تاج گل عروس",
+"avg": 30.0,
+"three_month": 50.0,
+"yoy": -57.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "تاس",
+"avg": 720.0,
+"three_month": -18.0,
+"yoy": -33.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "تزئینات عروسی",
+"avg": 10.0,
+"three_month": null,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "تزیینات تولد",
+"avg": 210.0,
+"three_month": 24.0,
+"yoy": -34.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "تقویم دیواری",
+"avg": 30.0,
+"three_month": -50.0,
+"yoy": -50.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "تقویم رومیزی",
+"avg": 110.0,
+"three_month": -43.0,
+"yoy": -71.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "جا براش",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "جا صابونی",
+"avg": 40.0,
+"three_month": 25.0,
+"yoy": -29.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "جا مسواک",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "جادستمال کاغذی",
+"avg": 20.0,
+"three_month": 50.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "جاشمعی",
+"avg": 210.0,
+"three_month": 24.0,
+"yoy": -19.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "جاقرصی",
+"avg": 30.0,
+"three_month": 0.0,
+"yoy": -29.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "جاکلیدی",
+"avg": 320.0,
+"three_month": -56.0,
+"yoy": -33.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "جای خواب گربه",
+"avg": 70.0,
+"three_month": 0.0,
+"yoy": -36.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "جعبه حلقه",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": -50.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "جعبه کادو",
+"avg": 210.0,
+"three_month": 24.0,
+"yoy": -34.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "جغجغه",
+"avg": 110.0,
+"three_month": -21.0,
+"yoy": -48.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "جلد کتاب",
+"avg": 170.0,
+"three_month": 433.0,
+"yoy": -45.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "جلیقه",
+"avg": 390.0,
+"three_month": -18.0,
+"yoy": -68.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "جلیقه بافتنی",
+"avg": 50.0,
+"three_month": 100.0,
+"yoy": -56.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "جوراب",
+"avg": 720.0,
+"three_month": 22.0,
+"yoy": -28.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "جوراب بچه",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "جیبیتز",
+"avg": 30.0,
+"three_month": -71.0,
+"yoy": -71.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "حلقه جاکلیدی",
+"avg": 20.0,
+"three_month": -33.0,
+"yoy": -33.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "حلقه مو",
+"avg": 20.0,
+"three_month": -75.0,
+"yoy": -67.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "حنا",
+"avg": 6600.0,
+"three_month": -19.0,
+"yoy": -33.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "خانه گربه",
+"avg": 170.0,
+"three_month": 24.0,
+"yoy": -34.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "خرس عروسکی",
+"avg": 70.0,
+"three_month": 29.0,
+"yoy": -18.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "خوشبوکننده ماشین",
+"avg": 30.0,
+"three_month": -25.0,
+"yoy": -25.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "دستبند",
+"avg": 2400.0,
+"three_month": -19.0,
+"yoy": -70.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "دستبند اسم مردانه",
+"avg": 10.0,
+"three_month": null,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "دستبند زنجیری",
+"avg": 70.0,
+"three_month": 0.0,
+"yoy": -64.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "دستبند مردانه",
+"avg": 590.0,
+"three_month": 0.0,
+"yoy": -45.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "دستبند مهره ای",
+"avg": 70.0,
+"three_month": 0.0,
+"yoy": -36.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "دستبند نقره",
+"avg": 260.0,
+"three_month": -34.0,
+"yoy": -46.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "دستبند چرم",
+"avg": 110.0,
+"three_month": -36.0,
+"yoy": -65.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "دستبند چرم مردانه",
+"avg": 170.0,
+"three_month": -33.0,
+"yoy": -56.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "دستمال آروغ",
+"avg": 10.0,
+"three_month": null,
+"yoy": null,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "دستمال گردن سگ",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "دسته گل",
+"avg": 2400.0,
+"three_month": -16.0,
+"yoy": -45.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "دسته گل عروس",
+"avg": 880.0,
+"three_month": 22.0,
+"yoy": -54.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "دستکش",
+"avg": 590.0,
+"three_month": 0.0,
+"yoy": -34.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "دستکش بافتنی",
+"avg": 70.0,
+"three_month": 200.0,
+"yoy": -25.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "دفتر",
+"avg": 1900.0,
+"three_month": 81.0,
+"yoy": -19.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "دفتر طراحی",
+"avg": 110.0,
+"three_month": 89.0,
+"yoy": -56.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "دفتر یادداشت",
+"avg": 720.0,
+"three_month": 49.0,
+"yoy": -32.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "دمپایی",
+"avg": 880.0,
+"three_month": -12.0,
+"yoy": -45.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "دمپایی لا انگشتی",
+"avg": 50.0,
+"three_month": -73.0,
+"yoy": -57.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "دهل",
+"avg": 210.0,
+"three_month": -18.0,
+"yoy": -46.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "دوز",
+"avg": 720.0,
+"three_month": -19.0,
+"yoy": -61.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "دکمه سردست",
+"avg": 70.0,
+"three_month": 40.0,
+"yoy": -59.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "دکور آکواریوم",
+"avg": 20.0,
+"three_month": 0.0,
+"yoy": -67.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "دکوری",
+"avg": 140.0,
+"three_month": 0.0,
+"yoy": -33.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "دیوارکوب",
+"avg": 480.0,
+"three_month": 23.0,
+"yoy": -45.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "روبالشی",
+"avg": 30.0,
+"three_month": -40.0,
+"yoy": -25.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "روسری",
+"avg": 480.0,
+"three_month": 0.0,
+"yoy": -56.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "روغن ریش",
+"avg": 110.0,
+"three_month": -18.0,
+"yoy": -36.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "روغن مو",
+"avg": 260.0,
+"three_month": -19.0,
+"yoy": -33.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "رومیزی",
+"avg": 320.0,
+"three_month": 0.0,
+"yoy": -33.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "روکش فرمان",
+"avg": 30.0,
+"three_month": -50.0,
+"yoy": -71.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "روکش کیبورد",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "زنجیر مردانه",
+"avg": 140.0,
+"three_month": -18.0,
+"yoy": -46.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "زنجیر مو",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "زنجیر کمر",
+"avg": 90.0,
+"three_month": -50.0,
+"yoy": -36.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "زنگوله گربه",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "زیرانداز تعویض",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "زیورآلات دست ساز",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": -50.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "زیورآلات مو",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": -100.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "ساز کوبه ای",
+"avg": 90.0,
+"three_month": -18.0,
+"yoy": -47.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "ساق بوت",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": -100.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "ساق دست",
+"avg": 210.0,
+"three_month": -34.0,
+"yoy": -34.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "ساق دست بافتنی",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "ساق پا بافتنی",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "ساپورت",
+"avg": 480.0,
+"three_month": -19.0,
+"yoy": -46.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "ساک دستی",
+"avg": 140.0,
+"three_month": 0.0,
+"yoy": -46.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "ساک دستی کادو",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": -50.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "سبد حصیری",
+"avg": 210.0,
+"three_month": 0.0,
+"yoy": -33.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "سبد عروسی",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": -50.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "سبد گل",
+"avg": 260.0,
+"three_month": 24.0,
+"yoy": -46.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "ست لباس بچه",
+"avg": 10.0,
+"three_month": -100.0,
+"yoy": -100.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "ست هدیه نوزاد",
+"avg": 10.0,
+"three_month": null,
+"yoy": null,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "سرهمی",
+"avg": 170.0,
+"three_month": -18.0,
+"yoy": -46.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "سرهمی جوراب دار",
+"avg": 10.0,
+"three_month": null,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "سرهمی نوزاد",
+"avg": 110.0,
+"three_month": 0.0,
+"yoy": -48.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "سرویس جواهرات",
+"avg": 50.0,
+"three_month": 133.0,
+"yoy": -36.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "سوت",
+"avg": 1000.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "سوزن دوزی",
+"avg": 140.0,
+"three_month": 27.0,
+"yoy": -18.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "سویشرت",
+"avg": 1000.0,
+"three_month": 213.0,
+"yoy": -58.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "سگک کمربند",
+"avg": 90.0,
+"three_month": -36.0,
+"yoy": -59.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "شابلون ناخن",
+"avg": 30.0,
+"three_month": 150.0,
+"yoy": 25.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "شال",
+"avg": 2400.0,
+"three_month": -16.0,
+"yoy": -33.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "شال مبل",
+"avg": 720.0,
+"three_month": 22.0,
+"yoy": -45.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "شطرنج",
+"avg": 9900.0,
+"three_month": -18.0,
+"yoy": -18.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "شلوار بچه",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "شماره میز",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "شمع",
+"avg": 2400.0,
+"three_month": 0.0,
+"yoy": -34.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "شمع عروسی",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "شمع معطر",
+"avg": 70.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "شمعدان",
+"avg": 480.0,
+"three_month": 23.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "شمعدان عروس",
+"avg": 10.0,
+"three_month": null,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "شنل",
+"avg": 1000.0,
+"three_month": 22.0,
+"yoy": -46.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "شنل عروس",
+"avg": 110.0,
+"three_month": 57.0,
+"yoy": -58.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "صابون",
+"avg": 1600.0,
+"three_month": -19.0,
+"yoy": -19.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "صابون دست ساز",
+"avg": 20.0,
+"three_month": 0.0,
+"yoy": -60.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "صندل",
+"avg": 1300.0,
+"three_month": -47.0,
+"yoy": -38.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "صندل چرمی",
+"avg": 30.0,
+"three_month": -40.0,
+"yoy": -40.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "طراحی ناخن",
+"avg": 2900.0,
+"three_month": -47.0,
+"yoy": -71.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "عروسک",
+"avg": 2400.0,
+"three_month": -16.0,
+"yoy": -70.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "عروسک اسب",
+"avg": 20.0,
+"three_month": -50.0,
+"yoy": -50.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "عروسک انگشتی",
+"avg": 40.0,
+"three_month": 0.0,
+"yoy": -60.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "عروسک بافتنی",
+"avg": 140.0,
+"three_month": -33.0,
+"yoy": -46.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "عروسک تک شاخ",
+"avg": 20.0,
+"three_month": 0.0,
+"yoy": -60.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "عروسک خرگوش",
+"avg": 170.0,
+"three_month": -33.0,
+"yoy": -64.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "عروسک دستی",
+"avg": 20.0,
+"three_month": 50.0,
+"yoy": -40.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "عروسک سگ",
+"avg": 40.0,
+"three_month": 0.0,
+"yoy": -43.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "عروسک ماهی",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": -50.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "عروسک میمون",
+"avg": 30.0,
+"three_month": -33.0,
+"yoy": -60.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "عروسک نمایشی",
+"avg": 20.0,
+"three_month": -50.0,
+"yoy": -80.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "عروسک پولیشی",
+"avg": 110.0,
+"three_month": 0.0,
+"yoy": -48.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "عروسک گربه",
+"avg": 90.0,
+"three_month": -22.0,
+"yoy": -59.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "عینک آفتابی",
+"avg": 480.0,
+"three_month": -45.0,
+"yoy": -33.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "فانوس شمع",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "فرش حمام",
+"avg": 90.0,
+"three_month": 57.0,
+"yoy": 57.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "فرفره کاغذی",
+"avg": 110.0,
+"three_month": 75.0,
+"yoy": -22.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "قاب گوشی",
+"avg": 720.0,
+"three_month": -18.0,
+"yoy": -55.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "قلاب بافی",
+"avg": 480.0,
+"three_month": 23.0,
+"yoy": -19.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "قلاده",
+"avg": 480.0,
+"three_month": 0.0,
+"yoy": -19.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "قلاده کتفی",
+"avg": 10.0,
+"three_month": 100.0,
+"yoy": -33.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "لانه همستر",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "لباس سگ",
+"avg": 70.0,
+"three_month": 0.0,
+"yoy": -55.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "لباس عروسکی",
+"avg": 260.0,
+"three_month": -19.0,
+"yoy": -56.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "لباس نوزاد پسر",
+"avg": 90.0,
+"three_month": -55.0,
+"yoy": -44.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "لباس پسرانه",
+"avg": 260.0,
+"three_month": -19.0,
+"yoy": -19.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "لحاف چهل تکه",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "لوازم ماشین",
+"avg": 30.0,
+"three_month": 0.0,
+"yoy": -71.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "لوازم نوزاد",
+"avg": 30.0,
+"three_month": -33.0,
+"yoy": -33.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "لیف",
+"avg": 480.0,
+"three_month": 0.0,
+"yoy": -19.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "لیوان مسواک",
+"avg": 10.0,
+"three_month": null,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "ماراکاس",
+"avg": 10.0,
+"three_month": -50.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "ماوس پد",
+"avg": 40.0,
+"three_month": -25.0,
+"yoy": -40.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "ماکت",
+"avg": 590.0,
+"three_month": 23.0,
+"yoy": -41.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "ماگ",
+"avg": 1300.0,
+"three_month": 23.0,
+"yoy": -45.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "مجسمه دکوری",
+"avg": 20.0,
+"three_month": 0.0,
+"yoy": 50.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "مجسمه کوچک",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "مهر ناخن",
+"avg": 20.0,
+"three_month": -50.0,
+"yoy": -86.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "مهر کتاب",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "مهره",
+"avg": 590.0,
+"three_month": -19.0,
+"yoy": -52.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "مواد صابون سازی",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "موزاییک",
+"avg": 480.0,
+"three_month": 0.0,
+"yoy": -33.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "مکرومه",
+"avg": 210.0,
+"three_month": -58.0,
+"yoy": -72.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "مینیاتور",
+"avg": 480.0,
+"three_month": 0.0,
+"yoy": -34.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "ناخن مصنوعی",
+"avg": 590.0,
+"three_month": 0.0,
+"yoy": -45.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "نظم دهنده کابل",
+"avg": 20.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "نقاشی",
+"avg": 22200.0,
+"three_month": 22.0,
+"yoy": -45.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "نقاشی اکریلیک",
+"avg": 50.0,
+"three_month": 0.0,
+"yoy": -29.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "نقاشی حیوان خانگی",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "نقاشی رنگ روغن",
+"avg": 210.0,
+"three_month": -33.0,
+"yoy": -56.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "نمد",
+"avg": 390.0,
+"three_month": 23.0,
+"yoy": -33.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "نمک حمام",
+"avg": 50.0,
+"three_month": -43.0,
+"yoy": -56.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "نوار چسب طرح دار",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "هنر بافت",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "هودی",
+"avg": 1300.0,
+"three_month": 306.0,
+"yoy": -55.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "هودی بچه",
+"avg": 10.0,
+"three_month": null,
+"yoy": null,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "واکس کفش",
+"avg": 70.0,
+"three_month": 40.0,
+"yoy": -22.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پابند",
+"avg": 320.0,
+"three_month": -33.0,
+"yoy": -46.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پادری",
+"avg": 320.0,
+"three_month": 23.0,
+"yoy": -33.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پادری حمام",
+"avg": 40.0,
+"three_month": -20.0,
+"yoy": -43.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پارچه کوبلن",
+"avg": 10.0,
+"three_month": 200.0,
+"yoy": 200.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پازل",
+"avg": 480.0,
+"three_month": -19.0,
+"yoy": -56.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پازل اسم",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پاشنه کش",
+"avg": 110.0,
+"three_month": 0.0,
+"yoy": -18.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پانچو",
+"avg": 480.0,
+"three_month": 23.0,
+"yoy": -45.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پاپوش نوزاد",
+"avg": 70.0,
+"three_month": 57.0,
+"yoy": -21.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پاپیون سگ",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": -50.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پاپیون کادو",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پایه انگشتر",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": -50.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پایه دستبند",
+"avg": 10.0,
+"three_month": -100.0,
+"yoy": -100.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پایه صابون",
+"avg": 20.0,
+"three_month": -33.0,
+"yoy": -50.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پایه لپ تاپ",
+"avg": 110.0,
+"three_month": 0.0,
+"yoy": -35.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پایه موبایل",
+"avg": 110.0,
+"three_month": 0.0,
+"yoy": -48.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پایه هدفون",
+"avg": 10.0,
+"three_month": 100.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پایه کتاب",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": -33.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پایه گوشواره",
+"avg": 10.0,
+"three_month": -50.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پایه گوشی",
+"avg": 140.0,
+"three_month": -21.0,
+"yoy": -66.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پتو بافتنی",
+"avg": 30.0,
+"three_month": 100.0,
+"yoy": -71.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پتو حیوانات",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پتو نوزاد",
+"avg": 90.0,
+"three_month": 29.0,
+"yoy": -47.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پلاک اسم سگ",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": -100.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پلاک اسم مردانه",
+"avg": 10.0,
+"three_month": -100.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پلاک تزئینی",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پلاک خام",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پلیور",
+"avg": 390.0,
+"three_month": 86.0,
+"yoy": -46.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پک هدیه آرایشی",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پیش بندی",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پیشبند آشپزی",
+"avg": 30.0,
+"three_month": 100.0,
+"yoy": -20.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پیشبند نوزاد",
+"avg": 20.0,
+"three_month": 0.0,
+"yoy": -33.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "پیک گیتار",
+"avg": 110.0,
+"three_month": -47.0,
+"yoy": -57.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "چشم بند",
+"avg": 170.0,
+"three_month": -33.0,
+"yoy": -46.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "چشم بند خواب",
+"avg": 140.0,
+"three_month": -19.0,
+"yoy": -19.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "چهل تکه",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": -50.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "چوب مو",
+"avg": 50.0,
+"three_month": -40.0,
+"yoy": -67.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "ژاکت بافتنی",
+"avg": 70.0,
+"three_month": 250.0,
+"yoy": -50.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کابوشن",
+"avg": 10.0,
+"three_month": -100.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کادو عروسی",
+"avg": 20.0,
+"three_month": 0.0,
+"yoy": -33.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کارت انگیزشی",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": -100.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کارت تبریک",
+"avg": 70.0,
+"three_month": 25.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کارت تبریک تولد نوزاد",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کارت تبریک عید",
+"avg": 20.0,
+"three_month": 0.0,
+"yoy": null,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کارت تشکر",
+"avg": 20.0,
+"three_month": 0.0,
+"yoy": -33.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کارت تولد",
+"avg": 320.0,
+"three_month": -19.0,
+"yoy": -19.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کارت دوستی",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کارت سالگرد",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کارت عاشقانه",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": null,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کارت عروسی",
+"avg": 880.0,
+"three_month": 0.0,
+"yoy": -47.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کارت فارغ التحصیلی",
+"avg": 10.0,
+"three_month": -100.0,
+"yoy": -100.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کارت ولنتاین",
+"avg": 10.0,
+"three_month": null,
+"yoy": null,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کارت پستال",
+"avg": 480.0,
+"three_month": -18.0,
+"yoy": -56.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کاسه شمع",
+"avg": 10.0,
+"three_month": -100.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کاور ساز",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کاور سوییچ",
+"avg": 50.0,
+"three_month": -29.0,
+"yoy": -44.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کاور لپ تاپ",
+"avg": 110.0,
+"three_month": 0.0,
+"yoy": -58.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کاور پاسپورت",
+"avg": 20.0,
+"three_month": -60.0,
+"yoy": -50.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کتاب رنگ آمیزی",
+"avg": 20.0,
+"three_month": 0.0,
+"yoy": -33.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کش مو",
+"avg": 260.0,
+"three_month": 0.0,
+"yoy": -33.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کش مو گوجه ای",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کفی کفش",
+"avg": 170.0,
+"three_month": 21.0,
+"yoy": -19.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کلاه",
+"avg": 1300.0,
+"three_month": -23.0,
+"yoy": -38.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کلاه حمام",
+"avg": 50.0,
+"three_month": -43.0,
+"yoy": -64.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کمربند",
+"avg": 590.0,
+"three_month": 22.0,
+"yoy": -18.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کمربند عروس",
+"avg": 50.0,
+"three_month": 29.0,
+"yoy": 29.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کمربند چرمی",
+"avg": 70.0,
+"three_month": 0.0,
+"yoy": -64.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کوبلن",
+"avg": 260.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کوسن",
+"avg": 1600.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کوله پشتی",
+"avg": 590.0,
+"three_month": 22.0,
+"yoy": -54.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کیسه خرید",
+"avg": 10.0,
+"three_month": -50.0,
+"yoy": -50.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کیسه معطر",
+"avg": 10.0,
+"three_month": null,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کیسه پارچه ای",
+"avg": 40.0,
+"three_month": 25.0,
+"yoy": -44.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کیسه گیفت",
+"avg": 10.0,
+"three_month": -100.0,
+"yoy": -100.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کیف آرایش",
+"avg": 170.0,
+"three_month": 24.0,
+"yoy": -34.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کیف براش",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کیف تبلت",
+"avg": 40.0,
+"three_month": 25.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کیف دستی",
+"avg": 260.0,
+"three_month": -19.0,
+"yoy": -71.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کیف دستی زنانه",
+"avg": 90.0,
+"three_month": 29.0,
+"yoy": -47.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کیف دوشی",
+"avg": 140.0,
+"three_month": 21.0,
+"yoy": -47.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کیف دوشی بزرگ",
+"avg": 10.0,
+"three_month": -50.0,
+"yoy": -67.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کیف رودوشی",
+"avg": 40.0,
+"three_month": 25.0,
+"yoy": -29.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کیف ساز",
+"avg": 10.0,
+"three_month": null,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کیف عروس",
+"avg": 50.0,
+"three_month": 25.0,
+"yoy": -64.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کیف قمقمه",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": -50.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کیف لوازم",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کیف لوازم آرایش",
+"avg": 260.0,
+"three_month": -19.0,
+"yoy": -56.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کیف لوازم شخصی",
+"avg": 10.0,
+"three_month": -50.0,
+"yoy": null,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کیف مت یوگا",
+"avg": 20.0,
+"three_month": 0.0,
+"yoy": -50.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کیف مجلسی",
+"avg": 140.0,
+"three_month": 56.0,
+"yoy": -56.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کیف مچی",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کیف ناهار",
+"avg": 10.0,
+"three_month": null,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کیف پاسپورت",
+"avg": 40.0,
+"three_month": 0.0,
+"yoy": -50.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کیف پول",
+"avg": 880.0,
+"three_month": 22.0,
+"yoy": -32.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کیف پول سکه",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کیف کراس بادی",
+"avg": 170.0,
+"three_month": 0.0,
+"yoy": -46.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کیف کفش",
+"avg": 20.0,
+"three_month": 100.0,
+"yoy": -50.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "کیف کمری",
+"avg": 210.0,
+"three_month": -34.0,
+"yoy": -56.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "گردنبند",
+"avg": 2400.0,
+"three_month": -23.0,
+"yoy": -72.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "گردنبند استیل",
+"avg": 30.0,
+"three_month": 50.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "گردنبند اسم",
+"avg": 40.0,
+"three_month": 0.0,
+"yoy": -40.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "گردنبند مردانه",
+"avg": 390.0,
+"three_month": -19.0,
+"yoy": -46.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "گل سینه",
+"avg": 90.0,
+"three_month": -29.0,
+"yoy": -64.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "گل مو",
+"avg": 30.0,
+"three_month": 0.0,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "گل کت داماد",
+"avg": 10.0,
+"three_month": 0.0,
+"yoy": -50.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "گلدان",
+"avg": 720.0,
+"three_month": 0.0,
+"yoy": -45.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "گلدوزی",
+"avg": 1000.0,
+"three_month": 0.0,
+"yoy": -45.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "گوشواره",
+"avg": 9900.0,
+"three_month": -32.0,
+"yoy": -93.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "گوشواره میخی",
+"avg": 170.0,
+"three_month": -19.0,
+"yoy": -47.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "گیره مو",
+"avg": 260.0,
+"three_month": 0.0,
+"yoy": -33.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "گیره مو عروس",
+"avg": 10.0,
+"three_month": -100.0,
+"yoy": -100.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "گیره کراوات",
+"avg": 50.0,
+"three_month": 133.0,
+"yoy": -59.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "گیره کفش",
+"avg": 10.0,
+"three_month": null,
+"yoy": 0.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "گیفت عروسی",
+"avg": 210.0,
+"three_month": 0.0,
+"yoy": -64.0,
+"competition": "",
+"months": {}
+},
+{
+"keyword": "یقه",
+"avg": 260.0,
+"three_month": -19.0,
+"yoy": -46.0,
+"competition": "",
+"months": {}
+}
+]
+}
