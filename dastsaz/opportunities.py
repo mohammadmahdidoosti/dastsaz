@@ -41,8 +41,8 @@ EXPAND_MAX = 60
 
 
 def _plain(t: str) -> str:
-    """For matching titles: no half-spaces, Arabic ي/ك as Persian, one space."""
-    t = str(t or "").replace("\u200c", "").replace("ي", "ی").replace("ك", "ک")
+    """For matching titles: half-space = space (سه‌چرخه matches سه چرخه), Arabic ي/ك as Persian, one space."""
+    t = str(t or "").replace("\u200c", " ").replace("ي", "ی").replace("ك", "ک")
     return re.sub(r"\s+", " ", t).strip()
 
 
