@@ -656,3 +656,26 @@ def test_claude_categories_file():
     assert len(cats) == len(K.etsy_list()) and all(c["fa"] for c in cats)
     names = {c["fa"] for c in K.categories(2)}
     assert {"گردنبند", "گوشواره", "دستبند", "انگشتر"} <= names
+
+
+def test_lab_seed_once(tmp_path, monkeypatch):
+    from dastsaz import lab, lab_seed
+    monkeypatch.setattr(C, "DATA_DIR", tmp_path)
+    assert lab_seed.seed() == len(lab_seed.DESIGNS)
+    assert lab_seed.seed() == 0
+    tests = lab.load()
+    assert sum(1 for t in tests if t["control"]) == 1 and any("مردانه" in t["name"] for t in tests)
+
+
+def test_weights_learn():
+    from dastsaz import weights as W
+    import random
+    rnd = random.Random(1)
+    hist = []
+    base = {f"c{i}": rnd.randint(1, 50) for i in range(30)}
+    good = {q: rnd.random() for q in base}            # 'ads' predicts growth, 'ig' is noise
+    for t in range(10):
+        cats = {q: {"week": base[q] * (1 + good[q]) ** t, "ads": good[q], "ig": rnd.random()} for q in base}
+        hist.append({"date": str(t), "cats": cats})
+    res = W.learn(hist, horizon=2)
+    assert res["active"] and res["skill"]["ads"] > 0.8 and res["weights"]["ads"] > res["weights"].get("ig", 0)

@@ -25,7 +25,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from dastsaz import config as C
-from dastsaz import ads, categories, guard, schedule, lab, needs, page, pipeline, snapshot, telegram, voice
+from dastsaz import ads, categories, deepdive, lab_seed, guard, schedule, lab, needs, page, pipeline, snapshot, telegram, voice
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S")
 logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -36,7 +36,7 @@ NAME = re.compile(r"^[\w\-]{1,60}$")
 STEP_FA = {"wait": "منتظر", "basalam": "باسلام", "digikala": "دیجی‌کالا", "etsy": "اتسی", "ai": "هوش مصنوعی", "expand": "فرصت‌یابی", "testlist": "لیست آزمایش", "trends": "گوگل ترندز", "suggest": "پیشنهادهای جست‌وجو",
            "reviews": "نظر خریداران", "makers": "سازنده‌ها", "snapshot": "عکس هفتگی فروش",
            "voice": "صدای مشتری", "needs": "نیازهای کادو", "telegram": "تلگرام", "radar": "رادار دسته‌ها",
-           "radar_trends": "گوگلِ دسته‌ها", "radar_ig": "اینستاگرامِ دسته‌ها", "twitter": "توییتر کادو", "translation_test": "تست ترجمه‌ی دسته‌ها",
+           "radar_trends": "گوگلِ دسته‌ها", "radar_ig": "اینستاگرامِ دسته‌ها", "twitter": "توییتر کادو", "translation_test": "تست ترجمه‌ی دسته‌ها", "lab_seed": "ثبت طرح‌های اول", "deepdive": "بررسی دسته‌های کم‌رقیب",
            "report": "گزارش"}
 
 
@@ -274,7 +274,8 @@ class H(BaseHTTPRequestHandler):
             name = (parse_qs(u.query).get("name") or [""])[0]
             fn = {"snapshot": lambda p: snapshot.take(progress=p), "voice": lambda p: voice.run(progress=p),
                   "needs": lambda p: needs.run(progress=p), "telegram": lambda p: telegram.run(progress=p),
-                  "radar": lambda p: categories.run(progress=p), "radar_trends": lambda p: categories.trends(), "radar_ig": lambda p: categories.instagram(), "twitter": lambda p: needs.twitter(), "translation_test": lambda p: categories.translation_test(progress=p)}.get(name)
+                  "radar": lambda p: categories.run(progress=p), "radar_trends": lambda p: categories.trends(), "radar_ig": lambda p: categories.instagram(), "twitter": lambda p: needs.twitter(), "translation_test": lambda p: categories.translation_test(progress=p),
+                  "lab_seed": lambda p: lab_seed.seed(), "deepdive": lambda p: deepdive.run(progress=p)}.get(name)
             if not fn:
                 return self._json({"error": "نامعتبر"}, 400)
             err = JOB.start(name, task=fn)

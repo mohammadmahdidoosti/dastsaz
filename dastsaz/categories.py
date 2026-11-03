@@ -169,7 +169,7 @@ def _ads_map() -> dict:
     return out
 
 
-def combine(rows: list[dict]) -> list[dict]:
+def combine(rows: list[dict], weights: dict | None = None) -> list[dict]:
     """Each source ranks the categories (0 = last, 1 = first); score = average over the sources that have a number.
     agree = in how many sources the category is in the top third; strong = names of those sources."""
     for key, _ in SOURCES:
@@ -184,9 +184,15 @@ def combine(rows: list[dict]) -> list[dict]:
             below = sum(1 for x in vals if x < v)
             same = sum(1 for x in vals if x == v)
             r.setdefault("pct", {})[key] = (below + (same - 1) / 2) / (n - 1)
+    if weights is None:
+        from . import weights as W
+        w = W.load()
+        weights = w.get("weights") if w.get("active") else {}
     for r in rows:
         p = r.get("pct") or {}
-        r["score"] = sum(p.values()) / len(p) if p else 0.0
+        ws = {k: (weights or {}).get(k, 1.0) for k in p}
+        tot = sum(ws.values())
+        r["score"] = sum(p[k] * ws[k] for k in p) / tot if tot else 0.0
         r["n_src"] = len(p)
         r["strong"] = [name for key, name in SOURCES if p.get(key, 0) >= 2 / 3]
         r["agree"] = len(r["strong"])
@@ -261,6 +267,11 @@ def run(progress=None, sleep=time.sleep, n: int = 400) -> dict:
     if not categories(0):
         build(C.secret("OPENROUTER_API_KEY"))
     snap = measure(pick(categories(1), n), progress=progress, sleep=sleep)
+    try:
+        from . import weights as W
+        W.save(W.learn(history()))
+    except Exception as e:  # noqa: BLE001
+        log.warning("radar weights: %s", e)
     if C.secret("APIFY_TOKEN"):
         try:
             instagram()
