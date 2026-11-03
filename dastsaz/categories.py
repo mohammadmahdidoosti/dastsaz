@@ -209,7 +209,10 @@ def board(hist: list[dict] | None = None, ads_map: dict | None = None) -> list[d
 
 CORE = {  # the plain words Iranians actually type; Etsy's deep names miss them
     "Jewellery": ["گردنبند", "گوشواره", "دستبند", "انگشتر", "پابند", "آویز گردنبند", "سرویس جواهرات", "گردنبند اسم",
-                  "دستبند چرم", "گوشواره میخی", "گردنبند استیل", "دستبند نقره", "انگشتر نقره", "زیورآلات دست ساز"],
+                  "دستبند چرم", "گوشواره میخی", "گردنبند استیل", "دستبند نقره", "انگشتر نقره", "زیورآلات دست ساز",
+                  # men's (Twitter: birthday gifts for boyfriends are a big need)
+                  "دستبند مردانه", "انگشتر مردانه", "گردنبند مردانه", "زنجیر مردانه", "دستبند چرم مردانه",
+                  "انگشتر عقیق", "دستبند اسم مردانه", "پلاک اسم مردانه", "دکمه سردست", "گیره کراوات"],
     "Accessories": ["گیره مو", "کش مو", "شال", "روسری", "کلاه", "عینک آفتابی", "کمربند", "جاکلیدی", "کیف پول"],
     "Bags & Purses": ["کیف دستی", "کیف دوشی", "کوله پشتی", "کیف آرایش"],
     "Home & Living": ["شمع", "گلدان", "تابلو", "ماگ", "کوسن", "رومیزی", "جاشمعی", "دیوارکوب"],
@@ -272,7 +275,7 @@ def _ig_stats(posts: list[dict]) -> dict:
             "ig_likes": likes[len(likes) // 2] if likes else None}
 
 
-def instagram(token: str | None = None, n: int = 60, explore: int = 60, per: int = 12, max_usd: float = 4.0, ap=None) -> int:
+def instagram(token: str | None = None, n: int = 60, explore: int = 0, per: int = 12, max_usd: float = 2.0, ap=None) -> int:
     """For the top n categories of the latest radar week and `explore` random others: how fast new posts appear under the Persian hashtag
     (posts per day), how many accounts post, median likes. ~$0.03 per category. Written into that week."""
     from urllib.parse import unquote
@@ -283,7 +286,7 @@ def instagram(token: str | None = None, n: int = 60, explore: int = 60, per: int
     snap = json.loads(f.read_text(encoding="utf-8"))
     ranked = [r for r in board() if r.get("week") is not None]
     rest = ranked[n:]
-    # plus a random sample of the rest, so Instagram can find what the stores ranked low (not only confirm them)
+    # optional random sample of the rest; tested 2026-11-03 with 60: only 1 of 60 was busy on Instagram, so off by default
     rows = ranked[:n] + random.Random(snap["date"]).sample(rest, min(explore, len(rest)))
     tags = {hashtag(r["q"]): r["q"] for r in rows}
     ap = ap or Apify(token or C.secret("APIFY_TOKEN"))
