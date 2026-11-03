@@ -31,8 +31,10 @@ _lock = threading.Lock()
 
 IMAGE_API = "https://openrouter.ai/api/v1/images"
 CHAT_API = "https://openrouter.ai/api/v1/chat/completions"
-IMAGE_MODEL = C.secret("IMAGE_MODEL") or "google/gemini-2.5-flash-image"
-DESIGN_MODEL = C.secret("DESIGN_MODEL") or "anthropic/claude-sonnet-4.5"
+# tested 2026-11-03, same design on 6 models: flux.2-klein 1.4c/picture, clearest necklace; gemini-flash 3.9c drew a bracelet
+IMAGE_MODEL = C.secret("IMAGE_MODEL") or "black-forest-labs/flux.2-klein-4b"
+# with this brief DeepSeek wrote designs as specific as Sonnet's (and quoted the data) for 1/20 of the cost
+DESIGN_MODEL = C.secret("DESIGN_MODEL") or C.AI_MODEL
 
 CATEGORIES = {  # key: (Persian name, Basalam search for this week's best-sellers)
     "necklace": ("گردنبند", "گردنبند"),
