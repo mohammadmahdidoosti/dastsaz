@@ -79,9 +79,24 @@ def build(key: str, items: list[dict] | None = None, chunk: int = 120) -> list[d
     return cats
 
 
-def categories(min_fit: int = 1) -> list[dict]:
+CLAUDE = Path(__file__).resolve().parent / "claude_categories.tsv"
+
+
+def _ai_categories() -> list[dict]:
     f = _dir() / "categories.json"
-    cats = json.loads(f.read_text(encoding="utf-8")) if f.exists() else []
+    return json.loads(f.read_text(encoding="utf-8")) if f.exists() else []
+
+
+def categories(min_fit: int = 1) -> list[dict]:
+    """Persian names: Claude's hand translation of the whole Etsy list (tested: finds matching products about twice
+    as often as the bulk AI's); the bulk AI file only as a fallback."""
+    if CLAUDE.exists():
+        rows = CLAUDE.read_text(encoding="utf-8").splitlines()[1:]
+        cats = [dict(zip(("top", "name", "fa", "fit"), r.split("\t"))) for r in rows if r.count("\t") == 3]
+        for c in cats:
+            c["fit"] = int(c["fit"])
+    else:
+        cats = _ai_categories()
     return [c for c in cats if c.get("fit", 0) >= min_fit]
 
 
@@ -322,7 +337,7 @@ def translation_test(progress=None, sleep=time.sleep) -> dict:
     Which name finds more matching products on Basalam/Digikala and more Google searches?"""
     import requests
     sample = json.loads((Path(__file__).resolve().parent / "translation_test.json").read_text(encoding="utf-8"))
-    ai_fa = {(c["top"], c["name"]): c for c in categories(0)}
+    ai_fa = {(c["top"], c["name"]): c for c in _ai_categories()}
     sb, sd, sg = basalam._session(), digikala._session(), requests.Session()
     rows, cache = [], {}
     for i, c in enumerate(sample):

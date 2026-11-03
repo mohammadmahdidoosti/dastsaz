@@ -645,6 +645,14 @@ def test_translation_test(tmp_path, monkeypatch):
     from dastsaz import categories as K
     monkeypatch.setattr(C, "DATA_DIR", tmp_path)
     monkeypatch.setattr(K, "_probe", lambda q, *a: {"q": q, "bs_match": 1 if q == "کلاه" else 0, "bs_week": 3, "dk_match": 0, "g": 1})
-    monkeypatch.setattr(K, "categories", lambda m=1: [{"top": "Accessories", "name": "Hats & Head Coverings", "fa": "پوشش سر", "fit": 1}])
+    monkeypatch.setattr(K, "_ai_categories", lambda: [{"top": "Accessories", "name": "Hats & Head Coverings", "fa": "پوشش سر", "fit": 1}])
     res = K.translation_test()
     assert res["claude"]["bs_found"] > res["ai"]["bs_found"] and res["differ"] >= 1
+
+
+def test_claude_categories_file():
+    from dastsaz import categories as K
+    cats = K.categories(0)
+    assert len(cats) == len(K.etsy_list()) and all(c["fa"] for c in cats)
+    names = {c["fa"] for c in K.categories(2)}
+    assert {"گردنبند", "گوشواره", "دستبند", "انگشتر"} <= names
