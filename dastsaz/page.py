@@ -475,7 +475,7 @@ def render(name: str, when: str, st: dict, ex: dict, mk: list[dict], etsy: list[
 <section id="summary"><h2>خلاصه‌ی مدیریتی</h2>
 <p class="lead">نتیجه‌گیری هوش مصنوعی فقط از عددهای همین گزارش؛ عددها را در بخش‌های پایین می‌توانید چک کنید.
 این گزارش «ایده‌یاب» است، نه پیش‌گوی فروش: آزمون روی گذشته نشان داد فروش یک طرح خاص را از بیرون نمی‌شود دقیق پیش‌بینی کرد
-(<a href="/backtest">دقت سیستم</a>)؛ داور، آزمایش کم و ارزان در <a href="/lab">آزمایشگاه</a> است.</p>
+(<a href="/backtest">دقت سیستم</a>)؛ داور، آزمایش کم و ارزان در <a href="/lab">آزمایشگاه</a><a href="/designs">طراحی</a> است.</p>
 <div class="exec"><div>{findings}</div><div><div class="todo"><h3>کارهای این هفته</h3><ol>{actions}</ol></div>
 {f'<div class="todo risk"><h3>ریسک‌ها و محدودیت داده</h3><ul>{risks}</ul></div>' if risks else ''}</div></div>{brief}</section>
 <section id="test"><h2>لیست آزمایش این هفته</h2>
@@ -602,7 +602,7 @@ label.num{{display:flex;flex-direction:column;font-size:12px;color:var(--soft)}}
 .v-win{{color:#13877f;font-weight:700}}.v-drop{{color:#a43f55;font-weight:700}}.v-early{{color:#8a8f99}}
 .bar{{height:8px;background:#e8eaee;border-radius:4px;min-width:80px}}.bar i{{display:block;height:8px;border-radius:4px;background:#13877f}}
 {extra_css}</style></head><body>
-<nav class="bar-top"><div class="wrap"><span class="brand">دست‌ساز</span><a href="/">خانه</a><a href="/lab">آزمایشگاه</a>
+<nav class="bar-top"><div class="wrap"><span class="brand">دست‌ساز</span><a href="/">خانه</a><a href="/lab">آزمایشگاه</a><a href="/designs">طراحی</a>
 <a href="/voice">صدای مشتری</a><a href="/needs">نیازهای کادو</a><a href="/radar">رادار دسته‌ها</a><a href="/telegram">تلگرام</a><a href="/ads">ادز</a>
 <a href="/backtest">دقت سیستم</a></div></nav>
 <header class="hero"><div class="wrap"><div><div class="date">{E(kicker)}</div><h1>{E(title)}</h1><p>{lead}</p></div></div></header>
@@ -824,3 +824,79 @@ def radar_page(rows: list[dict], n_cats: int, weeks: int, trends: dict | None = 
             f"<table><tr><th>دسته</th><th>نمره</th><th>قوی در</th><th>فروش هفته باسلام</th><th>رقیب</th><th>فرصت</th>"
             f"<th>دیجی‌کالا</th><th>گوگل</th><th>Ads</th><th>اینستاگرام</th><th>تغییر هفتگی</th><th>مرحله</th><th>قیمت میانه</th><th>فصل ۳ ماه آینده</th></tr>{tr}</table></section>")
     return _shell("رادار دسته‌ها", "شکار دسته", "کدام دسته‌ها بزرگ می‌شوند و کجا رقیب کم است؛ فرصت‌یابی عمیق برای دسته‌های برتر.", body)
+
+
+DESIGN_STATUS = {"idea": "ایده", "can": "سازنده می‌سازد", "cannot": "سازنده نمی‌سازد", "testing": "در آزمایش",
+                 "winner": "برنده", "dropped": "کنار رفت"}
+
+
+def _design_card(d: dict, img_url: str, form: str = "") -> str:
+    sup = d.get("supplier") or {}
+    s = ""
+    if sup:
+        s = (f"<div class='muted'>سازنده: {'می‌سازد' if sup.get('can') else 'نمی‌سازد'}"
+             f"{' · ' + toman(sup['cost']) + ' تومان' if sup.get('cost') else ''}"
+             f"{' · ' + fa(sup['days']) + ' روز' if sup.get('days') else ''}{' · ' + E(sup['note']) if sup.get('note') else ''}</div>")
+    pic = f"<img src='{img_url}' loading='lazy' alt=''>" if d.get("img") else "<div class='noimg'>بدون تصویر</div>"
+    return (f"<div class='dcard st-{E(d['status'])}'>{pic}<div class='dbody'><b>{E(d['name'])}</b>"
+            f"<div class='muted'>{E(DESIGN_STATUS.get(d['status'], d['status']))}"
+            f"{' · فروش ' + toman(d['price']) + ' تومان' if d.get('price') else ''}"
+            f"{' · سقف خرید ' + toman(d['cost']) + ' تومان' if d.get('cost') else ''}</div>"
+            f"<p>{E(d.get('spec') or '')}</p><p class='muted'>{E(d.get('why') or '')}</p>"
+            f"<div>{''.join('<span class=tag>' + E(t) + '</span>' for t in d.get('tags') or [])}</div>{s}{form}</div></div>")
+
+
+DCSS = """.dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.dcard{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}.dcard img{width:100%;aspect-ratio:1;object-fit:cover;display:block}
+.noimg{aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:#f2f3f5;color:#8a8f99}
+.dbody{padding:10px 12px}.dbody p{margin:6px 0;font-size:14px}.st-can{outline:2px solid #13877f}.st-cannot{opacity:.55}
+.st-testing{outline:2px solid #2f4b85}.render{font-size:12px;color:#8a8f99}"""
+
+
+def designs_page(items: list[dict], counts: dict, cats: dict, supplier_link: str, last: dict | None) -> str:
+    rows = "".join(
+        f"<tr><td>{E(cats[c][0])}</td>" + "".join(f"<td>{fa((counts.get(c) or {}).get(s, 0))}</td>" for s in DESIGN_STATUS) + "</tr>"
+        for c in cats)
+    head = "".join(f"<th>{E(v)}</th>" for v in DESIGN_STATUS.values())
+    groups = ""
+    for c, (name, _) in cats.items():
+        ds = [d for d in items if d["cat"] == c]
+        if not ds:
+            continue
+        groups += f"<section><h2>{E(name)} ({fa(len(ds))})</h2><div class='dgrid'>" + "".join(
+            _design_card(d, f"/designs/img/{E(d['img'])}") for d in ds) + "</div></section>"
+    run = (f"<p class='muted'>آخرین ساخت: {E(last.get('date'))} · {fa(last.get('added'))} طرح · "
+           f"بدون تصویر: {fa(last.get('no_image'))} · هزینه {E(last.get('usd'))} دلار</p>") if last else ""
+    body = (f"<section><h2>وضعیت</h2>{run}<table><tr><th>دسته</th>{head}</tr>{rows}</table>"
+            f"<p>لینک تأمین‌کننده (بدون رمز، فقط برای رابط بفرست): <a href='{E(supplier_link)}'>{E(supplier_link)}</a></p>"
+            f"<form method='post' action='/designs/lab'><button class='btn'>طرح‌هایی که سازنده تأیید کرده را بفرست به آزمایشگاه</button></form>"
+            f"<p class='render'>تصویرها طراحی کامپیوتری‌اند، نه عکس واقعی. در اینستاگرام با عنوان «طرح جدید / پیش‌فروش» استفاده شوند؛ "
+            f"در باسلام فقط عکس واقعی نمونه‌ی ساخته‌شده.</p></section>{groups}")
+    return _shell("ماشین طراحی", "طرح، تأیید سازنده، آزمایش",
+                  "طرح‌هایی که الگوریتم از روی داده‌ها ساخته؛ سازنده می‌گوید می‌تواند بسازد یا نه؛ فقط برنده‌ها ساخته می‌شوند.",
+                  body, DCSS)
+
+
+def supplier_page(items: list[dict], cats: dict, tok: str, done: bool = False) -> str:
+    groups = ""
+    for c, (name, _) in cats.items():
+        ds = [d for d in items if d["cat"] == c and d["status"] in ("idea", "can", "cannot")]
+        if not ds:
+            continue
+        cards = ""
+        for d in ds:
+            sup = d.get("supplier") or {}
+            form = (f"<form class='inline' method='post' action='/s/{E(tok)}/{E(d['id'])}'>"
+                    f"<select name='can'><option value='yes'{' selected' if sup.get('can') else ''}>می‌توانم بسازم</option>"
+                    f"<option value='no'{' selected' if sup and not sup.get('can') else ''}>نمی‌توانم</option></select>"
+                    f"<label class='num'>قیمت هر عدد (تومان)<input name='cost' type='number' min='0' value='{sup.get('cost') or ''}'></label>"
+                    f"<label class='num'>چند روزه آماده می‌شود<input name='days' type='number' min='0' value='{sup.get('days') or ''}'></label>"
+                    f"<input class='w' name='note' placeholder='توضیح (اختیاری)' value='{E(sup.get('note') or '')}'>"
+                    f"<button class='btn'>ثبت</button></form>")
+            cards += _design_card(d, f"/s/{E(tok)}/img/{E(d['img'])}", form)
+        groups += f"<section><h2>{E(name)}</h2><div class='dgrid'>{cards}</div></section>"
+    lead = ("برای هر طرح بگویید اگر سفارش بیاید می‌توانید بسازید یا نه، با قیمت هر عدد و چند روز. فعلاً سفارشی در کار نیست؛ "
+            "طرح‌هایی که تأیید کنید را تست می‌کنیم و برای برنده‌ها سفارش می‌دهیم. تصویرها طراحی کامپیوتری‌اند.")
+    body = ("<div class='verdict good'>ثبت شد، ممنون.</div>" if done else "") + groups
+    return (_shell("طرح‌ها برای تأیید سازنده", "دست‌ساز", lead, body, DCSS)
+            .replace('<nav class="bar-top">', '<nav class="bar-top" style="display:none">'))

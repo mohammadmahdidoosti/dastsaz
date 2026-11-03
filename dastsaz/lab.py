@@ -39,7 +39,7 @@ STAGES = {"pretest": "پیش‌آزمون با عکس", "smallbuy": "خرید ک
 SOURCES = {"report": "گزارش (باسلام)", "etsy": "Etsy", "google": "گوگل", "suggest": "پیشنهاد جست‌وجو",
            "voice": "نظر خریداران", "needs": "نیاز کادو", "instagram": "اینستاگرام", "telegram": "تلگرام",
            "trendyol": "ترندیول (ترکیه)", "ads": "گوگل ادز", "maker": "پیشنهاد سازنده",
-           "manual": "ایده‌ی خودم"}
+           "design": "ماشین طراحی", "manual": "ایده‌ی خودم"}
 FIELDS = ("views", "saves", "messages", "carts", "orders", "noes", "cost")   # noes: «نه»/skip taps; cost: toman spent on showing it
 EXPLORE = 0.2          # share of showcase slots always kept for brand-new ideas (under MIN_VIEWS), so new trends get seen
 _lock = threading.Lock()

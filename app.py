@@ -25,7 +25,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from dastsaz import config as C
-from dastsaz import ads, categories, deepdive, lab_seed, guard, schedule, lab, needs, page, pipeline, snapshot, telegram, voice
+from dastsaz import ads, categories, deepdive, designs, lab_seed, guard, schedule, lab, needs, page, pipeline, snapshot, telegram, voice
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S")
 logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -33,10 +33,11 @@ log = logging.getLogger("app")
 APP_PASSWORD = os.environ.get("APP_PASSWORD", "")
 STATIC = Path(__file__).resolve().parent / "static"
 NAME = re.compile(r"^[\w\-]{1,60}$")
+IMG = re.compile(r"^[0-9a-f]{8}\.png$")
 STEP_FA = {"wait": "منتظر", "basalam": "باسلام", "digikala": "دیجی‌کالا", "etsy": "اتسی", "ai": "هوش مصنوعی", "expand": "فرصت‌یابی", "testlist": "لیست آزمایش", "trends": "گوگل ترندز", "suggest": "پیشنهادهای جست‌وجو",
            "reviews": "نظر خریداران", "makers": "سازنده‌ها", "snapshot": "عکس هفتگی فروش",
            "voice": "صدای مشتری", "needs": "نیازهای کادو", "telegram": "تلگرام", "radar": "رادار دسته‌ها",
-           "radar_trends": "گوگلِ دسته‌ها", "radar_ig": "اینستاگرامِ دسته‌ها", "twitter": "توییتر کادو", "translation_test": "تست ترجمه‌ی دسته‌ها", "lab_seed": "ثبت طرح‌های اول", "deepdive": "بررسی دسته‌های کم‌رقیب",
+           "radar_trends": "گوگلِ دسته‌ها", "radar_ig": "اینستاگرامِ دسته‌ها", "twitter": "توییتر کادو", "translation_test": "تست ترجمه‌ی دسته‌ها", "lab_seed": "ثبت طرح‌های اول", "designs": "ماشین طراحی", "designs_sample": "۵ طرح نمونه", "designs_redraw": "تصویر طرح‌ها", "deepdive": "بررسی دسته‌های کم‌رقیب",
            "report": "گزارش"}
 
 
@@ -182,11 +183,27 @@ class H(BaseHTTPRequestHandler):
         if u.path == "/static/vazirmatn.woff2":           # the report font (no outside font server needed in Iran)
             return self._send(200, (STATIC / "vazirmatn.woff2").read_bytes(), "font/woff2",
                               {"Cache-Control": "public, max-age=2592000"})
+        parts = [p for p in u.path.split("/") if p]
+        if len(parts) >= 2 and parts[0] == "s":                 # supplier page: secret link, no password
+            if not hmac.compare_digest(parts[1].encode(), designs.token().encode()):
+                return self._send(404, "پیدا نشد".encode(), "text/plain; charset=utf-8")
+            if len(parts) == 4 and parts[2] == "img" and IMG.match(parts[3]):
+                return self._img(parts[3])
+            if len(parts) == 2:
+                return self._send(200, page.supplier_page(designs.load(), designs.CATEGORIES, parts[1],
+                                                          "ok" in parse_qs(u.query)).encode())
         if not self._gate():
             return
-        parts = [p for p in u.path.split("/") if p]
         if not parts:
             return self._send(200, PAGE.encode())
+        if parts == ["designs"]:
+            lf = designs._dir() / "last_run.json"
+            host = self.headers.get("Host", "")
+            return self._send(200, page.designs_page(
+                designs.load(), designs.counts(), designs.CATEGORIES, f"https://{host}/s/{designs.token()}",
+                json.loads(lf.read_text(encoding="utf-8")) if lf.exists() else None).encode())
+        if len(parts) == 3 and parts[:2] == ["designs", "img"] and IMG.match(parts[2]):
+            return self._img(parts[2])
         if parts == ["api", "status"]:
             j = dict(JOB.state)
             q = parse_qs(u.query)
@@ -205,10 +222,10 @@ class H(BaseHTTPRequestHandler):
         if parts == ["ads"]:
             return self._send(200, page.ads_page(*ads.latest()).encode())
         if parts == ["telegram"]:
-            designs = _designs()
+            motifs = _designs()
             return self._send(200, page.telegram_page(telegram.channels(),
                                                       {c: len(p) for c, p in telegram.posts().items()},
-                                                      telegram.recent(designs)).encode())
+                                                      telegram.recent(motifs)).encode())
         if parts == ["voice"]:
             return self._send(200, page.voice_page(voice.latest()).encode())
         if parts == ["needs"]:
@@ -225,6 +242,12 @@ class H(BaseHTTPRequestHandler):
                 return self._send(200, (d / f"{f}.csv").read_bytes(), "text/csv; charset=utf-8",
                                   {"Content-Disposition": f'attachment; filename="dastsaz-{parts[1]}-{f}.csv"'})
         return self._send(404, "پیدا نشد".encode(), "text/plain; charset=utf-8")
+
+    def _img(self, name: str):
+        f = designs._dir() / "img" / name
+        if not f.exists():
+            return self._send(404, b"", "text/plain")
+        return self._send(200, f.read_bytes(), "image/png", {"Cache-Control": "public, max-age=86400"})
 
     def _upload(self) -> bytes:
         """The one file of a multipart form (Keyword Planner csv, a few hundred KB at most)."""
@@ -247,10 +270,17 @@ class H(BaseHTTPRequestHandler):
         self._send(303, b"", "text/plain", {"Location": to})
 
     def do_POST(self):
-        if not self._gate():
-            return
         u = urlparse(self.path)
         parts = [p for p in u.path.split("/") if p]
+        if len(parts) == 3 and parts[0] == "s" and hmac.compare_digest(parts[1].encode(), designs.token().encode()):
+            f = self._form()
+            designs.answer(parts[2], f.get("can", ""), f.get("cost", ""), f.get("days", ""), f.get("note", ""))
+            return self._back(f"/s/{parts[1]}?ok=1")
+        if not self._gate():
+            return
+        if parts == ["designs", "lab"]:
+            designs.to_lab()
+            return self._back("/designs")
         if parts == ["ads", "upload"]:
             ads.save(self._upload())
             return self._back("/ads")
@@ -275,7 +305,9 @@ class H(BaseHTTPRequestHandler):
             fn = {"snapshot": lambda p: snapshot.take(progress=p), "voice": lambda p: voice.run(progress=p),
                   "needs": lambda p: needs.run(progress=p), "telegram": lambda p: telegram.run(progress=p),
                   "radar": lambda p: categories.run(progress=p), "radar_trends": lambda p: categories.trends(), "radar_ig": lambda p: categories.instagram(), "twitter": lambda p: needs.twitter(), "translation_test": lambda p: categories.translation_test(progress=p),
-                  "lab_seed": lambda p: lab_seed.seed(), "deepdive": lambda p: deepdive.run(progress=p)}.get(name)
+                  "lab_seed": lambda p: lab_seed.seed(), "designs": lambda p: designs.generate(progress=p),
+                  "designs_sample": lambda p: designs.generate(per=5, cats=["necklace"], progress=p),
+                  "designs_redraw": lambda p: designs.redraw(), "deepdive": lambda p: deepdive.run(progress=p)}.get(name)
             if not fn:
                 return self._json({"error": "نامعتبر"}, 400)
             err = JOB.start(name, task=fn)

@@ -679,3 +679,28 @@ def test_weights_learn():
         hist.append({"date": str(t), "cats": cats})
     res = W.learn(hist, horizon=2)
     assert res["active"] and res["skill"]["ads"] > 0.8 and res["weights"]["ads"] > res["weights"].get("ig", 0)
+
+
+def test_designs_machine(tmp_path, monkeypatch):
+    from dastsaz import designs as D, lab, page
+    monkeypatch.setattr(C, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(D, "best_sellers", lambda q, **k: [["گردنبند ماه", 9, 150000]])
+    monkeypatch.setattr(D, "ideas", lambda cat, n, s, key: ([{"name": f"طرح {i}", "spec": "استیل", "why": "چون",
+                                                               "price": 200000, "cost": 80000, "tags": ["ماه"],
+                                                               "prompt": "a moon pendant"} for i in range(n)], 0.01))
+    monkeypatch.setattr(D, "image", lambda p, key, s=None: (b"\x89PNG fake", 0.04))
+    res = D.generate(per=3, cats=["necklace", "men"])
+    assert res["added"] == 6 and res["no_image"] == 0 and round(res["usd"], 2) == 0.26
+    items = D.load()
+    assert all((tmp_path / "designs" / "img" / d["img"]).exists() for d in items)
+    assert D.answer(items[0]["id"], "yes", "70000", "5") and D.answer(items[1]["id"], "no")
+    assert D.to_lab() == 1 and lab.load()[0]["source"] == "design"
+    st = [d["status"] for d in D.load()]
+    assert st.count("testing") == 1 and st.count("cannot") == 1
+    tok = D.token()
+    assert tok == D.token() and len(tok) > 10
+    html = page.supplier_page(D.load(), D.CATEGORIES, tok)
+    assert "می‌توانم بسازم" in html and f"/s/{tok}/" in html and "طرح 1" in html
+    tid = next(d["id"] for d in D.load() if d["status"] == "testing")
+    assert f"/{tid}'" not in html       # already in testing: not shown to the supplier
+    assert "ماشین طراحی" in page.designs_page(D.load(), D.counts(), D.CATEGORIES, "x", None)
