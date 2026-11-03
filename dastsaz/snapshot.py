@@ -43,7 +43,7 @@ def tracked(n: int = 80) -> list[str]:
 def take(queries: list[str] | None = None, progress=None, sleep=time.sleep) -> dict:
     queries = queries or tracked()
     s = basalam._session()
-    snap = {"date": dt.date.today().isoformat(), "searches": {}}
+    snap = {"date": C.today().isoformat(), "searches": {}}
     for i, q in enumerate(queries):
         try:
             cards, total = basalam.search(q, size=20, session=s, sleep=sleep)

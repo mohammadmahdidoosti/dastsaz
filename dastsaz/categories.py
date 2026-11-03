@@ -89,7 +89,7 @@ def measure(cats: list[dict], progress=None, sleep=time.sleep) -> dict:
     """One slow Basalam search (+ one Digikala) per category."""
     import requests
     sb, sd, sg = basalam._session(), digikala._session(), requests.Session()
-    snap = {"date": dt.date.today().isoformat(), "cats": {}}
+    snap = {"date": C.today().isoformat(), "cats": {}}
     for i, c in enumerate(cats):
         q = c["fa"]
         row = {"top": c["top"], "name": c["name"], "fit": c["fit"]}
@@ -129,7 +129,9 @@ def history() -> list[dict]:
     return [json.loads(f.read_text(encoding="utf-8")) for f in sorted(_dir().glob("20*.json"))]
 
 
-SOURCES = [("week", "باسلام"), ("dk_reviews", "دیجی‌کالا"), ("g_suggest", "گوگل"), ("ads", "Ads"), ("ig", "اینستاگرام")]
+# Google suggestions are 10/10 for most terms, so they can't rank; they are a check instead: 0 = Iranians don't
+# type this phrase on Google, so the Persian name is probably wrong (shown as a warning, not in the score).
+SOURCES = [("week", "باسلام"), ("dk_reviews", "دیجی‌کالا"), ("ads", "Ads"), ("ig", "اینستاگرام")]
 
 
 def _ads_map() -> dict:
@@ -190,12 +192,26 @@ def board(hist: list[dict] | None = None, ads_map: dict | None = None) -> list[d
     return combine(rows)
 
 
+CORE = {  # the plain words Iranians actually type; Etsy's deep names miss them
+    "Jewellery": ["گردنبند", "گوشواره", "دستبند", "انگشتر", "پابند", "آویز گردنبند", "سرویس جواهرات", "گردنبند اسم",
+                  "دستبند چرم", "گوشواره میخی", "گردنبند استیل", "دستبند نقره", "انگشتر نقره", "زیورآلات دست ساز"],
+    "Accessories": ["گیره مو", "کش مو", "شال", "روسری", "کلاه", "عینک آفتابی", "کمربند", "جاکلیدی", "کیف پول"],
+    "Bags & Purses": ["کیف دستی", "کیف دوشی", "کوله پشتی", "کیف آرایش"],
+    "Home & Living": ["شمع", "گلدان", "تابلو", "ماگ", "کوسن", "رومیزی", "جاشمعی", "دیوارکوب"],
+    "Bath & Beauty": ["صابون", "بالم لب", "شمع معطر", "روغن مو"],
+    "Weddings": ["کادو عروسی", "گیفت عروسی", "تاج عروس"],
+    "Paper & Party Supplies": ["کارت پستال", "دفتر", "تزیینات تولد", "باکس هدیه"],
+    "Toys & Games": ["عروسک", "اسباب بازی چوبی", "پازل"],
+}
+
+
 def pick(cats: list[dict], n: int) -> list[dict]:
     """n categories spread evenly over Etsy's main groups (jewellery, home, toys...), best fit first in each group,
     one per Persian search term. Taking the first n of the list would read only the first groups."""
     groups: dict[str, list] = {}
     seen: set[str] = set()
-    for c in sorted(cats, key=lambda c: -c["fit"]):
+    core = [{"top": top, "name": "core", "fa": w, "fit": 2} for top, ws in CORE.items() for w in ws]
+    for c in core + sorted(cats, key=lambda c: -c["fit"]):
         k = _plain(c["fa"])
         if k and k not in seen:
             seen.add(k)
@@ -241,8 +257,8 @@ def _ig_stats(posts: list[dict]) -> dict:
             "ig_likes": likes[len(likes) // 2] if likes else None}
 
 
-def instagram(token: str | None = None, n: int = 60, per: int = 12, max_usd: float = 2.0, ap=None) -> int:
-    """For the top n categories of the latest radar week: how fast new posts appear under the Persian hashtag
+def instagram(token: str | None = None, n: int = 60, explore: int = 60, per: int = 12, max_usd: float = 4.0, ap=None) -> int:
+    """For the top n categories of the latest radar week and `explore` random others: how fast new posts appear under the Persian hashtag
     (posts per day), how many accounts post, median likes. ~$0.03 per category. Written into that week."""
     from urllib.parse import unquote
     from .etsy import Apify
@@ -250,7 +266,10 @@ def instagram(token: str | None = None, n: int = 60, per: int = 12, max_usd: flo
         return 0
     f = sorted(_dir().glob("20*.json"))[-1]
     snap = json.loads(f.read_text(encoding="utf-8"))
-    rows = [r for r in board() if r.get("week") is not None][:n]
+    ranked = [r for r in board() if r.get("week") is not None]
+    rest = ranked[n:]
+    # plus a random sample of the rest, so Instagram can find what the stores ranked low (not only confirm them)
+    rows = ranked[:n] + random.Random(snap["date"]).sample(rest, min(explore, len(rest)))
     tags = {hashtag(r["q"]): r["q"] for r in rows}
     ap = ap or Apify(token or C.secret("APIFY_TOKEN"))
     run = ap.run({"hashtags": list(tags), "resultsLimit": per}, max_usd, actor=IG_ACTOR)

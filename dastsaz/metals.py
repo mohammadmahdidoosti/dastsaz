@@ -60,7 +60,7 @@ def record(prices: dict) -> None:
     d = C.DATA_DIR / "macro"
     d.mkdir(parents=True, exist_ok=True)
     f = d / "daily.jsonl"
-    today = dt.date.today().isoformat()
+    today = C.today().isoformat()
     lines = [x for x in (f.read_text(encoding="utf-8").splitlines() if f.exists() else []) if not x.startswith('{"date": "' + today)]
     lines.append(json.dumps({"date": today, **{k: v["toman"] for k, v in prices.items()}}))
     f.write_text("\n".join(lines) + "\n", encoding="utf-8")

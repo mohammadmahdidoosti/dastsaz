@@ -57,7 +57,7 @@ def parse(raw: bytes) -> list[dict]:
 def save(raw: bytes) -> int:
     rows = parse(raw)
     if rows:
-        f = _dir() / f"{dt.date.today().isoformat()}.json"
+        f = _dir() / f"{C.today().isoformat()}.json"
         f.write_text(json.dumps(rows, ensure_ascii=False), encoding="utf-8")
     return len(rows)
 

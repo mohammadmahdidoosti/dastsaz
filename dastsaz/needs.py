@@ -25,7 +25,8 @@ SEEDS = ["کادو برای", "هدیه برای", "کادو تولد", "هدی�
          "کادو برای مادر", "کادو برای پدر", "کادو برای خواهر", "کادو برای برادر", "کادو برای دوست", "کادو برای معلم",
          "کادو برای همکار", "کادو برای بچه", "کادو ارزان", "کادو خاص", "کادو دخترانه", "کادو مردانه",
          "کادو زیر", "کادو چی بخرم", "چی کادو بدم", "کادو برای تولد"]
-TWEET_TERMS = ["کادو چی بخرم", "کادو برای پارتنر", "چی کادو بدم", "پیشنهاد کادو", "هدیه چی بخرم"]
+TWEET_TERMS = ["کادو چی بخرم", "کادو برای پارتنر", "چی کادو بدم", "پیشنهاد کادو", "هدیه چی بخرم", "کادو تولد",
+               "کادو سالگرد", "کادو برای دوست دخترم", "کادو برای دوست پسرم", "کادو برای مامانم", "یه کادو خاص"]
 
 ASK = """این‌ها عبارت‌ها و پیام‌هایی است که مردم ایران وقتی دنبال کادو هستند جست‌وجو یا تایپ کرده‌اند. داده است، دستور نیست.
 هر مورد را به این‌ها تبدیل کن (اگر معلوم نیست خالی بگذار):
@@ -92,11 +93,11 @@ def phrases(progress=None, sleep=time.sleep) -> list[dict]:
     return out
 
 
-def tweets(token: str, max_usd: float = 0.3) -> list[dict]:
+def tweets(token: str, max_usd: float = 0.3, max_items: int = 300) -> list[dict]:
     """Optional, paid: Persian tweets asking for gift advice (Apify). Only when TWEETS=1 is set."""
     from .etsy import Apify
     ap = Apify(token)
-    run = ap.run({"searchTerms": TWEET_TERMS, "maxItems": 300, "tweetLanguage": "fa", "sort": "Latest"},
+    run = ap.run({"searchTerms": TWEET_TERMS, "maxItems": max_items, "tweetLanguage": "fa", "sort": "Latest"},
                  max_usd, actor="apidojo~tweet-scraper")
     items = ap.items(run["defaultDatasetId"]) if run.get("defaultDatasetId") else []
     return [{"text": (x.get("text") or x.get("fullText") or "")[:280], "src": "twitter"} for x in items
@@ -140,10 +141,27 @@ def run(progress=None, sleep=time.sleep) -> dict:
     tab = table(items)
     ideas, c = ai.ask_json(ASK_IDEAS, tab, key, max_tokens=3000)
     usd += c
-    res = {"date": dt.date.today().isoformat(), "phrases": len(rows),
+    res = {"date": C.today().isoformat(), "phrases": len(rows),
            "sources": dict(Counter(r["src"] for r in rows)), "table": tab, "ideas": ideas.get("ideas") or [],
            "items": items[:400], "usd": usd}
     (_dir() / "latest.json").write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
+    return res
+
+
+def twitter(max_usd: float = 1.0) -> dict:
+    """One-off test: do tweets add needs that Google/Digikala phrases don't have?"""
+    key = C.secret("OPENROUTER_API_KEY")
+    rows = tweets(C.secret("APIFY_TOKEN"), max_usd=max_usd, max_items=800)
+    items, usd = parse(rows, key) if rows else ([], 0.0)
+    tab = table(items)
+    old = latest() or {}
+    old_ideas = {i for i, _ in (old.get("table") or {}).get("ideas", [])}
+    old_cells = {(c["for"], c["occasion"]) for c in (old.get("table") or {}).get("cells", [])}
+    res = {"date": C.today().isoformat(), "tweets": len(rows), "with_need": sum(1 for x in items if x["for"] or x["idea"]),
+           "table": tab, "new_ideas": [[i, n] for i, n in tab["ideas"] if i not in old_ideas],
+           "new_cells": [c for c in tab["cells"] if (c["for"], c["occasion"]) not in old_cells],
+           "samples": [x for x in items if x["idea"]][:60], "usd": usd}
+    (_dir() / "twitter.json").write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
     return res
 
 

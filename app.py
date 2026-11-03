@@ -36,7 +36,7 @@ NAME = re.compile(r"^[\w\-]{1,60}$")
 STEP_FA = {"wait": "منتظر", "basalam": "باسلام", "digikala": "دیجی‌کالا", "etsy": "اتسی", "ai": "هوش مصنوعی", "expand": "فرصت‌یابی", "testlist": "لیست آزمایش", "trends": "گوگل ترندز", "suggest": "پیشنهادهای جست‌وجو",
            "reviews": "نظر خریداران", "makers": "سازنده‌ها", "snapshot": "عکس هفتگی فروش",
            "voice": "صدای مشتری", "needs": "نیازهای کادو", "telegram": "تلگرام", "radar": "رادار دسته‌ها",
-           "radar_trends": "گوگلِ دسته‌ها", "radar_ig": "اینستاگرامِ دسته‌ها",
+           "radar_trends": "گوگلِ دسته‌ها", "radar_ig": "اینستاگرامِ دسته‌ها", "twitter": "توییتر کادو",
            "report": "گزارش"}
 
 
@@ -118,7 +118,7 @@ button.sm{font-size:13px;padding:4px 12px;background:var(--turq);margin:4px 2px}
 <button class="sm" onclick="task('needs')">نیازهای کادو (۵ دقیقه)</button>
 <button class="sm" onclick="task('telegram')">تلگرام</button>
 <button class="sm" onclick="task('radar')">رادار دسته‌ها (حدود یک ساعت)</button>
-<button class="sm" onclick="task('radar_ig')">اینستاگرامِ ۶۰ دسته‌ی بالا (حدود ۱٫۵ دلار)</button>
+<button class="sm" onclick="task('radar_ig')">اینستاگرامِ ۱۲۰ دسته (حدود ۳ دلار)</button>
 <button class="sm" onclick="task('radar_trends')">گوگلِ دسته‌ها (ماهانه، حدود ۰٫۵ دلار)</button></p>
 <h2>گزارش‌ها</h2><div id="list">...</div></main>
 <script>
@@ -274,7 +274,7 @@ class H(BaseHTTPRequestHandler):
             name = (parse_qs(u.query).get("name") or [""])[0]
             fn = {"snapshot": lambda p: snapshot.take(progress=p), "voice": lambda p: voice.run(progress=p),
                   "needs": lambda p: needs.run(progress=p), "telegram": lambda p: telegram.run(progress=p),
-                  "radar": lambda p: categories.run(progress=p), "radar_trends": lambda p: categories.trends(), "radar_ig": lambda p: categories.instagram()}.get(name)
+                  "radar": lambda p: categories.run(progress=p), "radar_trends": lambda p: categories.trends(), "radar_ig": lambda p: categories.instagram(), "twitter": lambda p: needs.twitter()}.get(name)
             if not fn:
                 return self._json({"error": "نامعتبر"}, 400)
             err = JOB.start(name, task=fn)

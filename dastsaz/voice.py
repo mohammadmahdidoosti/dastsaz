@@ -146,7 +146,7 @@ def run(progress=None, sleep=time.sleep, reuse: bool = True) -> dict:
         raw.write_text(json.dumps(rows, ensure_ascii=False), encoding="utf-8")
     themes, usd = cluster(rows, C.secret("OPENROUTER_API_KEY"))
     stars = Counter(int(r["stars"]) for r in rows if isinstance(r.get("stars"), (int, float)) and r["stars"])
-    res = {"date": dt.date.today().isoformat(), "reviews": len(rows), "designs": [o["q"] for o in ds],
+    res = {"date": C.today().isoformat(), "reviews": len(rows), "designs": [o["q"] for o in ds],
            "stars": dict(sorted(stars.items())), "themes": themes, "usd": usd, "instagram": ig_intent()[:30]}
     (_dir() / "latest.json").write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
     return res

@@ -52,3 +52,10 @@ TOP_N = int(os.environ.get("TOP_N", "200"))
 
 def secret(name: str) -> str:
     return os.environ.get(name, "").strip()
+
+
+def today():
+    """Today in Tehran (the server runs on UTC, so 2 a.m. Tehran would still be yesterday)."""
+    import datetime as _dt
+    from zoneinfo import ZoneInfo
+    return _dt.datetime.now(ZoneInfo("Asia/Tehran")).date()

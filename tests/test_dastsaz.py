@@ -636,5 +636,6 @@ def test_radar_pick_spreads_groups():
     from dastsaz import categories as K
     cats = [{"top": "A", "fa": f"الف {i}", "fit": 2} for i in range(10)] + \
            [{"top": "J", "fa": "گردنبند", "fit": 2}, {"top": "J", "fa": "گردنبند", "fit": 1}, {"top": "J", "fa": "دستبند", "fit": 1}]
-    got = K.pick(cats, 4)
-    assert [c["fa"] for c in got if c["top"] == "J"] == ["گردنبند", "دستبند"] and len(got) == 4
+    got = K.pick(cats, 70)
+    fas = [c["fa"] for c in got]
+    assert fas.count("گردنبند") == 1 and "گوشواره" in fas and "دستبند" in fas and "الف 0" in fas
