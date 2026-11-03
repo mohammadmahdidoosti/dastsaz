@@ -704,3 +704,10 @@ def test_designs_machine(tmp_path, monkeypatch):
     tid = next(d["id"] for d in D.load() if d["status"] == "testing")
     assert f"/{tid}'" not in html       # already in testing: not shown to the supplier
     assert "ماشین طراحی" in page.designs_page(D.load(), D.counts(), D.CATEGORIES, "x", None)
+
+
+def test_designs_brand_filter():
+    from dastsaz import designs as D
+    assert D.branded({"name": "گردنبند ونکلیف استیل", "prompt": "x"})
+    assert D.branded({"name": "گردنبند", "prompt": "Four-leaf Alhambra style clover"})
+    assert not D.branded({"name": "گردنبند گل چهارپر استیل", "prompt": "four petal flower pendant"})
