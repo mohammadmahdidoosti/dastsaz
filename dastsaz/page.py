@@ -921,8 +921,8 @@ def pins_page(d: dict | None, img_base: str, like_base: str | None, supplier: bo
                 on = bool(p.get("liked"))
                 heart = (f"<form method='post' action='{E(like_base)}/{E(p['id'])}'>"
                          f"<input type='hidden' name='on' value='{'0' if on else '1'}'>"
-                         f"<button class='btn{' on' if on else ''}'>{'♥ پسندیدم' if on else '♡ به درد ما می‌خورد'}</button></form>")
-            shop = f" · <a href='{E(p['link'])}' rel='noreferrer' target='_blank'>فروشگاه: {E(p['host'])}</a>" if p.get("shop") else ""
+                         f"<button class='btn{' on' if on else ''}'>{'پسندیدید (برای برداشتن بزنید)' if on else 'به درد ما می‌خورد'}</button></form>")
+            shop = f" · <a href='{E(p['link'])}' rel='noreferrer' target='_blank'>فروشگاه: {E(p['host'])}</a>" if p.get("shop") and "instagram" not in p.get("host", "") else ""
             cards += (f"<div class='dcard{' st-can' if p.get('liked') else ''}'><img src='{E(img_base)}/{E(p['thumb'])}' loading='lazy' alt=''>"
                       f"<div class='dbody'><b>{E(p.get('title') or p.get('term'))}</b>"
                       f"<div class='muted'>{'♥ ' + fa(p['react']) + ' · ' if p.get('react') else ''}{age}{shop}</div>"

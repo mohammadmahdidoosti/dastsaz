@@ -775,7 +775,7 @@ def test_pinterest_card_score_and_run(tmp_path, monkeypatch):
     assert P.for_designs(5)[0].startswith("[سازنده پسندید]")
     from dastsaz import page
     html = page.pins_page(P.latest(), "/pimg", "/pin", supplier=True)
-    assert "پسندیدم" in html and "display:none" in html
+    assert "پسندیدید" in html and "display:none" in html
 
 
 def test_twitter_ideas_crowd_and_page():
