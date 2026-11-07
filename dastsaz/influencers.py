@@ -217,3 +217,72 @@ def refresh_twitter_handles(ap=None) -> int:
     d["usd"] = round(d.get("usd", 0) + c, 3)
     (_dir() / "latest.json").write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding="utf-8")
     return n
+
+
+# ---- snowball (2026-11-07): from good pages to the pages around them ----
+def neighbours(prof: dict) -> Counter:
+    """Pages around one profile: Instagram's 'similar' suggestions, and people tagged or mentioned in its posts
+    (a shop's tags are usually the influencers it already worked with, so those count double)."""
+    c: Counter = Counter()
+    me = str(prof.get("username") or "")
+    for r in prof.get("relatedProfiles") or []:
+        u = r.get("username") if isinstance(r, dict) else r
+        if u:
+            c[str(u)] += 1
+    for p in prof.get("latestPosts") or []:
+        for t in p.get("taggedUsers") or []:
+            u = t.get("username") if isinstance(t, dict) else t
+            if u:
+                c[str(u)] += 2
+        for u in p.get("mentions") or []:
+            c[str(u).lstrip("@")] += 2
+        for u in p.get("coauthorProducers") or []:
+            u = u.get("username") if isinstance(u, dict) else u
+            if u:
+                c[str(u)] += 2
+    c.pop(me, None)
+    return c
+
+
+def snowball(seeds: list[str], max_usd: float = 1.5, n: int = 150, ap=None, label: str = "از پیج‌های تو") -> dict:
+    from .etsy import Apify
+    ap = ap or Apify(C.secret("APIFY_TOKEN"))
+    seeds = [s.strip().strip("/").rsplit("/", 1)[-1].lstrip("@") for s in seeds if s.strip()]
+    r1 = ap.run({"usernames": seeds}, max_usd * 0.2, actor=PROFILE_ACTOR)
+    sp = ap.items(r1["defaultDatasetId"]) if r1.get("defaultDatasetId") else []
+    old = latest() or {"rows": []}
+    seen = {x["u"] for x in old["rows"]} | set(old.get("checked", [])) | set(seeds)
+    votes: Counter = Counter()
+    via: dict[str, str] = {}
+    for p in sp:
+        for u, k in neighbours(p).items():
+            if u not in seen:
+                votes[u] += k
+                via.setdefault(u, str(p.get("username")))
+    users = [u for u, _ in votes.most_common(n)]
+    r2 = ap.run({"usernames": users}, max_usd * 0.8, actor=PROFILE_ACTOR) if users else {}
+    profs = ap.items(r2["defaultDatasetId"]) if r2.get("defaultDatasetId") else []
+    rows = [stats(p) | {"src": "instagram", "niche": f"{label} (از {via.get(str(p.get('username')), '')})"}
+            for p in profs + sp if p.get("username")]
+    rows = [x for x in rows if MIN_F <= x["followers"] <= MAX_F and x["u"] not in {r["u"] for r in old["rows"]}]
+    usd = ap.cost(r1) + (ap.cost(r2) if r2 else 0)
+    tags, c = ai.ask_json(ASK, [{"u": x["u"], "bio": x["bio"], "captions": x["captions"]} for x in rows],
+                          C.secret("OPENROUTER_API_KEY"), max_tokens=8000)
+    usd += c
+    by = {str(t.get("u")): t for t in tags.get("items") or []}
+    for x in rows:
+        t = by.get(x["u"], {})
+        x["kind"] = t.get("kind") if t.get("kind") in ("creator", "shop", "other") else "other"
+        x["fit"] = _n(t.get("fit"))
+        x["note"] = str(t.get("note") or "")[:160]
+        x["pick"] = False
+        x.pop("captions", None)
+        if x["u"] in seeds:
+            x["niche"] = "پیجی که خودت دادی"
+    allr = old["rows"] + rows
+    allr.sort(key=lambda x: ({"creator": 0, "shop": 1, "other": 2}[x["kind"]], -(x["fit"] * 2 + min(x["eng"], 10))))
+    old.update({"rows": allr, "usd": round(old.get("usd", 0) + usd, 3), "date": C.today().isoformat(),
+                "checked": sorted(set(old.get("checked", [])) | set(users) | set(seeds))})
+    (_dir() / "latest.json").write_text(json.dumps(old, ensure_ascii=False, indent=1), encoding="utf-8")
+    return {"seeds": len(sp), "neighbours": len(votes), "checked": len(profs), "added": len(rows),
+            "creators": sum(1 for x in rows if x["kind"] == "creator"), "usd": round(usd, 3)}

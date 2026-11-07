@@ -873,3 +873,31 @@ def test_ig_handle_edge_cases():
 def test_ig_handle_skips_urls_prefix():
     from dastsaz import influencers as I
     assert I.ig_handle("Instagram: https://instagram.com/sara_x") == "sara_x"
+
+
+def test_influencers_snowball(tmp_path, monkeypatch):
+    from dastsaz import influencers as I
+    monkeypatch.setattr(C, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(C, "today", lambda: dt.date(2026, 11, 7))
+    seed = {"username": "shop1", "followersCount": 80000, "relatedProfiles": [{"username": "rel"}],
+            "latestPosts": [{"taggedUsers": [{"username": "inf"}], "mentions": ["@inf", "x"]}]}
+    assert I.neighbours(seed).most_common(1)[0] == ("inf", 4)
+
+    class Ap:
+        def __init__(self):
+            self.calls = []
+        def run(self, inp, usd, actor=None):
+            self.calls.append(inp["usernames"])
+            return {"defaultDatasetId": str(len(self.calls))}
+        def items(self, ds):
+            return [seed] if ds == "1" else [{"username": "inf", "followersCount": 9000, "biography": "استایل",
+                                              "latestPosts": [{"likesCount": 300}]}]
+        def cost(self, _):
+            return 0.2
+    monkeypatch.setattr(I.ai, "ask_json", lambda *a, **k: ({"items": [{"u": "inf", "kind": "creator", "fit": 8}]}, 0.0))
+    ap = Ap()
+    r = I.snowball(["https://www.instagram.com/shop1/"], ap=ap)
+    assert ap.calls[0] == ["shop1"] and ap.calls[1][0] == "inf"
+    assert r["creators"] == 1
+    row = I.latest()["rows"][0]
+    assert row["u"] == "inf" and "shop1" in row["niche"]
