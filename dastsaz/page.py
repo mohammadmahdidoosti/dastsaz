@@ -870,7 +870,7 @@ def designs_page(items: list[dict], counts: dict, cats: dict, supplier_link: str
            f"بدون تصویر: {fa(last.get('no_image'))} · هزینه {E(last.get('usd'))} دلار</p>") if last else ""
     body = (f"<section><h2>وضعیت</h2>{run}<table><tr><th>دسته</th>{head}</tr>{rows}</table>"
             f"<p>لینک تأمین‌کننده (بدون رمز، فقط برای رابط بفرست): <a href='{E(supplier_link)}'>{E(supplier_link)}</a></p>"
-            f"<p><a href='/pins'>پین‌های داغ پینترست این هفته</a> · <a href='/tw-ideas'>ایده‌های توییتر</a></p>"
+            f"<p><a href='/pins'>پین‌های داغ پینترست این هفته</a> · <a href='/tw-ideas'>ایده‌های توییتر</a> · <a href='/people'>اینفلوئنسرها</a></p>"
             f"<form method='post' action='/designs/lab'><button class='btn'>طرح‌هایی که سازنده تأیید کرده را بفرست به آزمایشگاه</button></form>"
             f"<p class='render'>تصویرها طراحی کامپیوتری‌اند، نه عکس واقعی. در اینستاگرام با عنوان «طرح جدید / پیش‌فروش» استفاده شوند؛ "
             f"در باسلام فقط عکس واقعی نمونه‌ی ساخته‌شده.</p></section>{groups}")
@@ -901,7 +901,8 @@ def supplier_page(items: list[dict], cats: dict, tok: str, done: bool = False) -
             "طرح‌هایی که تأیید کنید را تست می‌کنیم و برای برنده‌ها سفارش می‌دهیم. تصویرها طراحی کامپیوتری‌اند.")
     body = (("<div class='verdict good'>ثبت شد، ممنون.</div>" if done else "")
             + f"<p><a class='btn' href='/s/{E(tok)}/pins'>پین‌های داغ پینترست این هفته</a> "
-              f"<a class='btn' href='/s/{E(tok)}/ideas'>ایده‌های توییتر</a></p>" + groups)
+              f"<a class='btn' href='/s/{E(tok)}/ideas'>ایده‌های توییتر</a> "
+              f"<a class='btn' href='/s/{E(tok)}/people'>اینفلوئنسرها</a></p>" + groups)
     return (_shell("طرح‌ها برای تأیید سازنده", "دست‌ساز", lead, body, DCSS)
             .replace('<nav class="bar-top">', '<nav class="bar-top" style="display:none">'))
 
@@ -972,4 +973,33 @@ def tw_ideas_page(d: dict | None, supplier: bool = False) -> str:
             "«جای خالی» یعنی تقاضا دیده شده ولی تقریباً کسی نمی‌فروشد.")
     css = DCSS + ".crowd-gap{background:#e3f4ef}.crowd-open{background:#fff7e6}.crowd-busy{background:#fbe9ec}"
     html = _shell("ایده‌های توییتر", "دست‌ساز", lead, body, css)
+    return html.replace('<nav class="bar-top">', '<nav class="bar-top" style="display:none">') if supplier else html
+
+
+def influencers_page(d: dict | None, pick_base: str, supplier: bool = False) -> str:
+    if not d:
+        body = "<p>هنوز جست‌وجو نشده.</p>"
+    else:
+        def table(kind: str) -> str:
+            rows = ""
+            for x in [r for r in d["rows"] if r["kind"] == kind]:
+                on = bool(x.get("pick"))
+                btn = (f"<form method='post' action='{E(pick_base)}/{E(x['u'])}'><input type='hidden' name='on' value='{'0' if on else '1'}'>"
+                       f"<button class='btn{' on' if on else ''}'>{'انتخاب شد' if on else 'انتخاب'}</button></form>") if kind == "creator" else ""
+                rows += (f"<tr{' class=hl' if on else ''}><td><a href='https://instagram.com/{E(x['u'])}' target='_blank' rel='noreferrer'>{E(x['u'])}</a>"
+                         f"<div class='muted'>{E(x.get('name'))}</div></td><td>{fa(x['followers'])}</td>"
+                         f"<td>{fa(x['eng'])}٪<div class='muted'>{fa(x['med'])} لایک+کامنت</div></td><td>{fa(x['fit'])} از ۱۰</td>"
+                         f"<td>{E(x.get('note'))}<div class='muted'>{E(x.get('bio', '')[:120])}</div></td><td>{btn}</td></tr>")
+            return (f"<table><tr><th>پیج</th><th>دنبال‌کننده</th><th>تعامل</th><th>تناسب با ما</th><th>محتوا</th><th></th></tr>{rows}</table>"
+                    if rows else "<p class='muted'>چیزی پیدا نشد.</p>")
+        picked = sum(1 for r in d["rows"] if r.get("pick"))
+        body = (f"<p class='muted'>جست‌وجو {E(d['date'])}: {fa(d['posts'])} پست زیر هشتگ‌های دست‌ساز، زیورآلات، کادو و استایل؛ "
+                f"{fa(d['accounts'])} پیج بررسی شد؛ {fa(len(d['rows']))} پیج بین ۵ تا ۵۰ هزار دنبال‌کننده ماند. انتخاب‌شده: {fa(picked)}"
+                + ("" if supplier else f" · هزینه {E(d.get('usd'))} دلار") + "</p>"
+                f"<section><h2>اینفلوئنسرهای احتمالی</h2>{table('creator')}</section>"
+                f"<section><h2>فروشگاه‌های رقیب (برای شناخت بازار)</h2>{table('shop')}</section>")
+    lead = ("پیج‌های ۵ تا ۵۰ هزار نفری که زیر هشتگ‌های مرتبط پست می‌گذارند. «تعامل» یعنی لایک و کامنت معمول یک پست تقسیم بر دنبال‌کننده؛ "
+            "۲ تا ۵ درصد خوب است و بالای ۱۰ درصد را با احتیاط ببینید. «تناسب» را هوش مصنوعی از روی بیو و کپشن‌ها داده؛ "
+            "قبل از انتخاب حتماً خود پیج را ببینید. ۵ نفر را برای تست اول انتخاب کنید.")
+    html = _shell("میکرواینفلوئنسرها", "دست‌ساز", lead, body, DCSS + ".btn.on{background:#13877f;color:#fff}")
     return html.replace('<nav class="bar-top">', '<nav class="bar-top" style="display:none">') if supplier else html

@@ -25,7 +25,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from dastsaz import config as C
-from dastsaz import ads, categories, deepdive, designs, pinterest, lab_seed, guard, schedule, lab, needs, page, pipeline, snapshot, telegram, voice
+from dastsaz import ads, categories, deepdive, designs, influencers, pinterest, lab_seed, guard, schedule, lab, needs, page, pipeline, snapshot, telegram, voice
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S")
 logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -39,7 +39,7 @@ PIN = re.compile(r"^[\w\-]{1,120}$")
 STEP_FA = {"wait": "منتظر", "basalam": "باسلام", "digikala": "دیجی‌کالا", "etsy": "اتسی", "ai": "هوش مصنوعی", "expand": "فرصت‌یابی", "testlist": "لیست آزمایش", "trends": "گوگل ترندز", "suggest": "پیشنهادهای جست‌وجو",
            "reviews": "نظر خریداران", "makers": "سازنده‌ها", "snapshot": "عکس هفتگی فروش",
            "voice": "صدای مشتری", "needs": "نیازهای کادو", "telegram": "تلگرام", "radar": "رادار دسته‌ها",
-           "radar_trends": "گوگلِ دسته‌ها", "radar_ig": "اینستاگرامِ دسته‌ها", "twitter": "توییتر کادو", "translation_test": "تست ترجمه‌ی دسته‌ها", "lab_seed": "ثبت طرح‌های اول", "designs": "ماشین طراحی", "designs_sample": "۵ طرح نمونه", "designs_redraw": "تصویر طرح‌ها", "designs_v2": "طراحی دور دوم", "deepdive": "بررسی دسته‌های کم‌رقیب", "pinterest": "پینترست هفتگی", "twitter_ideas": "ایده‌های توییتر", "twitter_ideas_recheck": "بررسی دوباره‌ی بازار ایده‌ها",
+           "radar_trends": "گوگلِ دسته‌ها", "radar_ig": "اینستاگرامِ دسته‌ها", "twitter": "توییتر کادو", "translation_test": "تست ترجمه‌ی دسته‌ها", "lab_seed": "ثبت طرح‌های اول", "designs": "ماشین طراحی", "designs_sample": "۵ طرح نمونه", "designs_redraw": "تصویر طرح‌ها", "designs_v2": "طراحی دور دوم", "deepdive": "بررسی دسته‌های کم‌رقیب", "pinterest": "پینترست هفتگی", "twitter_ideas": "ایده‌های توییتر", "twitter_ideas_recheck": "بررسی دوباره‌ی بازار ایده‌ها", "influencers": "پیدا کردن اینفلوئنسر",
            "report": "گزارش"}
 
 
@@ -192,6 +192,8 @@ class H(BaseHTTPRequestHandler):
                 return self._send(404, "پیدا نشد".encode(), "text/plain; charset=utf-8")
             if len(parts) == 4 and parts[2] == "img" and IMG.match(parts[3]):
                 return self._img(parts[3])
+            if len(parts) == 3 and parts[2] == "people":
+                return self._send(200, page.influencers_page(influencers.latest(), f"/s/{parts[1]}/person", supplier=True).encode())
             if len(parts) == 3 and parts[2] == "ideas":
                 return self._send(200, page.tw_ideas_page(needs.twitter_ideas_latest(), supplier=True).encode())
             if len(parts) == 3 and parts[2] == "pins":
@@ -212,6 +214,8 @@ class H(BaseHTTPRequestHandler):
             return self._send(200, page.designs_page(
                 designs.load(), designs.counts(), designs.CATEGORIES, f"https://{host}/s/{designs.token()}",
                 json.loads(lf.read_text(encoding="utf-8")) if lf.exists() else None).encode())
+        if parts == ["people"]:
+            return self._send(200, page.influencers_page(influencers.latest(), "/person").encode())
         if parts == ["tw-ideas"]:
             return self._send(200, page.tw_ideas_page(needs.twitter_ideas_latest()).encode())
         if parts == ["pins"]:
@@ -296,6 +300,10 @@ class H(BaseHTTPRequestHandler):
     def do_POST(self):
         u = urlparse(self.path)
         parts = [p for p in u.path.split("/") if p]
+        if (len(parts) == 4 and parts[0] == "s" and parts[2] == "person" and PIN.match(parts[3])
+                and hmac.compare_digest(parts[1].encode(), designs.token().encode())):
+            influencers.pick(parts[3], self._form().get("on") == "1")
+            return self._back(f"/s/{parts[1]}/people")
         if (len(parts) == 4 and parts[0] == "s" and parts[2] == "pin" and PIN.match(parts[3])
                 and hmac.compare_digest(parts[1].encode(), designs.token().encode())):
             pinterest.like(parts[3], self._form().get("on") == "1")
@@ -306,6 +314,9 @@ class H(BaseHTTPRequestHandler):
             return self._back(f"/s/{parts[1]}?ok=1")
         if not self._gate():
             return
+        if len(parts) == 2 and parts[0] == "person" and PIN.match(parts[1]):
+            influencers.pick(parts[1], self._form().get("on") == "1")
+            return self._back("/people")
         if len(parts) == 2 and parts[0] == "pin" and PIN.match(parts[1]):
             pinterest.like(parts[1], self._form().get("on") == "1")
             return self._back("/pins")
@@ -338,7 +349,7 @@ class H(BaseHTTPRequestHandler):
                   "radar": lambda p: categories.run(progress=p), "radar_trends": lambda p: categories.trends(), "radar_ig": lambda p: categories.instagram(), "twitter": lambda p: needs.twitter(), "translation_test": lambda p: categories.translation_test(progress=p),
                   "lab_seed": lambda p: lab_seed.seed(), "designs": lambda p: designs.generate(progress=p),
                   "designs_sample": lambda p: designs.generate(per=5, cats=["necklace"], progress=p),
-                  "designs_redraw": lambda p: designs.redraw(), "designs_v2": lambda p: designs.generate_v2(progress=p), "designs_shrink": lambda p: designs.shrink_all(), "deepdive": lambda p: deepdive.run(progress=p), "pinterest": lambda p: pinterest.run(), "twitter_ideas": lambda p: needs.twitter_ideas(progress=p), "twitter_ideas_recheck": lambda p: needs.twitter_ideas(progress=p, reuse=True)}.get(name)
+                  "designs_redraw": lambda p: designs.redraw(), "designs_v2": lambda p: designs.generate_v2(progress=p), "designs_shrink": lambda p: designs.shrink_all(), "deepdive": lambda p: deepdive.run(progress=p), "pinterest": lambda p: pinterest.run(), "twitter_ideas": lambda p: needs.twitter_ideas(progress=p), "twitter_ideas_recheck": lambda p: needs.twitter_ideas(progress=p, reuse=True), "influencers": lambda p: influencers.run(progress=p)}.get(name)
             if not fn:
                 return self._json({"error": "نامعتبر"}, 400)
             err = JOB.start(name, task=fn)

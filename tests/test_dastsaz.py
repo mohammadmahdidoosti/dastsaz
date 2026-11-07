@@ -796,3 +796,33 @@ def test_twitter_terms_split():
     from dastsaz import needs
     assert needs._terms("گوشواره اسم، گوشواره حروف") == ["گوشواره اسم", "گوشواره حروف"]
     assert needs._terms("پابند") == ["پابند"]
+
+
+def test_influencers_run_and_page(tmp_path, monkeypatch):
+    from dastsaz import influencers as I, page
+    monkeypatch.setattr(C, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(C, "today", lambda: dt.date(2026, 11, 7))
+    posts = [{"ownerUsername": "a"}, {"ownerUsername": "a"}, {"ownerUsername": "b"}, {"ownerUsername": "big"}]
+    profs = [{"username": "a", "followersCount": 10000, "biography": "استایل", "latestPosts": [{"likesCount": 300, "commentsCount": 20}] * 3},
+             {"username": "b", "followersCount": 20000, "biography": "فروش گوشواره", "latestPosts": [{"likesCount": 100}]},
+             {"username": "big", "followersCount": 900000, "latestPosts": []}]
+
+    class Ap:
+        n = 0
+        def run(self, inp, usd, actor=None):
+            self.n += 1
+            return {"defaultDatasetId": actor}
+        def items(self, ds):
+            return posts if ds == I.TAG_ACTOR else profs
+        def cost(self, _):
+            return 0.5
+    monkeypatch.setattr(I.ai, "ask_json", lambda *a, **k: ({"items": [{"u": "a", "kind": "creator", "fit": 8},
+                                                                      {"u": "b", "kind": "shop", "fit": 6}]}, 0.01))
+    assert I.candidates(posts)[0] == "a"
+    r = I.run(ap=Ap())
+    assert r["kept"] == 2 and r["usd"] == 1.01
+    d = I.latest()
+    assert d["rows"][0]["u"] == "a" and d["rows"][0]["eng"] == 3.2
+    assert I.pick("a", True) and I.latest()["rows"][0]["pick"]
+    html = page.influencers_page(I.latest(), "/s/t/person", supplier=True)
+    assert "انتخاب شد" in html and "فروشگاه‌های رقیب" in html
