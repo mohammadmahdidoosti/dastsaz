@@ -992,7 +992,8 @@ def influencers_page(d: dict | None, pick_base: str, supplier: bool = False) -> 
                       if tw and x.get("ig") else "")
                 rows += (f"<tr{' class=hl' if on else ''}><td><a href='{link}' target='_blank' rel='noreferrer'>{'𝕏 ' if tw else ''}{E(x['u'])}</a>"
                          f"<div class='muted'>{E(x.get('name'))}</div>{ig}</td><td>{E(x.get('niche') or '')}</td><td>{fa(x['followers'])}</td>"
-                         f"<td>{fa(x['eng'])}٪<div class='muted'>{fa(x['med'])} لایک+کامنت</div></td><td>{fa(x['fit'])} از ۱۰</td>"
+                         + (f"<td>{fa(x['med'])}<div class='muted'>لایک معمول توییت‌های پرلایکش</div></td>" if tw else f"<td>{fa(x['eng'])}٪<div class='muted'>{fa(x['med'])} لایک+کامنت</div></td>")
+                         + f"<td>{fa(x['fit'])} از ۱۰</td>"
                          f"<td>{E(x.get('note'))}<div class='muted'>{E(x.get('bio', '')[:120])}</div></td><td>{btn}</td></tr>")
             return (f"<table><tr><th>پیج</th><th>دسته</th><th>دنبال‌کننده</th><th>تعامل</th><th>تناسب با ما</th><th>محتوا</th><th></th></tr>{rows}</table>"
                     if rows else "<p class='muted'>چیزی پیدا نشد.</p>")

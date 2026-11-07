@@ -70,7 +70,8 @@ def niche_of(posts: list[dict], tag_niche: dict) -> dict[str, str]:
     return {u: k.most_common(1)[0][0] for u, k in c.items()}
 
 
-IG_RE = __import__("re").compile(r"(?:instagram\.com/|(?:ig|insta|اینستا|اینستاگرام)\s*[:：]?\s*@?)([A-Za-z0-9_.]{3,30})", 2)
+IG_RE = __import__("re").compile(
+    r"(?:instagram\.com/|(?:instagram|اینستاگرام|insta|اینستا|ig)\b\s*[:：]?\s*@?)([A-Za-z0-9_][A-Za-z0-9_.]{2,29})", 2)
 
 
 def ig_handle(text: str) -> str:

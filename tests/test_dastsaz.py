@@ -861,3 +861,10 @@ def test_influencers_niche_twitter_merge(tmp_path, monkeypatch):
     assert "n1" in d["checked"]
     from dastsaz import page
     assert "اینستاگرام: tw.one" in page.influencers_page(d, "/person")
+
+
+def test_ig_handle_edge_cases():
+    from dastsaz import influencers as I
+    assert I.ig_handle("my instagram.com") == ""
+    assert I.ig_handle("www.instagram.com/curllyygirl") == "curllyygirl"
+    assert I.ig_handle("Instagram: @mehregan.design") == "mehregan.design"
