@@ -939,3 +939,28 @@ def test_influencers_sorted_by_engagement():
     html = page.influencers_page({"date": "x", "posts": 0, "accounts": 0, "rows": rows}, "/person")
     pos = lambda u: html.index(f"/{u}'")  # noqa: E731
     assert pos("high") < pos("low") < pos("tw")
+
+
+def test_grade_and_taste(monkeypatch):
+    from dastsaz import influencers as I
+    good = {"eng": 4.0, "med": 400, "cmed": 20, "last": "2026-11-01", "fa": 1.0, "fit": 8, "taste": 8}
+    bad = {"eng": 0.3, "med": 30, "cmed": 0, "last": "2025-01-01", "fa": 0.0, "fit": 3, "taste": 2}
+    assert I.grade(good, "2026-11-07") == "A" and I.grade(bad, "2026-11-07") == "C"
+    p = {"username": "a", "followersCount": 1000, "latestPosts": [
+        {"likesCount": 50, "commentsCount": 5, "timestamp": "2026-11-02T10:00:00Z", "caption": "سلام", "displayUrl": "http://i/1.jpg"}]}
+    st = I.stats(p)
+    assert st["fa"] == 1.0 and st["last"] == "2026-11-02" and st["imgs"] == ["http://i/1.jpg"] and st["cmed"] == 5
+
+    class S:
+        def get(self, u, timeout):
+            class R: status_code = 200; content = b"x"
+            return R()
+        def post(self, url, timeout, headers, json):
+            assert json["messages"][0]["content"][1]["type"] == "image_url"
+            class R:
+                def json(self):
+                    return {"choices": [{"message": {"content": '{"taste": 7, "why": "گرم"}'}}], "usage": {"cost": 0.01}}
+            return R()
+    monkeypatch.setattr("dastsaz.designs.shrink", lambda raw, size=900: raw)
+    x = {"u": "a", "imgs": ["http://i/1.jpg"]}
+    assert I.taste(x, "k", S()) == 0.01 and x["taste"] == 7

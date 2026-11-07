@@ -996,9 +996,10 @@ def influencers_page(d: dict | None, pick_base: str, supplier: bool = False) -> 
                 rows += (f"<tr{' class=hl' if on else ''}><td><a href='{link}' target='_blank' rel='noreferrer'>{'𝕏 ' if tw else ''}{E(x['u'])}</a>"
                          f"<div class='muted'>{E(x.get('name'))}</div>{ig}</td><td>{E(x.get('niche') or '')}</td><td>{fa(x['followers'])}</td>"
                          + (f"<td>{fa(x['med'])}<div class='muted'>لایک معمول توییت‌های پرلایکش</div></td>" if tw else f"<td>{fa(x['eng'])}٪<div class='muted'>{fa(x['med'])} لایک+کامنت</div></td>")
-                         + f"<td>{fa(x['fit'])} از ۱۰</td>"
-                         f"<td>{E(x.get('note'))}<div class='muted'>{E(x.get('bio', '')[:120])}</div></td><td>{btn}</td></tr>")
-            return (f"<table><tr><th>پیج</th><th>دسته</th><th>دنبال‌کننده</th><th>تعامل</th><th>تناسب با ما</th><th>محتوا</th><th></th></tr>{rows}</table>"
+                         + f"<td><b>{E({'A': 'الف', 'B': 'ب', 'C': 'ج'}.get(x.get('grade'), '—'))}</b><div class='muted'>متن {fa(x['fit'])} از ۱۰"
+                         + (f"، عکس {fa(x['taste'])} از ۱۰" if x.get('taste') is not None else "") + "</div></td>"
+                         f"<td>{E(x.get('note'))}{'<div class=muted>عکس‌ها: ' + E(x['taste_why']) + '</div>' if x.get('taste_why') else ''}<div class='muted'>{E(x.get('bio', '')[:120])}</div></td><td>{btn}</td></tr>")
+            return (f"<table><tr><th>پیج</th><th>دسته</th><th>دنبال‌کننده</th><th>تعامل</th><th>رتبه و تناسب</th><th>محتوا</th><th></th></tr>{rows}</table>"
                     if rows else "<p class='muted'>چیزی پیدا نشد.</p>")
         picked = sum(1 for r in d["rows"] if r.get("pick"))
         body = (f"<p class='muted'>جست‌وجو {E(d['date'])}: {fa(d['posts'])} پست زیر هشتگ‌های دست‌ساز، زیورآلات، کادو و استایل؛ "
@@ -1009,6 +1010,7 @@ def influencers_page(d: dict | None, pick_base: str, supplier: bool = False) -> 
                 f"<section><h2>فروشگاه‌های رقیب (برای شناخت بازار)</h2>{table('shop')}</section>")
     lead = ("پیج‌های ۵ تا ۵۰ هزار نفری که زیر هشتگ‌های مرتبط پست می‌گذارند. «تعامل» یعنی لایک و کامنت معمول یک پست تقسیم بر دنبال‌کننده؛ "
             "۲ تا ۵ درصد خوب است و بالای ۱۰ درصد را با احتیاط ببینید. «تناسب» را هوش مصنوعی از روی بیو و کپشن‌ها داده؛ "
+            "رتبه‌ی الف/ب/ج از تعامل، کامنت واقعی، فعال بودن، فارسی بودن، متن و حس عکس‌ها درآمده. "
             "قبل از انتخاب حتماً خود پیج را ببینید. ۵ نفر را برای تست اول انتخاب کنید.")
     html = _shell("میکرواینفلوئنسرها", "دست‌ساز", lead, body, DCSS + ".btn.on{background:#13877f;color:#fff}")
     return html.replace('<nav class="bar-top">', '<nav class="bar-top" style="display:none">') if supplier else html
