@@ -826,7 +826,7 @@ def radar_page(rows: list[dict], n_cats: int, weeks: int, trends: dict | None = 
     return _shell("رادار دسته‌ها", "شکار دسته", "کدام دسته‌ها بزرگ می‌شوند و کجا رقیب کم است؛ فرصت‌یابی عمیق برای دسته‌های برتر.", body)
 
 
-DESIGN_STATUS = {"idea": "ایده", "can": "سازنده می‌سازد", "cannot": "سازنده نمی‌سازد", "testing": "در آزمایش",
+DESIGN_STATUS = {"old": "دور اول (کنار رفت)", "idea": "ایده", "can": "سازنده می‌سازد", "cannot": "سازنده نمی‌سازد", "testing": "در آزمایش",
                  "winner": "برنده", "dropped": "کنار رفت"}
 
 
@@ -843,6 +843,7 @@ def _design_card(d: dict, img_url: str, form: str = "") -> str:
             f"{' · فروش ' + toman(d['price']) + ' تومان' if d.get('price') else ''}"
             f"{' · سقف خرید ' + toman(d['cost']) + ' تومان' if d.get('cost') else ''}</div>"
             f"<p>{E(d.get('spec') or '')}</p><p class='muted'>{E(d.get('why') or '')}</p>"
+            f"{'<p class=muted>نمره‌ی منتقد: تفاوت ' + fa((d.get('critic') or {}).get('diff')) + '، خلاقیت ' + fa((d.get('critic') or {}).get('creative')) + '، ساخت ' + fa((d.get('critic') or {}).get('make')) + '</p>' if d.get('critic') and d['critic'].get('diff') is not None else ''}"
             f"<div>{''.join('<span class=tag>' + E(t) + '</span>' for t in d.get('tags') or [])}</div>{s}{form}</div></div>")
 
 

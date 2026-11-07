@@ -711,3 +711,29 @@ def test_designs_brand_filter():
     assert D.branded({"name": "گردنبند ونکلیف استیل", "prompt": "x"})
     assert D.branded({"name": "گردنبند", "prompt": "Four-leaf Alhambra style clover"})
     assert not D.branded({"name": "گردنبند گل چهارپر استیل", "prompt": "four petal flower pendant"})
+
+
+def test_designs_v2(tmp_path, monkeypatch):
+    from dastsaz import designs as D, ai, page
+    monkeypatch.setattr(C, "DATA_DIR", tmp_path)
+    D.save([{"id": "aaaaaaaa", "cat": "keychain", "name": "جاکلیدی بد", "status": "idea", "img": "", "supplier": {}},
+            {"id": "bbbbbbbb", "cat": "earring", "name": "گوشواره ماه و ستاره جفتی", "status": "idea", "img": "", "supplier": {}}])
+    D.mark_liked(["گوشواره ماه و ستاره جفتی"])
+    monkeypatch.setattr(D, "best_sellers", lambda q, **k: [["گوشواره ساده", 3, 100000]])
+    calls = []
+
+    def fake(prompt, data, key, max_tokens=0, model=None):
+        calls.append(prompt[:20])
+        if "designs" in data:
+            return {"items": [{"i": i, "diff": i, "creative": 5, "make": 5, "clear": 5} for i in range(len(data["designs"]))]}, 0.01
+        return {"items": [{"name": f"ط{i}", "spec": "s", "prompt": "p"} for i in range(5)]}, 0.02
+    monkeypatch.setattr(ai, "ask_json", fake)
+    monkeypatch.setattr(D, "image", lambda p, k, s=None: (b"png", 0.04))
+    res = D.generate_v2(per=2, extra=3, cats=["v2_ear"])
+    ds = D.load()
+    new = [d for d in ds if d.get("round") == 2]
+    assert res["added"] == 2 and [d["name"] for d in new] == ["ط4", "ط3"]       # critic kept the best
+    assert next(d for d in ds if d["id"] == "aaaaaaaa")["status"] == "old"
+    assert next(d for d in ds if d["id"] == "bbbbbbbb")["status"] == "idea"
+    html = page.supplier_page(ds, D.CATEGORIES, "t")
+    assert "جاکلیدی بد" not in html and "ط4" in html and "نمره‌ی منتقد" in html
