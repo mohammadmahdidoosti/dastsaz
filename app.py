@@ -39,7 +39,7 @@ PIN = re.compile(r"^[\w\-]{1,120}$")
 STEP_FA = {"wait": "منتظر", "basalam": "باسلام", "digikala": "دیجی‌کالا", "etsy": "اتسی", "ai": "هوش مصنوعی", "expand": "فرصت‌یابی", "testlist": "لیست آزمایش", "trends": "گوگل ترندز", "suggest": "پیشنهادهای جست‌وجو",
            "reviews": "نظر خریداران", "makers": "سازنده‌ها", "snapshot": "عکس هفتگی فروش",
            "voice": "صدای مشتری", "needs": "نیازهای کادو", "telegram": "تلگرام", "radar": "رادار دسته‌ها",
-           "radar_trends": "گوگلِ دسته‌ها", "radar_ig": "اینستاگرامِ دسته‌ها", "twitter": "توییتر کادو", "translation_test": "تست ترجمه‌ی دسته‌ها", "lab_seed": "ثبت طرح‌های اول", "designs": "ماشین طراحی", "designs_sample": "۵ طرح نمونه", "designs_redraw": "تصویر طرح‌ها", "designs_v2": "طراحی دور دوم", "deepdive": "بررسی دسته‌های کم‌رقیب", "pinterest": "پینترست هفتگی", "twitter_ideas": "ایده‌های توییتر",
+           "radar_trends": "گوگلِ دسته‌ها", "radar_ig": "اینستاگرامِ دسته‌ها", "twitter": "توییتر کادو", "translation_test": "تست ترجمه‌ی دسته‌ها", "lab_seed": "ثبت طرح‌های اول", "designs": "ماشین طراحی", "designs_sample": "۵ طرح نمونه", "designs_redraw": "تصویر طرح‌ها", "designs_v2": "طراحی دور دوم", "deepdive": "بررسی دسته‌های کم‌رقیب", "pinterest": "پینترست هفتگی", "twitter_ideas": "ایده‌های توییتر", "twitter_ideas_recheck": "بررسی دوباره‌ی بازار ایده‌ها",
            "report": "گزارش"}
 
 
@@ -338,7 +338,7 @@ class H(BaseHTTPRequestHandler):
                   "radar": lambda p: categories.run(progress=p), "radar_trends": lambda p: categories.trends(), "radar_ig": lambda p: categories.instagram(), "twitter": lambda p: needs.twitter(), "translation_test": lambda p: categories.translation_test(progress=p),
                   "lab_seed": lambda p: lab_seed.seed(), "designs": lambda p: designs.generate(progress=p),
                   "designs_sample": lambda p: designs.generate(per=5, cats=["necklace"], progress=p),
-                  "designs_redraw": lambda p: designs.redraw(), "designs_v2": lambda p: designs.generate_v2(progress=p), "designs_shrink": lambda p: designs.shrink_all(), "deepdive": lambda p: deepdive.run(progress=p), "pinterest": lambda p: pinterest.run(), "twitter_ideas": lambda p: needs.twitter_ideas(progress=p)}.get(name)
+                  "designs_redraw": lambda p: designs.redraw(), "designs_v2": lambda p: designs.generate_v2(progress=p), "designs_shrink": lambda p: designs.shrink_all(), "deepdive": lambda p: deepdive.run(progress=p), "pinterest": lambda p: pinterest.run(), "twitter_ideas": lambda p: needs.twitter_ideas(progress=p), "twitter_ideas_recheck": lambda p: needs.twitter_ideas(progress=p, reuse=True)}.get(name)
             if not fn:
                 return self._json({"error": "نامعتبر"}, 400)
             err = JOB.start(name, task=fn)

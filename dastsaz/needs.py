@@ -224,20 +224,32 @@ def crowd(m: dict) -> str:
     return "busy"
 
 
-def twitter_ideas(progress=None, sleep=time.sleep) -> dict:
+def _terms(search: str) -> list[str]:
+    """The AI sometimes gives two phrases in one field ("گوشواره اسم، گوشواره حروف"): check each on its own."""
+    import re
+    return [t.strip() for t in re.split(r"[،,/|]| یا ", str(search)) if t.strip()][:3]
+
+
+def twitter_ideas(progress=None, sleep=time.sleep, reuse: bool = False) -> dict:
     from . import basalam
     f = _dir() / "twitter.json"
     if not f.exists():
         return {"error": "no twitter test"}
     tw = json.loads(f.read_text(encoding="utf-8"))
-    data = {"cells": tw["table"]["cells"], "ideas": tw["table"]["ideas"], "budgets": tw["table"]["budgets"][::3],
-            "samples": [{k: s.get(k) for k in ("text", "for", "occasion", "idea", "budget")} for s in tw.get("samples", [])]}
-    from .designs import CRITIC_MODEL
-    res, usd = ai.ask_json(ASK_TW, data, C.secret("OPENROUTER_API_KEY"), max_tokens=8000, model=CRITIC_MODEL)
+    old = twitter_ideas_latest() if reuse else None
+    if old:                                               # same ideas, only the market check again (free)
+        res, usd = {"ideas": old["ideas"], "calendar": old["calendar"], "budget_note": old["budget_note"]}, old["usd"]
+    else:
+        data = {"cells": tw["table"]["cells"], "ideas": tw["table"]["ideas"], "budgets": tw["table"]["budgets"][::3],
+                "samples": [{k: s.get(k) for k in ("text", "for", "occasion", "idea", "budget")} for s in tw.get("samples", [])]}
+        from .designs import CRITIC_MODEL
+        res, usd = ai.ask_json(ASK_TW, data, C.secret("OPENROUTER_API_KEY"), max_tokens=8000, model=CRITIC_MODEL)
     ideas = [x for x in res.get("ideas") or [] if x.get("idea") and x.get("search")]
     sb, sd = basalam._session(), digikala._session()
     for i, x in enumerate(ideas):
-        x["market"] = _market(str(x["search"]), sb, sd, sleep)
+        tries = [_market(t, sb, sd, sleep) for t in _terms(x["search"])] or [{"q": x["search"]}]
+        x["market"] = max(tries, key=lambda m: ((m.get("bs_match") or 0) + (m.get("dk_match") or 0), m.get("bs_week") or 0))
+        x["search"] = x["market"]["q"]
         x["crowd"] = crowd(x["market"])
         if progress:
             progress(i + 1, len(ideas))

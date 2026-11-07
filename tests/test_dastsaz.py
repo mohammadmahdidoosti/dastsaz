@@ -790,3 +790,9 @@ def test_twitter_ideas_crowd_and_page():
          "calendar": [{"month": "آذر", "occasion": "یلدا", "make": "انار"}]}
     html = page.tw_ideas_page(d, supplier=True)
     assert "جای خالی" in html and "یلدا" in html
+
+
+def test_twitter_terms_split():
+    from dastsaz import needs
+    assert needs._terms("گوشواره اسم، گوشواره حروف") == ["گوشواره اسم", "گوشواره حروف"]
+    assert needs._terms("پابند") == ["پابند"]
