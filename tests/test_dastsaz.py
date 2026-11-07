@@ -937,4 +937,5 @@ def test_influencers_sorted_by_engagement():
             {"u": "tw", "kind": "creator", "fit": 9, "eng": 99, "followers": 3000, "med": 500, "src": "twitter"},
             {"u": "high", "kind": "creator", "fit": 5, "eng": 6.0, "followers": 9000, "med": 540, "src": "instagram"}]
     html = page.influencers_page({"date": "x", "posts": 0, "accounts": 0, "rows": rows}, "/person")
-    assert html.index("high") < html.index("low") < html.index(">𝕏 tw")
+    pos = lambda u: html.index(f"/{u}'")  # noqa: E731
+    assert pos("high") < pos("low") < pos("tw")
