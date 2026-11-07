@@ -244,30 +244,58 @@ def neighbours(prof: dict) -> Counter:
     return c
 
 
-def snowball(seeds: list[str], max_usd: float = 1.5, n: int = 150, ap=None, label: str = "از پیج‌های تو") -> dict:
+TAGGED_ACTOR = "apify~instagram-tagged-scraper"
+
+
+def tagged_votes(posts: list[dict], seeds: set[str]) -> tuple[Counter, dict]:
+    """Posts in which someone tagged one of our pages: the poster showed that page's product (x2, x4 if marked as a
+    paid partnership); other people tagged in the same post count once."""
+    from urllib.parse import unquote
+    c: Counter = Counter()
+    via: dict[str, str] = {}
+    for p in posts:
+        seed = unquote(str(p.get("inputUrl") or "")).rstrip("/").split("/")[-2 if str(p.get("inputUrl", "")).rstrip("/").endswith("tagged") else -1]
+        owner = str(p.get("ownerUsername") or "")
+        if owner and owner not in seeds:
+            c[owner] += 4 if p.get("paidPartnership") else 2
+            via.setdefault(owner, seed)
+        for t in p.get("taggedUsers") or []:
+            u = str(t.get("username") if isinstance(t, dict) else t)
+            if u and u not in seeds and u != owner:
+                c[u] += 1
+                via.setdefault(u, seed)
+    return c, via
+
+
+def snowball(seeds: list[str], max_usd: float = 2.0, n: int = 150, per: int = 30, ap=None,
+             label: str = "از پیج‌های تو") -> dict:
     from .etsy import Apify
     ap = ap or Apify(C.secret("APIFY_TOKEN"))
     seeds = [s.strip().strip("/").rsplit("/", 1)[-1].lstrip("@") for s in seeds if s.strip()]
-    r1 = ap.run({"usernames": seeds}, max_usd * 0.2, actor=PROFILE_ACTOR)
+    r1 = ap.run({"usernames": seeds}, max_usd * 0.1, actor=PROFILE_ACTOR)
     sp = ap.items(r1["defaultDatasetId"]) if r1.get("defaultDatasetId") else []
+    r0 = ap.run({"username": seeds, "resultsLimit": per}, max_usd * 0.4, actor=TAGGED_ACTOR)
+    tposts = ap.items(r0["defaultDatasetId"]) if r0.get("defaultDatasetId") else []
     old = latest() or {"rows": []}
     seen = {x["u"] for x in old["rows"]} | set(old.get("checked", [])) | set(seeds)
-    votes: Counter = Counter()
-    via: dict[str, str] = {}
+    votes, via = tagged_votes(tposts, set(seeds))
+    for u in list(votes):
+        if u in seen:
+            del votes[u]
     for p in sp:
         for u, k in neighbours(p).items():
             if u not in seen:
                 votes[u] += k
                 via.setdefault(u, str(p.get("username")))
     users = [u for u, _ in votes.most_common(n)]
-    r2 = ap.run({"usernames": users}, max_usd * 0.8, actor=PROFILE_ACTOR) if users else {}
+    r2 = ap.run({"usernames": users}, max_usd * 0.5, actor=PROFILE_ACTOR) if users else {}
     profs = ap.items(r2["defaultDatasetId"]) if r2.get("defaultDatasetId") else []
     rows = [stats(p) | {"src": "instagram", "niche": f"{label} (از {via.get(str(p.get('username')), '')})"}
             for p in profs + sp if p.get("username")]
     rows = [x for x in rows if MIN_F <= x["followers"] <= MAX_F and x["u"] not in {r["u"] for r in old["rows"]}]
-    usd = ap.cost(r1) + (ap.cost(r2) if r2 else 0)
+    usd = ap.cost(r1) + ap.cost(r0) + (ap.cost(r2) if r2 else 0)
     tags, c = ai.ask_json(ASK, [{"u": x["u"], "bio": x["bio"], "captions": x["captions"]} for x in rows],
-                          C.secret("OPENROUTER_API_KEY"), max_tokens=8000)
+                          C.secret("OPENROUTER_API_KEY"), max_tokens=12000)
     usd += c
     by = {str(t.get("u")): t for t in tags.get("items") or []}
     for x in rows:
@@ -284,5 +312,5 @@ def snowball(seeds: list[str], max_usd: float = 1.5, n: int = 150, ap=None, labe
     old.update({"rows": allr, "usd": round(old.get("usd", 0) + usd, 3), "date": C.today().isoformat(),
                 "checked": sorted(set(old.get("checked", [])) | set(users) | set(seeds))})
     (_dir() / "latest.json").write_text(json.dumps(old, ensure_ascii=False, indent=1), encoding="utf-8")
-    return {"seeds": len(sp), "neighbours": len(votes), "checked": len(profs), "added": len(rows),
+    return {"seeds": len(sp), "tagged_posts": len(tposts), "neighbours": len(votes), "checked": len(profs), "added": len(rows),
             "creators": sum(1 for x in rows if x["kind"] == "creator"), "usd": round(usd, 3)}

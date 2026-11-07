@@ -887,17 +887,30 @@ def test_influencers_snowball(tmp_path, monkeypatch):
         def __init__(self):
             self.calls = []
         def run(self, inp, usd, actor=None):
-            self.calls.append(inp["usernames"])
+            self.calls.append(inp.get("usernames") or inp.get("username"))
             return {"defaultDatasetId": str(len(self.calls))}
         def items(self, ds):
-            return [seed] if ds == "1" else [{"username": "inf", "followersCount": 9000, "biography": "استایل",
-                                              "latestPosts": [{"likesCount": 300}]}]
+            if ds == "1":
+                return [seed]
+            if ds == "2":
+                return [{"inputUrl": "https://www.instagram.com/shop1/tagged/", "ownerUsername": "inf", "paidPartnership": True,
+                         "taggedUsers": [{"username": "friend"}]}]
+            return [{"username": "inf", "followersCount": 9000, "biography": "استایل", "latestPosts": [{"likesCount": 300}]}]
         def cost(self, _):
             return 0.2
     monkeypatch.setattr(I.ai, "ask_json", lambda *a, **k: ({"items": [{"u": "inf", "kind": "creator", "fit": 8}]}, 0.0))
     ap = Ap()
     r = I.snowball(["https://www.instagram.com/shop1/"], ap=ap)
-    assert ap.calls[0] == ["shop1"] and ap.calls[1][0] == "inf"
+    assert ap.calls[0] == ["shop1"] and ap.calls[2][0] == "inf"
     assert r["creators"] == 1
     row = I.latest()["rows"][0]
     assert row["u"] == "inf" and "shop1" in row["niche"]
+
+
+def test_tagged_votes():
+    from dastsaz import influencers as I
+    posts = [{"inputUrl": "https://www.instagram.com/limu/tagged/", "ownerUsername": "a", "paidPartnership": True,
+              "taggedUsers": [{"username": "b"}, {"username": "limu"}]},
+             {"inputUrl": "https://www.instagram.com/limu/tagged/", "ownerUsername": "a"}]
+    c, via = I.tagged_votes(posts, {"limu"})
+    assert c["a"] == 6 and c["b"] == 1 and "limu" not in c and via["a"] == "limu"
