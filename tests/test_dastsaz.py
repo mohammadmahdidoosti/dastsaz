@@ -826,3 +826,38 @@ def test_influencers_run_and_page(tmp_path, monkeypatch):
     assert I.pick("a", True) and I.latest()["rows"][0]["pick"]
     html = page.influencers_page(I.latest(), "/s/t/person", supplier=True)
     assert "انتخاب شد" in html and "فروشگاه‌های رقیب" in html
+
+
+def test_influencers_niche_twitter_merge(tmp_path, monkeypatch):
+    from dastsaz import influencers as I
+    monkeypatch.setattr(C, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(C, "today", lambda: dt.date(2026, 11, 7))
+    assert I.ig_handle("طراح | اینستا: @sara.art") == "sara.art"
+    assert I.ig_handle("https://instagram.com/mina_cafe/") == "mina_cafe"
+    posts = [{"ownerUsername": "n1", "inputUrl": "https://www.instagram.com/explore/tags/%D8%B7%D8%B1%D8%A7%D8%AD%DB%8C_%D9%86%D8%A7%D8%AE%D9%86/"}]
+    assert I.niche_of(posts, {"طراحی_ناخن": "ناخن و آرایش"}) == {"n1": "ناخن و آرایش"}
+    (tmp_path / "influencers").mkdir()
+    (tmp_path / "influencers" / "latest.json").write_text(json.dumps({"usd": 1.0, "rows": [
+        {"u": "old", "kind": "creator", "fit": 5, "eng": 3, "followers": 9000, "med": 1, "pick": True}]}), encoding="utf-8")
+    tweets = [{"author": {"userName": "tw1", "followers": 5000, "description": "IG: tw.one"}, "likeCount": 200, "text": "استایل"}]
+
+    class Ap:
+        def run(self, inp, usd, actor=None):
+            return {"defaultDatasetId": actor}
+        def items(self, ds):
+            if ds == I.TAG_ACTOR:
+                return posts
+            if ds == I.PROFILE_ACTOR:
+                return [{"username": "n1", "followersCount": 8000, "latestPosts": [{"likesCount": 400}]}]
+            return tweets
+        def cost(self, _):
+            return 0.1
+    monkeypatch.setattr(I.ai, "ask_json", lambda *a, **k: ({"items": [{"u": "n1", "kind": "creator", "fit": 9},
+                                                                      {"u": "tw1", "kind": "creator", "fit": 7}]}, 0.0))
+    I.run(ap=Ap(), niches={"ناخن و آرایش": ["طراحی_ناخن"]}, with_twitter=True)
+    d = I.latest()
+    us = {x["u"]: x for x in d["rows"]}
+    assert us["n1"]["niche"] == "ناخن و آرایش" and us["tw1"]["ig"] == "tw.one" and us["old"]["pick"]
+    assert "n1" in d["checked"]
+    from dastsaz import page
+    assert "اینستاگرام: tw.one" in page.influencers_page(d, "/person")

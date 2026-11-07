@@ -986,15 +986,19 @@ def influencers_page(d: dict | None, pick_base: str, supplier: bool = False) -> 
                 on = bool(x.get("pick"))
                 btn = (f"<form method='post' action='{E(pick_base)}/{E(x['u'])}'><input type='hidden' name='on' value='{'0' if on else '1'}'>"
                        f"<button class='btn{' on' if on else ''}'>{'انتخاب شد' if on else 'انتخاب'}</button></form>") if kind == "creator" else ""
-                rows += (f"<tr{' class=hl' if on else ''}><td><a href='https://instagram.com/{E(x['u'])}' target='_blank' rel='noreferrer'>{E(x['u'])}</a>"
-                         f"<div class='muted'>{E(x.get('name'))}</div></td><td>{fa(x['followers'])}</td>"
+                tw = x.get("src") == "twitter"
+                link = f"https://x.com/{E(x['u'])}" if tw else f"https://instagram.com/{E(x['u'])}"
+                ig = (f"<div><a href='https://instagram.com/{E(x['ig'])}' target='_blank' rel='noreferrer'>اینستاگرام: {E(x['ig'])}</a></div>"
+                      if tw and x.get("ig") else "")
+                rows += (f"<tr{' class=hl' if on else ''}><td><a href='{link}' target='_blank' rel='noreferrer'>{'𝕏 ' if tw else ''}{E(x['u'])}</a>"
+                         f"<div class='muted'>{E(x.get('name'))}</div>{ig}</td><td>{E(x.get('niche') or '')}</td><td>{fa(x['followers'])}</td>"
                          f"<td>{fa(x['eng'])}٪<div class='muted'>{fa(x['med'])} لایک+کامنت</div></td><td>{fa(x['fit'])} از ۱۰</td>"
                          f"<td>{E(x.get('note'))}<div class='muted'>{E(x.get('bio', '')[:120])}</div></td><td>{btn}</td></tr>")
-            return (f"<table><tr><th>پیج</th><th>دنبال‌کننده</th><th>تعامل</th><th>تناسب با ما</th><th>محتوا</th><th></th></tr>{rows}</table>"
+            return (f"<table><tr><th>پیج</th><th>دسته</th><th>دنبال‌کننده</th><th>تعامل</th><th>تناسب با ما</th><th>محتوا</th><th></th></tr>{rows}</table>"
                     if rows else "<p class='muted'>چیزی پیدا نشد.</p>")
         picked = sum(1 for r in d["rows"] if r.get("pick"))
         body = (f"<p class='muted'>جست‌وجو {E(d['date'])}: {fa(d['posts'])} پست زیر هشتگ‌های دست‌ساز، زیورآلات، کادو و استایل؛ "
-                f"{fa(d['accounts'])} پیج بررسی شد؛ {fa(len(d['rows']))} پیج بین ۵ تا ۵۰ هزار دنبال‌کننده ماند. انتخاب‌شده: {fa(picked)}"
+                f"{fa(d['accounts'])} پیج تازه بررسی شد؛ روی‌هم {fa(len(d['rows']))} پیج (اینستاگرام ۵ تا ۵۰ هزار، توییتر ۲ تا ۳۰ هزار دنبال‌کننده). انتخاب‌شده: {fa(picked)}"
                 + ("" if supplier else f" · هزینه {E(d.get('usd'))} دلار") + "</p>"
                 f"<section><h2>اینفلوئنسرهای احتمالی</h2>{table('creator')}</section>"
                 f"<section><h2>فروشگاه‌های رقیب (برای شناخت بازار)</h2>{table('shop')}</section>")

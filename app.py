@@ -349,7 +349,7 @@ class H(BaseHTTPRequestHandler):
                   "radar": lambda p: categories.run(progress=p), "radar_trends": lambda p: categories.trends(), "radar_ig": lambda p: categories.instagram(), "twitter": lambda p: needs.twitter(), "translation_test": lambda p: categories.translation_test(progress=p),
                   "lab_seed": lambda p: lab_seed.seed(), "designs": lambda p: designs.generate(progress=p),
                   "designs_sample": lambda p: designs.generate(per=5, cats=["necklace"], progress=p),
-                  "designs_redraw": lambda p: designs.redraw(), "designs_v2": lambda p: designs.generate_v2(progress=p), "designs_shrink": lambda p: designs.shrink_all(), "deepdive": lambda p: deepdive.run(progress=p), "pinterest": lambda p: pinterest.run(), "twitter_ideas": lambda p: needs.twitter_ideas(progress=p), "twitter_ideas_recheck": lambda p: needs.twitter_ideas(progress=p, reuse=True), "influencers": lambda p: influencers.run(progress=p)}.get(name)
+                  "designs_redraw": lambda p: designs.redraw(), "designs_v2": lambda p: designs.generate_v2(progress=p), "designs_shrink": lambda p: designs.shrink_all(), "deepdive": lambda p: deepdive.run(progress=p), "pinterest": lambda p: pinterest.run(), "twitter_ideas": lambda p: needs.twitter_ideas(progress=p), "twitter_ideas_recheck": lambda p: needs.twitter_ideas(progress=p, reuse=True), "influencers": lambda p: influencers.run(progress=p), "influencers_niches": lambda p: influencers.run(progress=p, niches=influencers.NICHES, with_twitter=True, max_usd=2.5, per_tag=20)}.get(name)
             if not fn:
                 return self._json({"error": "نامعتبر"}, 400)
             err = JOB.start(name, task=fn)
