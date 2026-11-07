@@ -71,7 +71,7 @@ def niche_of(posts: list[dict], tag_niche: dict) -> dict[str, str]:
 
 
 IG_RE = __import__("re").compile(
-    r"(?:instagram\.com/|(?:instagram|اینستاگرام|insta|اینستا|ig)\b\s*[:：]?\s*@?)([A-Za-z0-9_][A-Za-z0-9_.]{2,29})", 2)
+    r"(?:instagram\.com/|(?:instagram|اینستاگرام|insta|اینستا|ig)\b\s*[:：]?\s*@?)(?!https?\b|www\b)([A-Za-z0-9_][A-Za-z0-9_.]{2,29})", 2)
 
 
 def ig_handle(text: str) -> str:
@@ -98,7 +98,8 @@ def twitter(ap, max_usd: float = 1.0, per: int = 60) -> list[dict]:
         if len(x["captions"]) < 4:
             x["captions"].append(str(t.get("text") or t.get("fullText") or "")[:160])
         links = " ".join(str(v) for v in ((a.get("entities") or {}).get("url") or {}).get("urls", []) if v) if isinstance(a.get("entities"), dict) else ""
-        x["ig"] = x.get("ig") or ig_handle(x["bio"] + " " + links + " " + str(a.get("url") or ""))
+        x["links"] = (links + " " + str(a.get("url") or "")).strip()[:300]
+        x["ig"] = x.get("ig") or ig_handle(x["links"] + " " + x["bio"])
     out = []
     for x in by.values():
         med = statistics.median(x.pop("likes"))
@@ -198,3 +199,21 @@ def pick(u: str, on: bool) -> bool:
     if hit:
         (_dir() / "latest.json").write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding="utf-8")
     return hit
+
+
+def refresh_twitter_handles(ap=None) -> int:
+    """Read the Twitter part again and fill in Instagram handles by username (the rest of the list stays)."""
+    from .etsy import Apify
+    ap = ap or Apify(C.secret("APIFY_TOKEN"))
+    tw, c = twitter(ap)
+    d = latest() or {"rows": []}
+    by = {x["u"]: x for x in tw}
+    n = 0
+    for x in d["rows"]:
+        if x.get("src") == "twitter" and x["u"] in by:
+            x["links"] = by[x["u"]].get("links", "")
+            x["ig"] = by[x["u"]].get("ig", "")
+            n += bool(x["ig"])
+    d["usd"] = round(d.get("usd", 0) + c, 3)
+    (_dir() / "latest.json").write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding="utf-8")
+    return n

@@ -868,3 +868,8 @@ def test_ig_handle_edge_cases():
     assert I.ig_handle("my instagram.com") == ""
     assert I.ig_handle("www.instagram.com/curllyygirl") == "curllyygirl"
     assert I.ig_handle("Instagram: @mehregan.design") == "mehregan.design"
+
+
+def test_ig_handle_skips_urls_prefix():
+    from dastsaz import influencers as I
+    assert I.ig_handle("Instagram: https://instagram.com/sara_x") == "sara_x"
