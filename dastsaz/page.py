@@ -938,7 +938,7 @@ def pins_page(d: dict | None, img_base: str, like_base: str | None, supplier: bo
     return html.replace('<nav class="bar-top">', '<nav class="bar-top" style="display:none">') if supplier else html
 
 
-CROWD = {"gap": ("جای خالی", "کسی تقریباً نمی‌فروشد"), "open": ("کم‌رقیب", "چند فروشنده، فروش کم"),
+CROWD = {"gap": ("جای خالی", "کسی تقریباً نمی‌فروشد"), "open": ("فروش کم", "فروشنده هست ولی فروش هفتگی کم است؛ جای نسخه‌ی بهتر"),
          "busy": ("شلوغ", "فروشنده و فروش زیاد؛ فقط با نسخه‌ی متفاوت")}
 
 
