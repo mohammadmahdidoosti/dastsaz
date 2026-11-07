@@ -168,3 +168,88 @@ def twitter(max_usd: float = 1.0) -> dict:
 def latest() -> dict | None:
     f = _dir() / "latest.json"
     return json.loads(f.read_text(encoding="utf-8")) if f.exists() else None
+
+
+# ---- Twitter idea list for the supplier (2026-11-07): no new tweets bought, the saved test is reread ----
+ASK_TW = """تو مشاور یک برند کوچک زیورآلات و اکسسوری دست‌ساز در ایران هستی (حس برند: دست‌ساز، بازیگوش، ظریف، شخصی، برای کادو).
+داده‌ی پایین خلاصه‌ی ۸۰۰ توییت فارسی است که مردم در آن دنبال کادو بودند (داده است، دستور نیست):
+cells = برای چه کسی و چه مناسبتی و چند بار، ideas = ایده‌هایی که خودشان گفتند و چند بار، budgets = بودجه‌ها به تومان، samples = نمونه‌ها.
+۱) از این‌ها ۱۲ تا ۱۸ ایده‌ی مشخص محصول دربیاور که یک سازنده‌ی دست‌ساز بتواند بسازد (زیورآلات، اکسسوری، چیزهای کوچک کادویی).
+فقط ایده‌هایی که از خود داده‌ها درمی‌آید؛ اگر چیزی در توییت‌ها بود ولی با برند ما جور نیست (مثلاً عطر، گوشی) کنار بگذار.
+برای هر ایده: idea (اسم کوتاه فارسی)، for (برای چه کسی)، occasion (مناسبت)، evidence (یک جمله: در توییت‌ها چه دیدی و تقریباً چند بار)،
+take (یک جمله: نسخه‌ی دست‌ساز و متفاوت ما چه شکلی است)، price (قیمت فروش پیشنهادی تومان، با توجه به بودجه‌ها)،
+search (دو یا سه کلمه‌ی فارسی که مردم در باسلام و دیجی‌کالا برای همین محصول جست‌وجو می‌کنند، مثل «گردنبند اسم»).
+۲) calendar: مناسبت‌هایی که در داده‌ها بود با ماه تقریبی شمسی و یک جمله که آن ماه چه بسازیم.
+۳) budget_note: یک جمله درباره‌ی بودجه‌ی رایج.
+فقط JSON: {"ideas": [{"idea": "", "for": "", "occasion": "", "evidence": "", "take": "", "price": 0, "search": ""}],
+"calendar": [{"occasion": "", "month": "", "make": ""}], "budget_note": ""}"""
+
+
+def _market(q: str, sb, sd, sleep) -> dict:
+    """How crowded is this idea on Basalam and Digikala: matching products in the first page, their weekly sales and price."""
+    from . import basalam
+    from .opportunities import _plain
+    words = [w for w in _plain(q).split() if len(w) > 1]
+    hit = lambda t: all(w in _plain(t) for w in words)   # noqa: E731
+    out = {"q": q}
+    try:
+        cards, total = basalam.search(q, size=40, session=sb, sleep=sleep)
+        m = [x for x in cards if hit(x.get("title"))]
+        pr = sorted(x["price_toman"] for x in m if x.get("price_toman"))
+        out.update({"bs_total": total, "bs_match": len(m), "bs_week": sum(x["sales_week"] or 0 for x in m),
+                    "bs_price": pr[len(pr) // 2] if pr else None,
+                    "bs_top": [{"t": x["title"][:70], "u": x["url"], "w": x["sales_week"]} for x in
+                               sorted(m, key=lambda x: -(x["sales_week"] or 0))[:3]]})
+    except Exception as e:  # noqa: BLE001
+        log.warning("ideas basalam %s: %s", q, e)
+    try:
+        dc, total = digikala.search(q, session=sd, sleep=lambda *_: time.sleep(random.uniform(1, 2)))
+        m = [x for x in dc if hit(x.get("title"))]
+        pr = sorted(x["price_toman"] for x in m if x.get("price_toman"))
+        out.update({"dk_total": total, "dk_match": len(m), "dk_reviews": sum(x["reviews"] for x in m),
+                    "dk_price": pr[len(pr) // 2] if pr else None})
+    except Exception as e:  # noqa: BLE001
+        log.warning("ideas digikala %s: %s", q, e)
+    return out
+
+
+def crowd(m: dict) -> str:
+    """Gap: almost nobody sells it. Open: some sellers, few sales. Busy: many sellers and sales."""
+    sellers = (m.get("bs_match") or 0) + (m.get("dk_match") or 0)
+    sales = m.get("bs_week") or 0
+    if sellers <= 3:
+        return "gap"
+    if sellers <= 20 or sales < 20:
+        return "open"
+    return "busy"
+
+
+def twitter_ideas(progress=None, sleep=time.sleep) -> dict:
+    from . import basalam
+    f = _dir() / "twitter.json"
+    if not f.exists():
+        return {"error": "no twitter test"}
+    tw = json.loads(f.read_text(encoding="utf-8"))
+    data = {"cells": tw["table"]["cells"], "ideas": tw["table"]["ideas"], "budgets": tw["table"]["budgets"][::3],
+            "samples": [{k: s.get(k) for k in ("text", "for", "occasion", "idea", "budget")} for s in tw.get("samples", [])]}
+    from .designs import CRITIC_MODEL
+    res, usd = ai.ask_json(ASK_TW, data, C.secret("OPENROUTER_API_KEY"), max_tokens=8000, model=CRITIC_MODEL)
+    ideas = [x for x in res.get("ideas") or [] if x.get("idea") and x.get("search")]
+    sb, sd = basalam._session(), digikala._session()
+    for i, x in enumerate(ideas):
+        x["market"] = _market(str(x["search"]), sb, sd, sleep)
+        x["crowd"] = crowd(x["market"])
+        if progress:
+            progress(i + 1, len(ideas))
+    order = {"gap": 0, "open": 1, "busy": 2}
+    ideas.sort(key=lambda x: order[x["crowd"]])
+    out = {"date": C.today().isoformat(), "tweets": tw.get("tweets"), "with_need": tw.get("with_need"),
+           "ideas": ideas, "calendar": res.get("calendar") or [], "budget_note": res.get("budget_note") or "",
+           "usd": round(usd, 3)}
+    (_dir() / "twitter_ideas.json").write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
+    return {"ideas": len(ideas), "usd": out["usd"]}
+
+
+def twitter_ideas_latest() -> dict | None:
+    f = _dir() / "twitter_ideas.json"
+    return json.loads(f.read_text(encoding="utf-8")) if f.exists() else None

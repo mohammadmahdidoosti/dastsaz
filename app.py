@@ -25,7 +25,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from dastsaz import config as C
-from dastsaz import ads, categories, deepdive, designs, lab_seed, guard, schedule, lab, needs, page, pipeline, snapshot, telegram, voice
+from dastsaz import ads, categories, deepdive, designs, pinterest, lab_seed, guard, schedule, lab, needs, page, pipeline, snapshot, telegram, voice
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S")
 logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -34,10 +34,12 @@ APP_PASSWORD = os.environ.get("APP_PASSWORD", "")
 STATIC = Path(__file__).resolve().parent / "static"
 NAME = re.compile(r"^[\w\-]{1,60}$")
 IMG = re.compile(r"^[0-9a-f]{8}\.png$")
+PIMG = re.compile(r"^[0-9a-f]{12}\.jpg$")
+PIN = re.compile(r"^[\w\-]{1,120}$")
 STEP_FA = {"wait": "منتظر", "basalam": "باسلام", "digikala": "دیجی‌کالا", "etsy": "اتسی", "ai": "هوش مصنوعی", "expand": "فرصت‌یابی", "testlist": "لیست آزمایش", "trends": "گوگل ترندز", "suggest": "پیشنهادهای جست‌وجو",
            "reviews": "نظر خریداران", "makers": "سازنده‌ها", "snapshot": "عکس هفتگی فروش",
            "voice": "صدای مشتری", "needs": "نیازهای کادو", "telegram": "تلگرام", "radar": "رادار دسته‌ها",
-           "radar_trends": "گوگلِ دسته‌ها", "radar_ig": "اینستاگرامِ دسته‌ها", "twitter": "توییتر کادو", "translation_test": "تست ترجمه‌ی دسته‌ها", "lab_seed": "ثبت طرح‌های اول", "designs": "ماشین طراحی", "designs_sample": "۵ طرح نمونه", "designs_redraw": "تصویر طرح‌ها", "designs_v2": "طراحی دور دوم", "deepdive": "بررسی دسته‌های کم‌رقیب",
+           "radar_trends": "گوگلِ دسته‌ها", "radar_ig": "اینستاگرامِ دسته‌ها", "twitter": "توییتر کادو", "translation_test": "تست ترجمه‌ی دسته‌ها", "lab_seed": "ثبت طرح‌های اول", "designs": "ماشین طراحی", "designs_sample": "۵ طرح نمونه", "designs_redraw": "تصویر طرح‌ها", "designs_v2": "طراحی دور دوم", "deepdive": "بررسی دسته‌های کم‌رقیب", "pinterest": "پینترست هفتگی", "twitter_ideas": "ایده‌های توییتر",
            "report": "گزارش"}
 
 
@@ -119,6 +121,7 @@ button.sm{font-size:13px;padding:4px 12px;background:var(--turq);margin:4px 2px}
 <button class="sm" onclick="task('needs')">نیازهای کادو (۵ دقیقه)</button>
 <button class="sm" onclick="task('telegram')">تلگرام</button>
 <button class="sm" onclick="task('radar')">رادار دسته‌ها (حدود یک ساعت)</button>
+<button class="sm" onclick="task('pinterest')">پینترست هفتگی (حدود ۰٫۷ دلار)</button>
 <button class="sm" onclick="task('radar_ig')">اینستاگرامِ ۶۰ دسته‌ی بالا (حدود ۱٫۵ دلار)</button>
 <button class="sm" onclick="task('radar_trends')">گوگلِ دسته‌ها (ماهانه، حدود ۰٫۵ دلار)</button></p>
 <h2>گزارش‌ها</h2><div id="list">...</div></main>
@@ -189,6 +192,13 @@ class H(BaseHTTPRequestHandler):
                 return self._send(404, "پیدا نشد".encode(), "text/plain; charset=utf-8")
             if len(parts) == 4 and parts[2] == "img" and IMG.match(parts[3]):
                 return self._img(parts[3])
+            if len(parts) == 3 and parts[2] == "ideas":
+                return self._send(200, page.tw_ideas_page(needs.twitter_ideas_latest(), supplier=True).encode())
+            if len(parts) == 3 and parts[2] == "pins":
+                return self._send(200, page.pins_page(pinterest.latest(), f"/s/{parts[1]}/pimg",
+                                                      f"/s/{parts[1]}/pin", supplier=True).encode())
+            if len(parts) == 4 and parts[2] == "pimg" and PIMG.match(parts[3]):
+                return self._pimg(parts[3])
             if len(parts) == 2:
                 return self._send(200, page.supplier_page(designs.load(), designs.CATEGORIES, parts[1],
                                                           "ok" in parse_qs(u.query)).encode())
@@ -202,6 +212,12 @@ class H(BaseHTTPRequestHandler):
             return self._send(200, page.designs_page(
                 designs.load(), designs.counts(), designs.CATEGORIES, f"https://{host}/s/{designs.token()}",
                 json.loads(lf.read_text(encoding="utf-8")) if lf.exists() else None).encode())
+        if parts == ["tw-ideas"]:
+            return self._send(200, page.tw_ideas_page(needs.twitter_ideas_latest()).encode())
+        if parts == ["pins"]:
+            return self._send(200, page.pins_page(pinterest.latest(), "/pimg", "/pin").encode())
+        if len(parts) == 2 and parts[0] == "pimg" and PIMG.match(parts[1]):
+            return self._pimg(parts[1])
         if len(parts) == 3 and parts[:2] == ["designs", "img"] and IMG.match(parts[2]):
             return self._img(parts[2])
         if parts == ["api", "status"]:
@@ -251,6 +267,12 @@ class H(BaseHTTPRequestHandler):
         return self._send(200, raw, "image/jpeg" if raw[:2] == b"\xff\xd8" else "image/png",
                           {"Cache-Control": "public, max-age=86400"})
 
+    def _pimg(self, name: str):
+        f = pinterest._dir() / "img" / name
+        if not f.exists():
+            return self._send(404, b"", "text/plain")
+        return self._send(200, f.read_bytes(), "image/jpeg", {"Cache-Control": "public, max-age=604800"})
+
     def _upload(self) -> bytes:
         """The one file of a multipart form (Keyword Planner csv, a few hundred KB at most)."""
         n = min(int(self.headers.get("Content-Length") or 0), 5_000_000)
@@ -274,12 +296,19 @@ class H(BaseHTTPRequestHandler):
     def do_POST(self):
         u = urlparse(self.path)
         parts = [p for p in u.path.split("/") if p]
+        if (len(parts) == 4 and parts[0] == "s" and parts[2] == "pin" and PIN.match(parts[3])
+                and hmac.compare_digest(parts[1].encode(), designs.token().encode())):
+            pinterest.like(parts[3], self._form().get("on") == "1")
+            return self._back(f"/s/{parts[1]}/pins")
         if len(parts) == 3 and parts[0] == "s" and hmac.compare_digest(parts[1].encode(), designs.token().encode()):
             f = self._form()
             designs.answer(parts[2], f.get("can", ""), f.get("cost", ""), f.get("days", ""), f.get("note", ""))
             return self._back(f"/s/{parts[1]}?ok=1")
         if not self._gate():
             return
+        if len(parts) == 2 and parts[0] == "pin" and PIN.match(parts[1]):
+            pinterest.like(parts[1], self._form().get("on") == "1")
+            return self._back("/pins")
         if parts == ["designs", "lab"]:
             designs.to_lab()
             return self._back("/designs")
@@ -309,7 +338,7 @@ class H(BaseHTTPRequestHandler):
                   "radar": lambda p: categories.run(progress=p), "radar_trends": lambda p: categories.trends(), "radar_ig": lambda p: categories.instagram(), "twitter": lambda p: needs.twitter(), "translation_test": lambda p: categories.translation_test(progress=p),
                   "lab_seed": lambda p: lab_seed.seed(), "designs": lambda p: designs.generate(progress=p),
                   "designs_sample": lambda p: designs.generate(per=5, cats=["necklace"], progress=p),
-                  "designs_redraw": lambda p: designs.redraw(), "designs_v2": lambda p: designs.generate_v2(progress=p), "designs_shrink": lambda p: designs.shrink_all(), "deepdive": lambda p: deepdive.run(progress=p)}.get(name)
+                  "designs_redraw": lambda p: designs.redraw(), "designs_v2": lambda p: designs.generate_v2(progress=p), "designs_shrink": lambda p: designs.shrink_all(), "deepdive": lambda p: deepdive.run(progress=p), "pinterest": lambda p: pinterest.run(), "twitter_ideas": lambda p: needs.twitter_ideas(progress=p)}.get(name)
             if not fn:
                 return self._json({"error": "نامعتبر"}, 400)
             err = JOB.start(name, task=fn)
@@ -344,7 +373,8 @@ def main():
     port = int(os.environ.get("PORT", "8000"))
     log.info("dastsaz on :%d, data in %s, password %s", port, C.DATA_DIR, "set" if APP_PASSWORD else "NOT SET")
     schedule.start(lambda name, fn: JOB.start(name, task=fn),
-                   {"snapshot": lambda p: snapshot.take(progress=p), "radar": lambda p: categories.run(progress=p)})
+                   {"snapshot": lambda p: snapshot.take(progress=p), "radar": lambda p: categories.run(progress=p),
+                    "pinterest": lambda p: pinterest.run()})
     ThreadingHTTPServer(("0.0.0.0", port), H).serve_forever()
 
 

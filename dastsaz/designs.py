@@ -270,7 +270,13 @@ def generate_v2(per: int = 10, extra: int = 6, cats: list[str] | None = None, pr
     sess = requests.Session()
     for cat in cats:
         market = [t[0] for t in best_sellers(CATEGORIES[cat][1], n=30, sleep=sleep)]
-        data = {"good": GOOD, "bad": BAD, "pins": PINS, "market": market}
+        try:
+            from . import pinterest
+            live = pinterest.for_designs(20)
+        except Exception as e:  # noqa: BLE001
+            log.warning("pinterest for designs: %s", e)
+            live = []
+        data = {"good": GOOD, "bad": BAD, "pins": PINS + live, "market": market}
         res, c = ai.ask_json(ASK2.format(cat=CATEGORIES[cat][0], n=per + extra), data, key, max_tokens=12000,
                              model=CRITIC_MODEL)
         usd += c

@@ -870,6 +870,7 @@ def designs_page(items: list[dict], counts: dict, cats: dict, supplier_link: str
            f"بدون تصویر: {fa(last.get('no_image'))} · هزینه {E(last.get('usd'))} دلار</p>") if last else ""
     body = (f"<section><h2>وضعیت</h2>{run}<table><tr><th>دسته</th>{head}</tr>{rows}</table>"
             f"<p>لینک تأمین‌کننده (بدون رمز، فقط برای رابط بفرست): <a href='{E(supplier_link)}'>{E(supplier_link)}</a></p>"
+            f"<p><a href='/pins'>پین‌های داغ پینترست این هفته</a> · <a href='/tw-ideas'>ایده‌های توییتر</a></p>"
             f"<form method='post' action='/designs/lab'><button class='btn'>طرح‌هایی که سازنده تأیید کرده را بفرست به آزمایشگاه</button></form>"
             f"<p class='render'>تصویرها طراحی کامپیوتری‌اند، نه عکس واقعی. در اینستاگرام با عنوان «طرح جدید / پیش‌فروش» استفاده شوند؛ "
             f"در باسلام فقط عکس واقعی نمونه‌ی ساخته‌شده.</p></section>{groups}")
@@ -898,6 +899,77 @@ def supplier_page(items: list[dict], cats: dict, tok: str, done: bool = False) -
         groups += f"<section><h2>{E(name)}</h2><div class='dgrid'>{cards}</div></section>"
     lead = ("برای هر طرح بگویید اگر سفارش بیاید می‌توانید بسازید یا نه، با قیمت هر عدد و چند روز. فعلاً سفارشی در کار نیست؛ "
             "طرح‌هایی که تأیید کنید را تست می‌کنیم و برای برنده‌ها سفارش می‌دهیم. تصویرها طراحی کامپیوتری‌اند.")
-    body = ("<div class='verdict good'>ثبت شد، ممنون.</div>" if done else "") + groups
+    body = (("<div class='verdict good'>ثبت شد، ممنون.</div>" if done else "")
+            + f"<p><a class='btn' href='/s/{E(tok)}/pins'>پین‌های داغ پینترست این هفته</a> "
+              f"<a class='btn' href='/s/{E(tok)}/ideas'>ایده‌های توییتر</a></p>" + groups)
     return (_shell("طرح‌ها برای تأیید سازنده", "دست‌ساز", lead, body, DCSS)
             .replace('<nav class="bar-top">', '<nav class="bar-top" style="display:none">'))
+
+
+def pins_page(d: dict | None, img_base: str, like_base: str | None, supplier: bool = False, n: int = 60) -> str:
+    """Hottest Pinterest pins of the week. like_base: where the heart button posts (supplier page and ours)."""
+    if not d:
+        body = "<p>هنوز پینترست خوانده نشده.</p>"
+    else:
+        cards = ""
+        for p in [x for x in d["pins"] if x.get("thumb")][:n]:
+            age = ""
+            if p.get("created"):
+                age = f"گذاشته‌شده {E(p['created'])}"
+            heart = ""
+            if like_base:
+                on = bool(p.get("liked"))
+                heart = (f"<form method='post' action='{E(like_base)}/{E(p['id'])}'>"
+                         f"<input type='hidden' name='on' value='{'0' if on else '1'}'>"
+                         f"<button class='btn{' on' if on else ''}'>{'♥ پسندیدم' if on else '♡ به درد ما می‌خورد'}</button></form>")
+            shop = f" · <a href='{E(p['link'])}' rel='noreferrer' target='_blank'>فروشگاه: {E(p['host'])}</a>" if p.get("shop") else ""
+            cards += (f"<div class='dcard{' st-can' if p.get('liked') else ''}'><img src='{E(img_base)}/{E(p['thumb'])}' loading='lazy' alt=''>"
+                      f"<div class='dbody'><b>{E(p.get('title') or p.get('term'))}</b>"
+                      f"<div class='muted'>{'♥ ' + fa(p['react']) + ' · ' if p.get('react') else ''}{age}{shop}</div>"
+                      f"<p class='muted'>{E((p.get('desc') or '')[:140])}</p>"
+                      f"<div><span class='tag'>{E(p.get('term'))}</span></div>{heart}</div></div>")
+        liked = sum(1 for p in d["pins"] if p.get("liked"))
+        body = (f"<p class='muted'>خوانده‌شده {E(d['date'])} · {fa(len(d['pins']))} پین · پسندیده‌شده {fa(liked)}"
+                + ("" if supplier else f" · هزینه {E(d.get('usd'))} دلار") + "</p>"
+                f"<div class='dgrid'>{cards}</div>")
+    lead = ("پرطرفدارترین پین‌های این هفته در پینترست برای زیورآلات دست‌ساز. ♥ یعنی تعداد واکنش‌ها؛ پین تازه با واکنش زیاد بالاتر است. "
+            "هر کدام که به سبک ما می‌خورد را «به درد ما می‌خورد» بزنید؛ ماشین طراحی از آن‌ها الهام می‌گیرد (کپی نمی‌کند).")
+    html = _shell("پینترست این هفته", "دست‌ساز", lead, body, DCSS + ".btn.on{background:#13877f;color:#fff}")
+    return html.replace('<nav class="bar-top">', '<nav class="bar-top" style="display:none">') if supplier else html
+
+
+CROWD = {"gap": ("جای خالی", "کسی تقریباً نمی‌فروشد"), "open": ("کم‌رقیب", "چند فروشنده، فروش کم"),
+         "busy": ("شلوغ", "فروشنده و فروش زیاد؛ فقط با نسخه‌ی متفاوت")}
+
+
+def tw_ideas_page(d: dict | None, supplier: bool = False) -> str:
+    if not d:
+        body = "<p>هنوز ساخته نشده.</p>"
+    else:
+        rows = ""
+        for x in d["ideas"]:
+            m = x.get("market") or {}
+            c, cdesc = CROWD.get(x.get("crowd"), ("", ""))
+            top = "".join(f"<li><a href='{E(t['u'])}' target='_blank' rel='noreferrer'>{E(t['t'])}</a>"
+                          f"{' · ' + fa(t['w']) + ' فروش این هفته' if t.get('w') else ''}</li>" for t in m.get("bs_top") or [])
+            rows += (f"<div class='dcard'><div class='dbody'><b>{E(x['idea'])}</b> <span class='tag crowd-{E(x.get('crowd'))}'>{E(c)}</span>"
+                     f"<div class='muted'>برای {E(x.get('for'))} · {E(x.get('occasion'))}"
+                     f"{' · پیشنهاد قیمت ' + toman(x['price']) + ' تومان' if x.get('price') else ''}</div>"
+                     f"<p>{E(x.get('take'))}</p><p class='muted'>در توییت‌ها: {E(x.get('evidence'))}</p>"
+                     f"<p class='muted'>جست‌وجوی «{E(x.get('search'))}» — باسلام: {fa(m.get('bs_match', '؟'))} محصول مرتبط"
+                     f"{'، ' + fa(m['bs_week']) + ' فروش در هفته' if m.get('bs_week') else ''}"
+                     f"{'، قیمت میانه ' + toman(m['bs_price']) if m.get('bs_price') else ''}"
+                     f" · دیجی‌کالا: {fa(m.get('dk_match', '؟'))} محصول مرتبط"
+                     f"{'، قیمت میانه ' + toman(m['dk_price']) if m.get('dk_price') else ''} ({E(cdesc)})</p>"
+                     f"{'<ul class=muted>' + top + '</ul>' if top else ''}</div></div>")
+        cal = "".join(f"<tr><td>{E(c.get('month'))}</td><td>{E(c.get('occasion'))}</td><td>{E(c.get('make'))}</td></tr>"
+                      for c in d.get("calendar") or [])
+        body = (f"<p class='muted'>از {fa(d.get('tweets'))} توییت فارسی که دنبال کادو بودند ({fa(d.get('with_need'))} تا نیاز واقعی داشتند)، "
+                f"بررسی‌شده با باسلام و دیجی‌کالا در {E(d['date'])}. {E(d.get('budget_note'))}</p>"
+                f"<section><h2>ایده‌ها (اول جاهای خالی)</h2><div class='dgrid'>{rows}</div></section>"
+                f"<section><h2>تقویم مناسبت‌ها</h2><table><tr><th>ماه</th><th>مناسبت</th><th>چه بسازیم</th></tr>{cal}</table></section>")
+    lead = ("ایده‌هایی که از نیاز واقعی مردم در توییتر درآمده؛ برای هر کدام دیدیم در باسلام و دیجی‌کالا چقدر فروشنده دارد. "
+            "«جای خالی» یعنی تقاضا دیده شده ولی تقریباً کسی نمی‌فروشد.")
+    css = DCSS + ".crowd-gap{background:#e3f4ef}.crowd-open{background:#fff7e6}.crowd-busy{background:#fbe9ec}"
+    html = _shell("ایده‌های توییتر", "دست‌ساز", lead, body, css)
+    return html.replace('<nav class="bar-top">', '<nav class="bar-top" style="display:none">') if supplier else html

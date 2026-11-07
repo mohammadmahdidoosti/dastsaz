@@ -737,3 +737,56 @@ def test_designs_v2(tmp_path, monkeypatch):
     assert next(d for d in ds if d["id"] == "bbbbbbbb")["status"] == "idea"
     html = page.supplier_page(ds, D.CATEGORIES, "t")
     assert "جاکلیدی بد" not in html and "ط4" in html and "نمره‌ی منتقد" in html
+
+
+def test_pinterest_card_score_and_run(tmp_path, monkeypatch):
+    from dastsaz import pinterest as P
+    monkeypatch.setattr(C, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(C, "today", lambda: dt.date(2026, 11, 8))
+    it = {"id": "a1", "title": "Clay cherry earrings", "description": "handmade", "imageUrl": "http://x/i.jpg",
+          "pinUrl": "https://pinterest.com/pin/a1", "link": "https://www.etsy.com/listing/1", "reactionCount": 300,
+          "createdAt": "Thu, 08 Oct 2026 12:20:16 +0000", "fromSearch": "clay earrings", "isVideo": "False",
+          "board": {"name": "b"}, "pinner": {"username": "u"}}
+    p = P.card(it, 1)
+    assert p["shop"] and p["created"] == "2026-10-08" and p["react"] == 300
+    old = dict(p, created="2020-01-01", shop=False, pos=40)
+    assert P.score(p, None, dt.date(2026, 11, 8)) > P.score(old, None, dt.date(2026, 11, 8))
+    assert P.score(p, {"react": 100}, dt.date(2026, 11, 8)) > P.score(p, None, dt.date(2026, 11, 8))
+
+    class Ap:
+        def run(self, inp, usd, actor=None):
+            assert actor == P.ACTOR and inp["searchTerms"]
+            return {"defaultDatasetId": "d"}
+        def items(self, _):
+            return [it, dict(it, id="b2", reactionCount=None, link="https://blog.x/")]
+        def cost(self, _):
+            return 0.07
+
+    class S:
+        def get(self, url, timeout):
+            class R: status_code = 200; content = b"x"
+            return R()
+    monkeypatch.setattr("dastsaz.designs.shrink", lambda raw, size=900: raw)
+    r = P.run(ap=Ap(), sess=S())
+    assert r["usd"] == 0.07
+    d = P.latest()
+    assert d["pins"][0]["id"] == "a1" and d["pins"][0]["thumb"]
+    assert P.like("b2", True)
+    assert P.for_designs(5)[0].startswith("[سازنده پسندید]")
+    from dastsaz import page
+    html = page.pins_page(P.latest(), "/pimg", "/pin", supplier=True)
+    assert "پسندیدم" in html and "display:none" in html
+
+
+def test_twitter_ideas_crowd_and_page():
+    from dastsaz import needs, page
+    assert needs.crowd({"bs_match": 1, "dk_match": 1}) == "gap"
+    assert needs.crowd({"bs_match": 10, "dk_match": 5, "bs_week": 100}) == "open"
+    assert needs.crowd({"bs_match": 30, "dk_match": 10, "bs_week": 100}) == "busy"
+    d = {"date": "2026-11-07", "tweets": 800, "with_need": 534, "budget_note": "زیر یک میلیون",
+         "ideas": [{"idea": "گردنبند اسم", "for": "دوست‌دختر", "occasion": "تولد", "take": "x", "evidence": "y",
+                    "price": 300000, "search": "گردنبند اسم", "crowd": "gap",
+                    "market": {"bs_match": 1, "bs_top": [{"t": "t", "u": "https://basalam.com/p/1", "w": 3}]}}],
+         "calendar": [{"month": "آذر", "occasion": "یلدا", "make": "انار"}]}
+    html = page.tw_ideas_page(d, supplier=True)
+    assert "جای خالی" in html and "یلدا" in html

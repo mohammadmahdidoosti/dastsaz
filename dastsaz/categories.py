@@ -272,7 +272,7 @@ def run(progress=None, sleep=time.sleep, n: int = 400) -> dict:
         W.save(W.learn(history()))
     except Exception as e:  # noqa: BLE001
         log.warning("radar weights: %s", e)
-    if C.secret("APIFY_TOKEN"):
+    if C.secret("APIFY_TOKEN") and C.today().day <= 7:      # monthly now: keeps Apify inside the free $5
         try:
             instagram()
         except Exception as e:  # noqa: BLE001
