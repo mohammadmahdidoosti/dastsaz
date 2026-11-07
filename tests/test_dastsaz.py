@@ -929,3 +929,12 @@ def test_reclassify_makers(tmp_path, monkeypatch):
     assert [x["u"] for x in d["rows"]] == ["sara", "curl"]
     html = page.influencers_page(d, "/person")
     assert "سازنده‌های دست‌ساز" in html
+
+
+def test_influencers_sorted_by_engagement():
+    from dastsaz import page
+    rows = [{"u": "low", "kind": "creator", "fit": 9, "eng": 1.0, "followers": 9000, "med": 90, "src": "instagram"},
+            {"u": "tw", "kind": "creator", "fit": 9, "eng": 99, "followers": 3000, "med": 500, "src": "twitter"},
+            {"u": "high", "kind": "creator", "fit": 5, "eng": 6.0, "followers": 9000, "med": 540, "src": "instagram"}]
+    html = page.influencers_page({"date": "x", "posts": 0, "accounts": 0, "rows": rows}, "/person")
+    assert html.index("high") < html.index("low") < html.index(">𝕏 tw")

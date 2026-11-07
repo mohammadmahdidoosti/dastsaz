@@ -982,7 +982,10 @@ def influencers_page(d: dict | None, pick_base: str, supplier: bool = False) -> 
     else:
         def table(kind: str) -> str:
             rows = ""
-            for x in [r for r in d["rows"] if r["kind"] == kind]:
+            group = [r for r in d["rows"] if r["kind"] == kind]
+            # Instagram by engagement (highest first); Twitter after, by usual likes (its percent is not comparable)
+            group.sort(key=lambda r: (r.get("src") == "twitter", -(r.get("med", 0) if r.get("src") == "twitter" else r.get("eng", 0))))
+            for x in group:
                 on = bool(x.get("pick"))
                 btn = (f"<form method='post' action='{E(pick_base)}/{E(x['u'])}'><input type='hidden' name='on' value='{'0' if on else '1'}'>"
                        f"<button class='btn{' on' if on else ''}'>{'انتخاب شد' if on else 'انتخاب'}</button></form>") if kind in ("creator", "maker") else ""
