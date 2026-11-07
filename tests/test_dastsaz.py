@@ -1048,3 +1048,16 @@ def test_igapi_profile_shape(monkeypatch):
     assert skipped == ["personal"] and got[0]["followersCount"] == 9000
     st = I.stats(got[0])
     assert st["eng"] == round(309 / 9000 * 100, 2) and st["imgs"] == ["http://m/1.jpg"] and st["last"] == "2026-11-05"
+
+
+def test_people_no_spend_without_token(tmp_path, monkeypatch):
+    from dastsaz import people as P
+    monkeypatch.setattr(C, "DATA_DIR", tmp_path)
+    (tmp_path / "influencers").mkdir()
+    monkeypatch.setattr(C, "secret", lambda k: "")
+
+    class Ap:
+        def run(self, *a, **k):
+            raise AssertionError("must not spend")
+    P.add_manual(["someone"])
+    assert P.nightly(0, ap=Ap())["profiled"] == 0

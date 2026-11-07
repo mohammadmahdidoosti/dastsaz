@@ -197,6 +197,9 @@ def nightly(budget: float = 0.15, ap=None, rnd: random.Random | None = None) -> 
         _save("frontier.json", fr)
         return {"harvest": got, "profiled": 0}
     skipped: list[str] = []
+    if not free and budget <= 0:                               # no free API yet and no Apify budget: only collect
+        _save("frontier.json", fr)
+        return {"date": today, "harvest": got, "profiled": 0, "waiting": "instagram token"}
     if free:
         profs, skipped = igapi.profiles(users)
         usd = 0.0
