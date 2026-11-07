@@ -229,6 +229,31 @@ def critic_score(x: dict) -> float:
     return (x.get("diff", 0) * 1.2 + x.get("creative", 0) + x.get("make", 0) * 1.2 + x.get("clear", 0) * 0.6)
 
 
+def shrink(raw: bytes, size: int = 900) -> bytes:
+    """Pictures come as 2048px JPEG/PNG (~1 MB): too slow on a phone. Re-save as a 900px JPEG (~100 KB)."""
+    try:
+        import io
+        from PIL import Image
+        im = Image.open(io.BytesIO(raw)).convert("RGB")
+        im.thumbnail((size, size))
+        out = io.BytesIO()
+        im.save(out, "JPEG", quality=85)
+        return out.getvalue()
+    except Exception as e:  # noqa: BLE001
+        log.warning("shrink: %s", e)
+        return raw
+
+
+def shrink_all() -> int:
+    n = 0
+    for f in (_dir() / "img").glob("*.png"):
+        raw = f.read_bytes()
+        if len(raw) > 300_000:
+            f.write_bytes(shrink(raw))
+            n += 1
+    return n
+
+
 def generate_v2(per: int = 10, extra: int = 6, cats: list[str] | None = None, progress=None, sleep=time.sleep) -> dict:
     """Round 2: ideas with the brand taste, a strict critic keeps the best `per` of per+extra, pictures in the
     handmade style. Older ideas leave the supplier page (status 'old'), except the ten the supplier liked."""
@@ -272,7 +297,7 @@ def generate_v2(per: int = 10, extra: int = 6, cats: list[str] | None = None, pr
                 IMAGE_MODEL, STYLE = old
             usd += ci
             if png:
-                (_dir() / "img" / f"{d['id']}.png").write_bytes(png)
+                (_dir() / "img" / f"{d['id']}.png").write_bytes(shrink(png))
                 d["img"] = f"{d['id']}.png"
             with _lock:
                 allx = load()

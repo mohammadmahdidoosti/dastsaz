@@ -247,7 +247,9 @@ class H(BaseHTTPRequestHandler):
         f = designs._dir() / "img" / name
         if not f.exists():
             return self._send(404, b"", "text/plain")
-        return self._send(200, f.read_bytes(), "image/png", {"Cache-Control": "public, max-age=86400"})
+        raw = f.read_bytes()
+        return self._send(200, raw, "image/jpeg" if raw[:2] == b"\xff\xd8" else "image/png",
+                          {"Cache-Control": "public, max-age=86400"})
 
     def _upload(self) -> bytes:
         """The one file of a multipart form (Keyword Planner csv, a few hundred KB at most)."""
@@ -307,7 +309,7 @@ class H(BaseHTTPRequestHandler):
                   "radar": lambda p: categories.run(progress=p), "radar_trends": lambda p: categories.trends(), "radar_ig": lambda p: categories.instagram(), "twitter": lambda p: needs.twitter(), "translation_test": lambda p: categories.translation_test(progress=p),
                   "lab_seed": lambda p: lab_seed.seed(), "designs": lambda p: designs.generate(progress=p),
                   "designs_sample": lambda p: designs.generate(per=5, cats=["necklace"], progress=p),
-                  "designs_redraw": lambda p: designs.redraw(), "designs_v2": lambda p: designs.generate_v2(progress=p), "deepdive": lambda p: deepdive.run(progress=p)}.get(name)
+                  "designs_redraw": lambda p: designs.redraw(), "designs_v2": lambda p: designs.generate_v2(progress=p), "designs_shrink": lambda p: designs.shrink_all(), "deepdive": lambda p: deepdive.run(progress=p)}.get(name)
             if not fn:
                 return self._json({"error": "نامعتبر"}, 400)
             err = JOB.start(name, task=fn)
