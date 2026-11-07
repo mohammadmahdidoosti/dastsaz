@@ -1026,3 +1026,25 @@ def test_schedule_daily():
     from dastsaz import schedule as S
     now = dt.datetime(2026, 11, 9, 3, tzinfo=S.TZ)          # a Monday
     assert "people" in S.due(now, {}) and "people" not in S.due(now, {"people": "2026-11-09"})
+
+
+def test_igapi_profile_shape(monkeypatch):
+    from dastsaz import igapi, influencers as I
+    monkeypatch.setattr(C, "secret", lambda k: {"IG_GRAPH_TOKEN": "t", "IG_USER_ID": "1"}.get(k, ""))
+    assert igapi.ready()
+
+    class S:
+        def get(self, url, timeout, params):
+            u = params["fields"].split("(")[1].split(")")[0]
+            class R:
+                def json(self):
+                    if u == "personal":
+                        return {"error": {"code": 110, "message": "not business"}}
+                    return {"business_discovery": {"username": u, "followers_count": 9000, "biography": "سلام",
+                            "media": {"data": [{"caption": "با @x", "like_count": 300, "comments_count": 9,
+                                                "timestamp": "2026-11-05T10:00:00+0000", "media_url": "http://m/1.jpg", "media_type": "IMAGE"}]}}}
+            return R()
+    got, skipped = igapi.profiles(["shop", "personal"], sess=S(), sleep=lambda *_: None)
+    assert skipped == ["personal"] and got[0]["followersCount"] == 9000
+    st = I.stats(got[0])
+    assert st["eng"] == round(309 / 9000 * 100, 2) and st["imgs"] == ["http://m/1.jpg"] and st["last"] == "2026-11-05"

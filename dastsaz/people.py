@@ -176,16 +176,18 @@ def nightly(budget: float = 0.15, ap=None, rnd: random.Random | None = None) -> 
     """One night: harvest free candidates, profile the most promising within the budget, grade, pass promise on,
     re-check a few good pages for growth, learn from votes."""
     from .etsy import Apify
-    ap = ap or Apify(C.secret("APIFY_TOKEN"))
+    ap = ap or Apify(C.secret("APIFY_TOKEN") or "none")
     rnd = rnd or random.Random(C.today().isoformat())
     d = I.latest() or {"rows": []}
     rows = {x["u"]: x for x in d["rows"]}
     fr = frontier()
     known = set(rows) | set(d.get("checked", []))
     got = harvest(fr, known)
-    per = 0.0065                                               # ~ dollars per profile on our plan
-    n_new = max(1, int(budget * 0.85 / per))
-    n_old = max(0, int(budget * 0.15 / per))
+    from . import igapi
+    free = igapi.ready()                                       # Instagram's own API: free, ~120 pages a night
+    per = 0.0065                                               # ~ dollars per profile on Apify
+    n_new = 120 if free else max(1, int(budget * 0.85 / per))
+    n_old = 20 if free else max(0, int(budget * 0.15 / per))
     today = C.today().isoformat()
     new = pick(fr, n_new, rnd)
     old = [u for u, x in rows.items() if x.get("grade") in ("A", "B") and x.get("src") != "twitter"
@@ -194,9 +196,17 @@ def nightly(budget: float = 0.15, ap=None, rnd: random.Random | None = None) -> 
     if not users:
         _save("frontier.json", fr)
         return {"harvest": got, "profiled": 0}
-    r = ap.run({"usernames": users}, budget, actor=I.PROFILE_ACTOR)
-    profs = ap.items(r["defaultDatasetId"]) if r.get("defaultDatasetId") else []
-    usd = ap.cost(r)
+    skipped: list[str] = []
+    if free:
+        profs, skipped = igapi.profiles(users)
+        usd = 0.0
+    else:
+        r = ap.run({"usernames": users}, budget, actor=I.PROFILE_ACTOR)
+        profs = ap.items(r["defaultDatasetId"]) if r.get("defaultDatasetId") else []
+        usd = ap.cost(r)
+    for u in skipped:                                          # personal or private: not visible to the free API
+        if u in fr:
+            fr[u]["done"], fr[u]["personal"] = today, True
     fresh, added, rising = [], 0, 0
     for p in profs:
         u = str(p.get("username") or "").lower()
@@ -249,7 +259,7 @@ def nightly(budget: float = 0.15, ap=None, rnd: random.Random | None = None) -> 
     d["checked"] = sorted(set(d.get("checked", [])) | {u.lower() for u in new})
     d.setdefault("radar", []).append({"date": today, "harvest": got, "profiled": len(profs), "added": added,
                                       "good": sum(1 for x in fresh if x.get("grade") in ("A", "B") and x["kind"] in ("creator", "maker")),
-                                      "rising": rising, "usd": round(usd, 3), "frontier": sum(1 for c in fr.values() if not c.get("done"))})
+                                      "rising": rising, "usd": round(usd, 3), "via": "instagram" if free else "apify", "personal": len(skipped), "frontier": sum(1 for c in fr.values() if not c.get("done"))})
     d["radar"] = d["radar"][-60:]
     (I._dir() / "latest.json").write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding="utf-8")
     _save("frontier.json", fr)
