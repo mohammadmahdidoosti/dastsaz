@@ -25,7 +25,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from dastsaz import config as C
-from dastsaz import ads, categories, deepdive, designs, influencers, pinterest, lab_seed, guard, schedule, lab, needs, page, pipeline, snapshot, telegram, voice
+from dastsaz import ads, categories, deepdive, designs, influencers, people, pinterest, lab_seed, guard, schedule, lab, needs, page, pipeline, snapshot, telegram, voice
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S")
 logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -193,7 +193,8 @@ class H(BaseHTTPRequestHandler):
             if len(parts) == 4 and parts[2] == "img" and IMG.match(parts[3]):
                 return self._img(parts[3])
             if len(parts) == 3 and parts[2] == "people":
-                return self._send(200, page.influencers_page(influencers.latest(), f"/s/{parts[1]}/person", supplier=True).encode())
+                return self._send(200, page.influencers_page(influencers.latest(), f"/s/{parts[1]}/person", supplier=True,
+                                                             add_url=f"/s/{parts[1]}/add-people", queue=people.frontier()).encode())
             if len(parts) == 3 and parts[2] == "ideas":
                 return self._send(200, page.tw_ideas_page(needs.twitter_ideas_latest(), supplier=True).encode())
             if len(parts) == 3 and parts[2] == "pins":
@@ -215,7 +216,8 @@ class H(BaseHTTPRequestHandler):
                 designs.load(), designs.counts(), designs.CATEGORIES, f"https://{host}/s/{designs.token()}",
                 json.loads(lf.read_text(encoding="utf-8")) if lf.exists() else None).encode())
         if parts == ["people"]:
-            return self._send(200, page.influencers_page(influencers.latest(), "/person").encode())
+            return self._send(200, page.influencers_page(influencers.latest(), "/person", add_url="/add-people",
+                                                         queue=people.frontier()).encode())
         if parts == ["tw-ideas"]:
             return self._send(200, page.tw_ideas_page(needs.twitter_ideas_latest()).encode())
         if parts == ["pins"]:
@@ -302,8 +304,16 @@ class H(BaseHTTPRequestHandler):
         parts = [p for p in u.path.split("/") if p]
         if (len(parts) == 4 and parts[0] == "s" and parts[2] == "person" and PIN.match(parts[3])
                 and hmac.compare_digest(parts[1].encode(), designs.token().encode())):
-            influencers.pick(parts[3], self._form().get("on") == "1")
-            return self._back(f"/s/{parts[1]}/people")
+            f = self._form()
+            if "vote" in f:
+                people.vote(parts[3], int(f["vote"]) if f["vote"] in ("1", "-1", "0") else 0)
+            else:
+                influencers.pick(parts[3], f.get("on") == "1")
+            return self._back(f"/s/{parts[1]}/people#{parts[3]}")
+        if (len(parts) == 3 and parts[0] == "s" and parts[2] == "add-people"
+                and hmac.compare_digest(parts[1].encode(), designs.token().encode())):
+            people.add_manual(re.split(r"[\s,،]+", self._form().get("handles", ""))[:50])
+            return self._back(f"/s/{parts[1]}/people?added=1")
         if (len(parts) == 4 and parts[0] == "s" and parts[2] == "pin" and PIN.match(parts[3])
                 and hmac.compare_digest(parts[1].encode(), designs.token().encode())):
             pinterest.like(parts[3], self._form().get("on") == "1")
@@ -315,8 +325,15 @@ class H(BaseHTTPRequestHandler):
         if not self._gate():
             return
         if len(parts) == 2 and parts[0] == "person" and PIN.match(parts[1]):
-            influencers.pick(parts[1], self._form().get("on") == "1")
-            return self._back("/people")
+            f = self._form()
+            if "vote" in f:
+                people.vote(parts[1], int(f["vote"]) if f["vote"] in ("1", "-1", "0") else 0)
+            else:
+                influencers.pick(parts[1], f.get("on") == "1")
+            return self._back(f"/people#{parts[1]}")
+        if parts == ["add-people"]:
+            people.add_manual(re.split(r"[\s,،]+", self._form().get("handles", ""))[:50])
+            return self._back("/people?added=1")
         if len(parts) == 2 and parts[0] == "pin" and PIN.match(parts[1]):
             pinterest.like(parts[1], self._form().get("on") == "1")
             return self._back("/pins")
@@ -349,7 +366,7 @@ class H(BaseHTTPRequestHandler):
                   "radar": lambda p: categories.run(progress=p), "radar_trends": lambda p: categories.trends(), "radar_ig": lambda p: categories.instagram(), "twitter": lambda p: needs.twitter(), "translation_test": lambda p: categories.translation_test(progress=p),
                   "lab_seed": lambda p: lab_seed.seed(), "designs": lambda p: designs.generate(progress=p),
                   "designs_sample": lambda p: designs.generate(per=5, cats=["necklace"], progress=p),
-                  "designs_redraw": lambda p: designs.redraw(), "designs_v2": lambda p: designs.generate_v2(progress=p), "designs_shrink": lambda p: designs.shrink_all(), "deepdive": lambda p: deepdive.run(progress=p), "pinterest": lambda p: pinterest.run(), "twitter_ideas": lambda p: needs.twitter_ideas(progress=p), "twitter_ideas_recheck": lambda p: needs.twitter_ideas(progress=p, reuse=True), "influencers": lambda p: influencers.run(progress=p), "influencers_snowball": lambda p: influencers.snowball((C.DATA_DIR / "influencers" / "seeds.txt").read_text(encoding="utf-8").split()), "influencers_grow": lambda p: influencers.grow(progress=p), "influencers_niches": lambda p: influencers.run(progress=p, niches=influencers.NICHES, with_twitter=True, max_usd=2.5, per_tag=20)}.get(name)
+                  "designs_redraw": lambda p: designs.redraw(), "designs_v2": lambda p: designs.generate_v2(progress=p), "designs_shrink": lambda p: designs.shrink_all(), "deepdive": lambda p: deepdive.run(progress=p), "pinterest": lambda p: pinterest.run(), "twitter_ideas": lambda p: needs.twitter_ideas(progress=p), "twitter_ideas_recheck": lambda p: needs.twitter_ideas(progress=p, reuse=True), "influencers": lambda p: influencers.run(progress=p), "influencers_snowball": lambda p: influencers.snowball((C.DATA_DIR / "influencers" / "seeds.txt").read_text(encoding="utf-8").split()), "influencers_grow": lambda p: influencers.grow(progress=p), "people": lambda p: people.nightly(float(C.secret("PEOPLE_BUDGET") or 0.15)), "people_bootstrap": lambda p: people.bootstrap(), "influencers_niches": lambda p: influencers.run(progress=p, niches=influencers.NICHES, with_twitter=True, max_usd=2.5, per_tag=20)}.get(name)
             if not fn:
                 return self._json({"error": "نامعتبر"}, 400)
             err = JOB.start(name, task=fn)
@@ -385,7 +402,8 @@ def main():
     log.info("dastsaz on :%d, data in %s, password %s", port, C.DATA_DIR, "set" if APP_PASSWORD else "NOT SET")
     schedule.start(lambda name, fn: JOB.start(name, task=fn),
                    {"snapshot": lambda p: snapshot.take(progress=p), "radar": lambda p: categories.run(progress=p),
-                    "pinterest": lambda p: pinterest.run()})
+                    "pinterest": lambda p: pinterest.run(),
+                    "people": lambda p: people.nightly(float(C.secret("PEOPLE_BUDGET") or 0.15))})
     ThreadingHTTPServer(("0.0.0.0", port), H).serve_forever()
 
 

@@ -14,7 +14,7 @@ from . import config as C
 
 log = logging.getLogger(__name__)
 TZ = ZoneInfo("Asia/Tehran")
-PLAN = {"snapshot": 5, "radar": 1, "pinterest": 6}   # weekday (Mon=0): Saturday, Tuesday, Sunday
+PLAN = {"snapshot": 5, "radar": 1, "pinterest": 6, "people": -1}   # weekday (Mon=0): Sat, Tue, Sun; -1 = every night
 HOUR = 2                                     # after 02:00 Tehran
 
 
@@ -30,7 +30,7 @@ def done() -> dict:
 def due(now: dt.datetime, last: dict) -> list[str]:
     out = []
     for name, wd in PLAN.items():
-        if now.weekday() != wd or now.hour < HOUR:
+        if (wd != -1 and now.weekday() != wd) or now.hour < HOUR:
             continue
         if last.get(name) != now.date().isoformat():
             out.append(name)

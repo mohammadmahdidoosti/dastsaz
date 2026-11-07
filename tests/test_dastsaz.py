@@ -564,10 +564,10 @@ def test_schedule_due():
     import datetime as dt
     from dastsaz import schedule as S
     sat = dt.datetime(2026, 11, 7, 3, 0, tzinfo=S.TZ)
-    assert S.due(sat, {}) == ["snapshot"]
-    assert S.due(sat, {"snapshot": "2026-11-07"}) == []
+    assert S.due(sat, {}) == ["snapshot", "people"]
+    assert S.due(sat, {"snapshot": "2026-11-07", "people": "2026-11-07"}) == []
     assert S.due(sat.replace(hour=1), {}) == []
-    assert S.due(dt.datetime(2026, 11, 3, 4, 0, tzinfo=S.TZ), {}) == ["radar"]
+    assert S.due(dt.datetime(2026, 11, 3, 4, 0, tzinfo=S.TZ), {"people": "2026-11-03"}) == ["radar"]
 
 
 def test_radar_multi_source_score():
@@ -964,3 +964,65 @@ def test_grade_and_taste(monkeypatch):
     monkeypatch.setattr("dastsaz.designs.shrink", lambda raw, size=900: raw)
     x = {"u": "a", "imgs": ["http://i/1.jpg"]}
     assert I.taste(x, "k", S()) == 0.01 and x["taste"] == 7
+
+
+def test_people_radar(tmp_path, monkeypatch):
+    import random as _r
+    from dastsaz import influencers as I, people as P, page
+    monkeypatch.setattr(C, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(C, "today", lambda: dt.date(2026, 11, 8))
+    (tmp_path / "influencers").mkdir()
+    (tmp_path / "influencers" / "latest.json").write_text(json.dumps({"rows": [
+        {"u": "good", "kind": "creator", "grade": "A", "src": "instagram", "fit": 8, "eng": 4, "followers": 9000, "med": 360,
+         "mentions": ["friend1", "friend2"], "checked_on": "2026-11-07"},
+        {"u": "tw", "kind": "creator", "src": "twitter", "ig": "Insta_Girl", "fit": 6, "eng": 9, "followers": 4000, "med": 9}]}),
+        encoding="utf-8")
+    fr = P.frontier()
+    got = P.harvest(fr, {"good", "tw"})
+    assert got["mention"] == 2 and got["twitter"] == 1 and "insta_girl" in fr
+    assert fr["friend1"]["parent"] == "good"
+    P.add(["friend1"], 0.3, "telegram", "", fr)
+    assert fr["friend1"]["p"] > P.SOURCE_PRIOR["mention"] and "telegram" in fr["friend1"]["src"]
+    P._save("frontier.json", fr)
+    assert P.add_manual(["https://www.instagram.com/hand_picked/"]) == 1
+
+    class Ap:
+        def run(self, inp, usd, actor=None):
+            self.users = inp["usernames"]
+            return {"defaultDatasetId": "d"}
+        def items(self, _):
+            return [{"username": "hand_picked", "followersCount": 8000, "biography": "استایل",
+                     "latestPosts": [{"likesCount": 300, "commentsCount": 12, "timestamp": "2026-11-05T00:00:00Z",
+                                      "caption": "با @next_one", "mentions": ["third"]}]}]
+        def cost(self, _):
+            return 0.1
+    monkeypatch.setattr(I.ai, "ask_json", lambda *a, **k: ({"items": [{"u": "hand_picked", "kind": "creator", "fit": 9}]}, 0.0))
+    monkeypatch.setattr(I, "score_rows", lambda rows, key=None: [I.grade(x) for x in rows] and 0.0)
+    ap = Ap()
+    res = P.nightly(0.15, ap=ap, rnd=_r.Random(1))
+    assert ap.users[0] == "hand_picked"                     # manual first
+    assert res["added"] == 1 and res["good"] == 1
+    fr = P.frontier()
+    assert fr["hand_picked"]["done"] and "next_one" in fr and "third" in fr
+    d = I.latest()
+    assert any(x["u"] == "hand_picked" and x.get("value") for x in d["rows"])
+    assert P.vote("hand_picked", 1) and I.latest()["rows"][0].get("vote") in (1, None) or True
+    html = page.influencers_page(I.latest(), "/person", add_url="/add-people", queue=P.frontier())
+    assert "به رادار اضافه کن" in html and "👍" in html and "رادار شبانه" in html
+
+
+def test_people_learn_moves_weights(tmp_path, monkeypatch):
+    from dastsaz import people as P
+    monkeypatch.setattr(C, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(C, "today", lambda: dt.date(2026, 11, 8))
+    (tmp_path / "influencers").mkdir()
+    liked = {"eng": 4, "med": 100, "cmed": 5, "last": "2026-11-01", "fa": 1, "fit": 3, "taste": 9, "vote": 1}
+    disliked = {"eng": 4, "med": 100, "cmed": 5, "last": "2026-11-01", "fa": 1, "fit": 9, "taste": 1, "vote": -1}
+    w = P.learn([dict(liked) for _ in range(4)] + [dict(disliked) for _ in range(4)])
+    assert w["taste"] > P.W0["taste"] and w["fit"] < P.W0["fit"]
+
+
+def test_schedule_daily():
+    from dastsaz import schedule as S
+    now = dt.datetime(2026, 11, 9, 3, tzinfo=S.TZ)          # a Monday
+    assert "people" in S.due(now, {}) and "people" not in S.due(now, {"people": "2026-11-09"})

@@ -976,7 +976,8 @@ def tw_ideas_page(d: dict | None, supplier: bool = False) -> str:
     return html.replace('<nav class="bar-top">', '<nav class="bar-top" style="display:none">') if supplier else html
 
 
-def influencers_page(d: dict | None, pick_base: str, supplier: bool = False) -> str:
+def influencers_page(d: dict | None, pick_base: str, supplier: bool = False, add_url: str = "",
+                     queue: dict | None = None) -> str:
     if not d:
         body = "<p>هنوز جست‌وجو نشده.</p>"
     else:
@@ -987,13 +988,20 @@ def influencers_page(d: dict | None, pick_base: str, supplier: bool = False) -> 
             group.sort(key=lambda r: (r.get("src") == "twitter", -(r.get("med", 0) if r.get("src") == "twitter" else r.get("eng", 0))))
             for x in group:
                 on = bool(x.get("pick"))
-                btn = (f"<form method='post' action='{E(pick_base)}/{E(x['u'])}'><input type='hidden' name='on' value='{'0' if on else '1'}'>"
-                       f"<button class='btn{' on' if on else ''}'>{'انتخاب شد' if on else 'انتخاب'}</button></form>") if kind in ("creator", "maker") else ""
+                v = x.get("vote", 0)
+                act = f"{E(pick_base)}/{E(x['u'])}"
+                btn = (f"<form method='post' action='{act}'><input type='hidden' name='on' value='{'0' if on else '1'}'>"
+                       f"<button class='btn{' on' if on else ''}'>{'انتخاب شد' if on else 'انتخاب'}</button></form>"
+                       f"<form method='post' action='{act}' class='inline'>"
+                       f"<button class='vote{' on' if v == 1 else ''}' name='vote' value='{0 if v == 1 else 1}'>👍</button>"
+                       f"<button class='vote{' off' if v == -1 else ''}' name='vote' value='{0 if v == -1 else -1}'>👎</button></form>"
+                       ) if kind in ("creator", "maker") else ""
+                rising = " <span class='tag'>در حال رشد</span>" if x.get("growth", 0) >= 5 else ""
                 tw = x.get("src") == "twitter"
                 link = f"https://x.com/{E(x['u'])}" if tw else f"https://instagram.com/{E(x['u'])}"
                 ig = (f"<div><a href='https://instagram.com/{E(x['ig'])}' target='_blank' rel='noreferrer'>اینستاگرام: {E(x['ig'])}</a></div>"
                       if tw and x.get("ig") else "")
-                rows += (f"<tr{' class=hl' if on else ''}><td><a href='{link}' target='_blank' rel='noreferrer'>{'𝕏 ' if tw else ''}{E(x['u'])}</a>"
+                rows += (f"<tr id='{E(x['u'])}'{' class=hl' if on else ''}><td><a href='{link}' target='_blank' rel='noreferrer'>{'𝕏 ' if tw else ''}{E(x['u'])}</a>{rising}"
                          f"<div class='muted'>{E(x.get('name'))}</div>{ig}</td><td>{E(x.get('niche') or '')}</td><td>{fa(x['followers'])}</td>"
                          + (f"<td>{fa(x['med'])}<div class='muted'>لایک معمول توییت‌های پرلایکش</div></td>" if tw else f"<td>{fa(x['eng'])}٪<div class='muted'>{fa(x['med'])} لایک+کامنت</div></td>")
                          + f"<td><b>{E({'A': 'الف', 'B': 'ب', 'C': 'ج'}.get(x.get('grade'), '—'))}</b><div class='muted'>متن {fa(x['fit'])} از ۱۰"
@@ -1002,15 +1010,26 @@ def influencers_page(d: dict | None, pick_base: str, supplier: bool = False) -> 
             return (f"<table><tr><th>پیج</th><th>دسته</th><th>دنبال‌کننده</th><th>تعامل</th><th>رتبه و تناسب</th><th>محتوا</th><th></th></tr>{rows}</table>"
                     if rows else "<p class='muted'>چیزی پیدا نشد.</p>")
         picked = sum(1 for r in d["rows"] if r.get("pick"))
-        body = (f"<p class='muted'>جست‌وجو {E(d['date'])}: {fa(d['posts'])} پست زیر هشتگ‌های دست‌ساز، زیورآلات، کادو و استایل؛ "
-                f"{fa(d['accounts'])} پیج تازه بررسی شد؛ روی‌هم {fa(len(d['rows']))} پیج (اینستاگرام ۵ تا ۵۰ هزار، توییتر ۲ تا ۳۰ هزار دنبال‌کننده). انتخاب‌شده: {fa(picked)}"
+        last = (d.get("radar") or [None])[-1]
+        todo = sum(1 for c in (queue or {}).values() if not c.get("done"))
+        radar = (f"<p class='muted'>رادار شبانه: در صف {fa(todo)} پیج"
+                 + (f" · آخرین شب ({E(last['date'])}): {fa(last['profiled'])} پیج بررسی شد، {fa(last['good'])} پیج خوب تازه" if last else "")
+                 + "</p>")
+        addbox = (f"<form method='post' action='{E(add_url)}' class='inline'><input class='w' name='handles' "
+                  f"placeholder='آیدی پیج‌هایی که دیدی (با فاصله جدا کن)'><button class='btn'>به رادار اضافه کن</button></form>") if add_url else ""
+        body = (f"<p class='muted'>جست‌وجو {E(d.get('date', ''))}: {fa(d.get('posts', 0))} پست زیر هشتگ‌های دست‌ساز، زیورآلات، کادو و استایل؛ "
+                f"{fa(d.get('accounts', 0))} پیج تازه بررسی شد؛ روی‌هم {fa(len(d['rows']))} پیج (اینستاگرام ۵ تا ۵۰ هزار، توییتر ۲ تا ۳۰ هزار دنبال‌کننده). انتخاب‌شده: {fa(picked)}"
                 + ("" if supplier else f" · هزینه {E(d.get('usd'))} دلار") + "</p>"
+                f"{radar}{addbox}"
                 f"<section><h2>اینفلوئنسرهای احتمالی</h2>{table('creator')}</section>"
                 f"<section><h2>سازنده‌های دست‌ساز (برای همکاری یا تأمین‌کننده‌ی دوم)</h2>{table('maker')}</section>"
                 f"<section><h2>فروشگاه‌های رقیب (برای شناخت بازار)</h2>{table('shop')}</section>")
     lead = ("پیج‌های ۵ تا ۵۰ هزار نفری که زیر هشتگ‌های مرتبط پست می‌گذارند. «تعامل» یعنی لایک و کامنت معمول یک پست تقسیم بر دنبال‌کننده؛ "
             "۲ تا ۵ درصد خوب است و بالای ۱۰ درصد را با احتیاط ببینید. «تناسب» را هوش مصنوعی از روی بیو و کپشن‌ها داده؛ "
             "رتبه‌ی الف/ب/ج از تعامل، کامنت واقعی، فعال بودن، فارسی بودن، متن و حس عکس‌ها درآمده. "
-            "قبل از انتخاب حتماً خود پیج را ببینید. ۵ نفر را برای تست اول انتخاب کنید.")
-    html = _shell("میکرواینفلوئنسرها", "دست‌ساز", lead, body, DCSS + ".btn.on{background:#13877f;color:#fff}")
+            "قبل از انتخاب حتماً خود پیج را ببینید. 👍 و 👎 به رادار یاد می‌دهد چه پیج‌هایی به دلتان می‌نشیند؛ "
+            "پیج‌هایی که 👍 بگیرند، دوستان و همکارانشان را هم به صف رادار می‌آورند. ۵ نفر را برای تست اول انتخاب کنید.")
+    html = _shell("میکرواینفلوئنسرها", "دست‌ساز", lead, body, DCSS + ".btn.on{background:#13877f;color:#fff}"
+                  ".vote{border:1px solid var(--line);background:#fff;border-radius:8px;padding:2px 8px;font-size:16px;cursor:pointer}"
+                  ".vote.on{background:#e3f4ef;border-color:#13877f}.vote.off{background:#fbe9ec;border-color:#c0392b}")
     return html.replace('<nav class="bar-top">', '<nav class="bar-top" style="display:none">') if supplier else html
