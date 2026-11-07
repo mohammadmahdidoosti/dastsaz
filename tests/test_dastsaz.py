@@ -765,7 +765,7 @@ def test_pinterest_card_score_and_run(tmp_path, monkeypatch):
     class S:
         def get(self, url, timeout):
             class R: status_code = 200; content = b"x"
-            return R()
+            R.content = b"\xff\xd8x"; return R()
     monkeypatch.setattr("dastsaz.designs.shrink", lambda raw, size=900: raw)
     r = P.run(ap=Ap(), sess=S())
     assert r["usd"] == 0.07

@@ -26,7 +26,7 @@ log = logging.getLogger(__name__)
 ACTOR = "logiover~pinterest-scraper"
 TERMS = ["clay earrings", "polymer clay necklace", "handmade silver earrings", "whimsical jewelry", "fruit earrings",
          "handmade beaded necklace", "dainty charm bracelet", "enamel ring", "mushroom jewelry", "cute handmade ring"]
-SHOPS = ("etsy.", "depop.", "shopify", "myshopify", "amazon.", "ebay.", "instagram.com", "bigcartel", "storenvy",
+SHOPS = ("etsy.", "depop.", "shopify", "myshopify", "amazon.", "ebay.", "bigcartel", "storenvy",
          "aliexpress", "temu.", "shein.")
 _lock = threading.Lock()
 
@@ -102,8 +102,10 @@ def _thumb(url: str, pid: str, sess) -> str:
         r = sess.get(url, timeout=30)
         if r.status_code == 200 and r.content:
             from .designs import shrink
-            f.write_bytes(shrink(r.content, 500))
-            return name
+            small = shrink(r.content, 500)
+            if small[:2] == b"\xff\xd8":             # a real picture (some links return a page, not an image)
+                f.write_bytes(small)
+                return name
     except requests.RequestException as e:
         log.info("pin picture %s: %s", pid, e)
     return ""
