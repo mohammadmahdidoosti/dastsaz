@@ -985,7 +985,7 @@ def influencers_page(d: dict | None, pick_base: str, supplier: bool = False) -> 
             for x in [r for r in d["rows"] if r["kind"] == kind]:
                 on = bool(x.get("pick"))
                 btn = (f"<form method='post' action='{E(pick_base)}/{E(x['u'])}'><input type='hidden' name='on' value='{'0' if on else '1'}'>"
-                       f"<button class='btn{' on' if on else ''}'>{'انتخاب شد' if on else 'انتخاب'}</button></form>") if kind == "creator" else ""
+                       f"<button class='btn{' on' if on else ''}'>{'انتخاب شد' if on else 'انتخاب'}</button></form>") if kind in ("creator", "maker") else ""
                 tw = x.get("src") == "twitter"
                 link = f"https://x.com/{E(x['u'])}" if tw else f"https://instagram.com/{E(x['u'])}"
                 ig = (f"<div><a href='https://instagram.com/{E(x['ig'])}' target='_blank' rel='noreferrer'>اینستاگرام: {E(x['ig'])}</a></div>"
@@ -1002,6 +1002,7 @@ def influencers_page(d: dict | None, pick_base: str, supplier: bool = False) -> 
                 f"{fa(d['accounts'])} پیج تازه بررسی شد؛ روی‌هم {fa(len(d['rows']))} پیج (اینستاگرام ۵ تا ۵۰ هزار، توییتر ۲ تا ۳۰ هزار دنبال‌کننده). انتخاب‌شده: {fa(picked)}"
                 + ("" if supplier else f" · هزینه {E(d.get('usd'))} دلار") + "</p>"
                 f"<section><h2>اینفلوئنسرهای احتمالی</h2>{table('creator')}</section>"
+                f"<section><h2>سازنده‌های دست‌ساز (برای همکاری یا تأمین‌کننده‌ی دوم)</h2>{table('maker')}</section>"
                 f"<section><h2>فروشگاه‌های رقیب (برای شناخت بازار)</h2>{table('shop')}</section>")
     lead = ("پیج‌های ۵ تا ۵۰ هزار نفری که زیر هشتگ‌های مرتبط پست می‌گذارند. «تعامل» یعنی لایک و کامنت معمول یک پست تقسیم بر دنبال‌کننده؛ "
             "۲ تا ۵ درصد خوب است و بالای ۱۰ درصد را با احتیاط ببینید. «تناسب» را هوش مصنوعی از روی بیو و کپشن‌ها داده؛ "

@@ -914,3 +914,18 @@ def test_tagged_votes():
              {"inputUrl": "https://www.instagram.com/limu/tagged/", "ownerUsername": "a"}]
     c, via = I.tagged_votes(posts, {"limu"})
     assert c["a"] == 6 and c["b"] == 1 and "limu" not in c and via["a"] == "limu"
+
+
+def test_reclassify_makers(tmp_path, monkeypatch):
+    from dastsaz import influencers as I, page
+    monkeypatch.setattr(C, "DATA_DIR", tmp_path)
+    (tmp_path / "influencers").mkdir()
+    (tmp_path / "influencers" / "latest.json").write_text(json.dumps({"date": "2026-11-07", "posts": 1, "accounts": 1,
+        "rows": [{"u": "curl", "kind": "creator", "fit": 10, "eng": 1, "followers": 4000, "med": 9, "bio": "جواهرسازم"},
+                 {"u": "sara", "kind": "creator", "fit": 8, "eng": 3, "followers": 9000, "med": 9}]}), encoding="utf-8")
+    monkeypatch.setattr(I.ai, "ask_json", lambda *a, **k: ({"items": [{"u": "curl", "kind": "maker"}]}, 0.0))
+    assert I.reclassify() == {"creator->maker": 1}
+    d = I.latest()
+    assert [x["u"] for x in d["rows"]] == ["sara", "curl"]
+    html = page.influencers_page(d, "/person")
+    assert "سازنده‌های دست‌ساز" in html
