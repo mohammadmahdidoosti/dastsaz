@@ -25,7 +25,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from dastsaz import config as C
-from dastsaz import ads, categories, deepdive, designs, influencers, people, pinterest, lab_seed, guard, schedule, lab, needs, page, pipeline, snapshot, telegram, voice
+from dastsaz import ads, categories, deepdive, designs, influencers, people, pinterest, shop, lab_seed, guard, schedule, lab, needs, page, pipeline, snapshot, telegram, voice
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S")
 logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -39,7 +39,7 @@ PIN = re.compile(r"^[\w\-]{1,120}$")
 STEP_FA = {"wait": "منتظر", "basalam": "باسلام", "digikala": "دیجی‌کالا", "etsy": "اتسی", "ai": "هوش مصنوعی", "expand": "فرصت‌یابی", "testlist": "لیست آزمایش", "trends": "گوگل ترندز", "suggest": "پیشنهادهای جست‌وجو",
            "reviews": "نظر خریداران", "makers": "سازنده‌ها", "snapshot": "عکس هفتگی فروش",
            "voice": "صدای مشتری", "needs": "نیازهای کادو", "telegram": "تلگرام", "radar": "رادار دسته‌ها",
-           "radar_trends": "گوگلِ دسته‌ها", "radar_ig": "اینستاگرامِ دسته‌ها", "twitter": "توییتر کادو", "translation_test": "تست ترجمه‌ی دسته‌ها", "lab_seed": "ثبت طرح‌های اول", "designs": "ماشین طراحی", "designs_sample": "۵ طرح نمونه", "designs_redraw": "تصویر طرح‌ها", "designs_v2": "طراحی دور دوم", "deepdive": "بررسی دسته‌های کم‌رقیب", "pinterest": "پینترست هفتگی", "twitter_ideas": "ایده‌های توییتر", "twitter_ideas_recheck": "بررسی دوباره‌ی بازار ایده‌ها", "influencers": "پیدا کردن اینفلوئنسر",
+           "radar_trends": "گوگلِ دسته‌ها", "radar_ig": "اینستاگرامِ دسته‌ها", "twitter": "توییتر کادو", "translation_test": "تست ترجمه‌ی دسته‌ها", "lab_seed": "ثبت طرح‌های اول", "designs": "ماشین طراحی", "designs_sample": "۵ طرح نمونه", "designs_redraw": "تصویر طرح‌ها", "designs_v2": "طراحی دور دوم", "deepdive": "بررسی دسته‌های کم‌رقیب", "pinterest": "پینترست هفتگی", "twitter_ideas": "ایده‌های توییتر", "shop_check": "آزمایش اتصال به سایت", "shop_sync": "بارگذاری طرح‌ها روی سایت", "shop_drop": "دراپ هفتگی سایت", "twitter_ideas_recheck": "بررسی دوباره‌ی بازار ایده‌ها", "influencers": "پیدا کردن اینفلوئنسر",
            "report": "گزارش"}
 
 
@@ -366,7 +366,7 @@ class H(BaseHTTPRequestHandler):
                   "radar": lambda p: categories.run(progress=p), "radar_trends": lambda p: categories.trends(), "radar_ig": lambda p: categories.instagram(), "twitter": lambda p: needs.twitter(), "translation_test": lambda p: categories.translation_test(progress=p),
                   "lab_seed": lambda p: lab_seed.seed(), "designs": lambda p: designs.generate(progress=p),
                   "designs_sample": lambda p: designs.generate(per=5, cats=["necklace"], progress=p),
-                  "designs_redraw": lambda p: designs.redraw(), "designs_v2": lambda p: designs.generate_v2(progress=p), "designs_shrink": lambda p: designs.shrink_all(), "deepdive": lambda p: deepdive.run(progress=p), "pinterest": lambda p: pinterest.run(), "twitter_ideas": lambda p: needs.twitter_ideas(progress=p), "twitter_ideas_recheck": lambda p: needs.twitter_ideas(progress=p, reuse=True), "influencers": lambda p: influencers.run(progress=p), "influencers_snowball": lambda p: influencers.snowball((C.DATA_DIR / "influencers" / "seeds.txt").read_text(encoding="utf-8").split()), "influencers_grow": lambda p: influencers.grow(progress=p), "people": lambda p: people.nightly(float(C.secret("PEOPLE_BUDGET") or 0)), "people_bootstrap": lambda p: people.bootstrap(), "influencers_niches": lambda p: influencers.run(progress=p, niches=influencers.NICHES, with_twitter=True, max_usd=2.5, per_tag=20)}.get(name)
+                  "designs_redraw": lambda p: designs.redraw(), "designs_v2": lambda p: designs.generate_v2(progress=p), "designs_shrink": lambda p: designs.shrink_all(), "deepdive": lambda p: deepdive.run(progress=p), "pinterest": lambda p: pinterest.run(), "twitter_ideas": lambda p: needs.twitter_ideas(progress=p), "twitter_ideas_recheck": lambda p: needs.twitter_ideas(progress=p, reuse=True), "influencers": lambda p: influencers.run(progress=p), "influencers_snowball": lambda p: influencers.snowball((C.DATA_DIR / "influencers" / "seeds.txt").read_text(encoding="utf-8").split()), "influencers_grow": lambda p: influencers.grow(progress=p), "people": lambda p: people.nightly(float(C.secret("PEOPLE_BUDGET") or 0)), "people_bootstrap": lambda p: people.bootstrap(), "influencers_niches": lambda p: influencers.run(progress=p, niches=influencers.NICHES, with_twitter=True, max_usd=2.5, per_tag=20), "shop_check": lambda p: shop.check(), "shop_sync": lambda p: shop.sync(progress=p), "shop_drop": lambda p: shop.next_drop()}.get(name)
             if not fn:
                 return self._json({"error": "نامعتبر"}, 400)
             err = JOB.start(name, task=fn)
@@ -403,7 +403,8 @@ def main():
     schedule.start(lambda name, fn: JOB.start(name, task=fn),
                    {"snapshot": lambda p: snapshot.take(progress=p), "radar": lambda p: categories.run(progress=p),
                     "pinterest": lambda p: pinterest.run(),
-                    "people": lambda p: people.nightly(float(C.secret("PEOPLE_BUDGET") or 0))})
+                    "people": lambda p: people.nightly(float(C.secret("PEOPLE_BUDGET") or 0)),
+                    "shop_drop": lambda p: shop.next_drop() if shop.ready() else {"skipped": "no shop keys"}})
     ThreadingHTTPServer(("0.0.0.0", port), H).serve_forever()
 
 

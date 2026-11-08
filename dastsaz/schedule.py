@@ -14,7 +14,7 @@ from . import config as C
 
 log = logging.getLogger(__name__)
 TZ = ZoneInfo("Asia/Tehran")
-PLAN = {"snapshot": 5, "radar": 1, "pinterest": 6, "people": -1}   # weekday (Mon=0): Sat, Tue, Sun; -1 = every night
+PLAN = {"snapshot": 5, "radar": 1, "pinterest": 6, "people": -1, "shop_drop": 2}   # weekday (Mon=0): Sat, Tue, Sun, Wed; -1 = every night
 HOUR = 2                                     # after 02:00 Tehran
 
 

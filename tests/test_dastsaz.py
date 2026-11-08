@@ -1061,3 +1061,66 @@ def test_people_no_spend_without_token(tmp_path, monkeypatch):
             raise AssertionError("must not spend")
     P.add_manual(["someone"])
     assert P.nightly(0, ap=Ap())["profiled"] == 0
+
+
+class _FakeWoo:
+    def __init__(self):
+        self.posts, self.puts, self.n = [], [], 100
+
+    def get(self, path, **params):
+        return []
+
+    def post(self, path, body):
+        self.n += 1
+        self.posts.append((path, body))
+        return {"id": self.n, "status": body.get("status"), "permalink": f"https://dastine.art/p/{self.n}"}
+
+    def put(self, path, body):
+        self.puts.append((path, body))
+        return {"id": 1}
+
+
+def _design(i, cat, make=8, name=None, status="idea"):
+    return {"id": f"d{i}", "cat": cat, "name": name or f"طرح {i}", "spec": "استیل ۳۱۶L، قفل میخی", "why": "سقف خرید ۵۰ هزار",
+            "price": 150000, "tags": ["ایرانی", "کادو"], "img": f"d{i}.png", "status": status,
+            "critic": {"diff": 8, "creative": 7, "make": make, "clear": 8}}
+
+
+def test_shop_plan_balances_halls_and_skips_hard(tmp_path, monkeypatch):
+    from dastsaz import shop
+    monkeypatch.setattr(C, "DATA_DIR", tmp_path)
+    allx = [_design(i, "v2_ear") for i in range(10)] + [_design(20 + i, "v2_ring") for i in range(3)]
+    allx += [_design(90, "v2_neck", make=4), _design(91, "v2_brace", name="گیره مو قارچ"), _design(92, "v2_neck", status="old")]
+    p = shop.plan(allx, launch=6, per_drop=3)
+    assert "d90" not in p and "d92" not in p                     # hard to make / old stay off
+    launch = [k for k, v in p.items() if v == 0]
+    assert {"d20", "d91"} <= set(launch) and len(launch) == 6     # every hall gets a place at launch
+    assert shop.hall_of(_design(91, "v2_brace", name="گیره مو قارچ")) == "hair"
+    assert max(p.values()) >= 2
+
+
+def test_shop_sync_and_drop(tmp_path, monkeypatch):
+    from dastsaz import designs, shop
+    monkeypatch.setattr(C, "DATA_DIR", tmp_path)
+    designs.save([_design(i, "v2_ear") for i in range(5)])
+    monkeypatch.setattr(shop.ai, "ask_json", lambda *a, **k: ({"items": [
+        {"id": "d0", "title": "گوشواره‌ی پسته", "short": "یک لبخندِ کوچک", "story": "قصه", "details": ["استیل"],
+         "alt": "گوشواره", "mood": ["بازیگوش"]}]}, 0.01))
+    w = _FakeWoo()
+    out = shop.sync(launch=2, per_drop=2, woo=w)
+    prods = [b for p, b in w.posts if p == "products"]
+    assert out["made"] == 5 and len(prods) == 5
+    assert sum(1 for b in prods if b["status"] == "publish") == 2
+    first = next(b for b in prods if b["name"] == "گوشواره‌ی پسته")
+    assert "سقف خرید" not in first["description"] and first["images"][0]["src"].endswith("/img/d0.png")
+    assert first["regular_price"] == "150000"
+    assert all(x.get("wc", {}).get("id") for x in designs.load())
+    assert shop.sync(launch=2, per_drop=2, woo=_FakeWoo())["made"] == 0       # nothing twice
+    r = shop.next_drop(woo=w)
+    assert r["drop"] == 1 and r["published"] == 2 and len(w.puts) == 2
+
+
+def test_schedule_has_weekly_drop():
+    from dastsaz import schedule as S
+    wed = dt.datetime(2026, 11, 11, 3, tzinfo=S.TZ)
+    assert "shop_drop" in S.due(wed, {})
