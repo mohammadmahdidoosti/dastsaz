@@ -57,7 +57,7 @@ add_action('admin_init', function () {
         $zone->save();
         $iid = $zone->add_shipping_method('flat_rate');
         $opt = 'woocommerce_flat_rate_' . $iid . '_settings';
-        update_option($opt, array('title' => 'پست پیشتاز', 'tax_status' => 'none', 'cost' => '0'));
+        update_option($opt, array('title' => 'تیپاکس (پس‌کرایه)', 'tax_status' => 'none', 'cost' => '0'));
     }
     // The payment page.
     if (!get_page_by_path('pay')) {
@@ -83,7 +83,7 @@ add_action('woocommerce_single_product_summary', function () {
     echo '<ul class="dastine-promise">'
         . '<li><b>دست‌ساز</b><span>' . $make . '</span></li>'
         . '<li><b>شناسنامه‌دار</b><span>با کارتِ شناسنامه: اسمِ سازنده، شماره و تاریخِ ساخت</span></li>'
-        . '<li><b>ارسال</b><span>با پستِ پیشتاز به سراسرِ ایران</span></li>'
+        . '<li><b>ارسال</b><span>با تیپاکس به سراسرِ ایران؛ هزینه‌ی ارسال پس‌کرایه</span></li>'
         . '</ul>';
 }, 25);
 
