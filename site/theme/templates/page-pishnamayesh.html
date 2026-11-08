@@ -1,0 +1,194 @@
+<!-- wp:template-part {"slug":"header","tagName":"header"} /-->
+
+<!-- wp:group {"tagName":"main","align":"full","className":"dastine-home dastine-v2","style":{"spacing":{"blockGap":"0","margin":{"top":"0"}}},"layout":{"type":"default"}} -->
+<main class="wp-block-group alignfull dastine-home dastine-v2" style="margin-top:0">
+
+<!-- wp:html -->
+<style>
+.dastine-v2 .v2-wrap{max-width:1240px;margin:0 auto;padding:0 24px;box-sizing:border-box}
+.dastine-v2 .v2-trust{background:#FFFFFF;border-top:1px solid var(--d-line);border-bottom:1px solid var(--d-line)}
+.dastine-v2 .v2-trust ul{list-style:none;margin:0 auto;padding:18px 24px;max-width:1240px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;box-sizing:border-box}
+.dastine-v2 .v2-trust li{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--d-ink)}
+.dastine-v2 .v2-trust li b{display:block;font-size:15px}
+.dastine-v2 .v2-trust li span{color:var(--d-muted);font-size:13px}
+.dastine-v2 .v2-ico{width:42px;height:42px;flex-shrink:0;border-radius:50%;background:var(--d-katan);display:flex;align-items:center;justify-content:center}
+.dastine-v2 .v2-ico svg{width:22px;height:22px;fill:none;stroke:var(--d-anar);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.dastine-v2 .dastine-halls .dastine-cert{display:none}
+.dastine-v2 .dastine-wall .dastine-loop li.product:nth-child(n+13){display:none}
+.dastine-v2 .dastine-wall.is-open .dastine-loop li.product:nth-child(n+13){display:block}
+.dastine-v2 .v2-more{display:flex;justify-content:center;margin-top:36px}
+.dastine-v2 .v2-more button{height:50px;padding:0 34px;border-radius:999px;border:1px solid var(--d-ink);background:transparent;color:var(--d-ink);font:inherit;font-weight:700;font-size:15px;cursor:pointer}
+.dastine-v2 .v2-more button:hover{border-color:var(--d-anar);color:var(--d-anar)}
+.dastine-v2 .dastine-wall.is-open .v2-more{display:none}
+.dastine-v2 .v2-workshop{background:var(--d-katan);padding:88px 0}
+.dastine-v2 .v2-workshop .v2-wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:64px;align-items:center}
+.dastine-v2 .v2-eyebrow{font-size:14px;font-weight:700;color:var(--d-anar);margin:0 0 10px}
+.dastine-v2 .v2-workshop h2{font-size:34px;line-height:1.45;margin:0 0 16px;color:var(--d-ink)}
+.dastine-v2 .v2-workshop .v2-lead{font-size:17px;line-height:1.95;color:var(--d-ink);margin:0 0 30px}
+.dastine-v2 .v2-steps{list-style:none;margin:0 0 32px;padding:0;display:flex;flex-direction:column;gap:18px}
+.dastine-v2 .v2-steps li{display:flex;gap:16px;align-items:flex-start}
+.dastine-v2 .v2-steps .n{width:36px;height:36px;flex-shrink:0;border-radius:50%;border:1px solid var(--d-sofal);color:var(--d-anar);font-weight:800;display:flex;align-items:center;justify-content:center}
+.dastine-v2 .v2-steps b{display:block;font-size:16px;margin-bottom:2px}
+.dastine-v2 .v2-steps span{font-size:14px;color:var(--d-muted);line-height:1.8}
+.dastine-v2 .v2-btn{display:inline-flex;align-items:center;height:50px;padding:0 30px;border-radius:999px;background:var(--d-anar);color:#FFFFFF!important;font-weight:700;text-decoration:none!important}
+.dastine-v2 .v2-btn:hover{background:var(--d-ink)}
+.dastine-v2 .v2-visual{position:relative;padding-bottom:70px}
+.dastine-v2 .v2-photo{aspect-ratio:4/5;max-width:440px;border-radius:6px;background:#E9DFD2;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:22%;box-sizing:border-box;gap:14px;color:var(--d-muted);font-size:14px;text-align:center;border:1px dashed #CDBBA6}
+.dastine-v2 .v2-photo img{width:72px;height:72px;opacity:.6}
+.dastine-v2 .v2-card{position:absolute;left:0;bottom:0;width:300px;background:#FBF7F1;border:1px solid var(--d-sofal);border-radius:6px;padding:22px 24px;box-shadow:0 18px 40px rgba(59,42,36,.14);transform:rotate(-3deg);color:var(--d-ink)}
+.dastine-v2 .v2-card__top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+.dastine-v2 .v2-card__brand{display:flex;align-items:center;gap:8px;font-weight:800;color:var(--d-anar)}
+.dastine-v2 .v2-card__brand img{width:28px;height:28px}
+.dastine-v2 .v2-card__no{text-align:left;font-size:11px;color:var(--d-muted)}
+.dastine-v2 .v2-card__no b{display:block;font-size:20px;color:var(--d-ink);letter-spacing:1px}
+.dastine-v2 .v2-card__name{font-size:19px;font-weight:800;margin:0 0 12px}
+.dastine-v2 .v2-card dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px;margin:0;padding-top:10px;border-top:1px solid #DCCBB8}
+.dastine-v2 .v2-card dt{font-size:11px;color:var(--d-muted)}
+.dastine-v2 .v2-card dd{margin:0;font-size:13px;font-weight:600}
+.dastine-v2 .v2-card__sign{margin-top:14px;display:flex;justify-content:space-between;align-items:flex-end;font-size:11px;color:var(--d-muted)}
+.dastine-v2 .v2-card__sign i{display:block;width:110px;border-bottom:1px dashed var(--d-muted);height:18px;margin-bottom:4px}
+.v2-foot{background:#FFFFFF;border-top:1px solid var(--d-line);padding:56px 0 0}
+.dastine-v2 .v2-foot__grid{display:grid;grid-template-columns:1.3fr 1fr 1fr .8fr;gap:40px}
+.v2-foot h3{font-size:15px;margin:0 0 14px;color:var(--d-ink)}
+.v2-foot p,.v2-foot li{font-size:14px;color:var(--d-muted);line-height:1.9;margin:0}
+.v2-foot ul{list-style:none;margin:0;padding:0}
+.v2-foot .v2-wrap a{color:var(--d-ink);text-decoration:none}
+.v2-foot .v2-wrap a:hover{color:var(--d-anar)}
+.dastine-v2 .v2-foot__brand{font-size:24px;font-weight:800;color:var(--d-anar)!important;margin-bottom:4px!important}
+.dastine-v2 .v2-insta{display:inline-flex;align-items:center;gap:8px;margin-top:14px;font-weight:600}
+.dastine-v2 .v2-insta svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7}
+.dastine-v2 .v2-soon{font-size:11px;background:var(--d-katan);color:var(--d-muted);padding:1px 8px;border-radius:999px;margin-right:6px}
+.dastine-v2 .v2-seal{width:110px;height:120px;border:1px dashed #CDBBA6;border-radius:8px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:12px;color:var(--d-muted);padding:8px;box-sizing:border-box}
+.dastine-v2 .v2-copy{margin-top:44px;border-top:1px solid var(--d-line);padding:18px 0 22px;font-size:13px;color:var(--d-muted);text-align:center}
+@media (max-width:900px){
+.dastine-v2 .v2-trust ul{grid-template-columns:repeat(2,minmax(0,1fr))}
+.dastine-v2 .v2-workshop{padding:56px 0}
+.dastine-v2 .v2-workshop .v2-wrap{grid-template-columns:minmax(0,1fr);gap:40px}
+.dastine-v2 .v2-workshop h2{font-size:26px}
+.dastine-v2 .v2-visual{order:2}
+.dastine-v2 .v2-photo{max-width:none;aspect-ratio:4/3}
+.dastine-v2 .v2-card{width:260px}
+.dastine-v2 .v2-foot__grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:32px}
+.dastine-v2 .v2-copy{padding-bottom:84px}
+}
+</style>
+<!-- /wp:html -->
+
+<!-- wp:shortcode -->
+[dastine_hero]
+<!-- /wp:shortcode -->
+
+<!-- wp:html -->
+<section class="v2-trust" aria-label="قول‌های دستینه">
+<ul>
+<li><span class="v2-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 13V6a1.5 1.5 0 0 1 3 0v5M11 11V5a1.5 1.5 0 0 1 3 0v6M14 11V6.5a1.5 1.5 0 0 1 3 0V14c0 4-2.5 6-5.5 6S7 18.5 6 16l-2-4a1.5 1.5 0 0 1 2.6-1.4L8 13"/></svg></span><div><b>ساخت با دست</b><span>بعد از سفارشِ تو</span></div></li>
+<li><span class="v2-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg></span><div><b>شناسنامه برای هر اثر</b><span>سازنده، شماره، تاریخ</span></div></li>
+<li><span class="v2-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4-1L19 8l-3-3L5 16z"/><path d="M14 7l3 3"/></svg></span><div><b>حکاکیِ دلخواه</b><span>رایگان</span></div></li>
+<li><span class="v2-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></svg></span><div><b>پستِ پیشتاز</b><span>به همه‌ی ایران</span></div></li>
+</ul>
+</section>
+<!-- /wp:html -->
+
+<!-- wp:group {"align":"full","className":"dastine-halls","style":{"spacing":{"padding":{"top":"var:preset|spacing|50","bottom":"var:preset|spacing|30","left":"var:preset|spacing|40","right":"var:preset|spacing|40"}}},"layout":{"type":"constrained"}} -->
+<div class="wp-block-group alignfull dastine-halls" style="padding-top:var(--wp--preset--spacing--50);padding-right:var(--wp--preset--spacing--40);padding-bottom:var(--wp--preset--spacing--30);padding-left:var(--wp--preset--spacing--40)">
+<!-- wp:html -->
+<h2 class="dastine-h2 alignwide">سالن‌ها</h2>
+<nav class="dastine-halls__row alignwide" aria-label="سالن‌ها">
+<a href="/product-category/necklace/"><span class="dastine-hall"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M10 10c2 12 8 18 14 18s12-6 14-18"/><path d="M24 28v4"/><path d="m24 32 5 7-5 4-5-4z"/></svg></span><span>گردنبند</span></a>
+<a href="/product-category/ring/"><span class="dastine-hall"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="29" r="12"/><path d="m19 13 5-5 5 5-5 4z"/></svg></span><span>انگشتر</span></a>
+<a href="/product-category/earring/"><span class="dastine-hall"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M20 8c-5 0-5 8 0 8"/><path d="M20 16v8"/><path d="M20 24c-6 4-7 14 0 16 7-2 6-12 0-16z"/></svg></span><span>گوشواره</span></a>
+<a href="/product-category/bracelet/"><span class="dastine-hall"><svg viewBox="0 0 48 48" aria-hidden="true"><ellipse cx="24" cy="24" rx="16" ry="9"/><circle cx="12" cy="29" r="2.5"/><circle cx="24" cy="33" r="2.5"/><circle cx="36" cy="29" r="2.5"/></svg></span><span>دستبند</span></a>
+<a href="/product-tag/gift/"><span class="dastine-hall"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="10" y="20" width="28" height="20" rx="2"/><path d="M8 14h32v6H8zM24 14v26"/><path d="M24 14c-3-6-11-6-9 0M24 14c3-6 11-6 9 0"/></svg></span><span>کادو برای…</span></a>
+<a href="/shop/?max_price=200000"><span class="dastine-hall dastine-hall--text">۲۰۰</span><span>زیر ۲۰۰ هزار</span></a>
+</nav>
+<!-- /wp:html -->
+</div>
+<!-- /wp:group -->
+
+<!-- wp:group {"align":"full","anchor":"gallery","className":"dastine-wall","style":{"spacing":{"padding":{"top":"var:preset|spacing|40","bottom":"var:preset|spacing|60","left":"var:preset|spacing|40","right":"var:preset|spacing|40"}}},"layout":{"type":"constrained"}} -->
+<div id="gallery" class="wp-block-group alignfull dastine-wall" style="padding-top:var(--wp--preset--spacing--40);padding-right:var(--wp--preset--spacing--40);padding-bottom:var(--wp--preset--spacing--60);padding-left:var(--wp--preset--spacing--40)">
+<!-- wp:html -->
+<div class="dastine-wall__head alignwide"><h2 class="dastine-h2">دیوارِ گالری</h2><a href="/shop/">همه‌ی آثار</a></div>
+<!-- /wp:html -->
+<!-- wp:shortcode -->
+[dastine_wall limit="24" columns="4"]
+<!-- /wp:shortcode -->
+<!-- wp:html -->
+<div class="v2-more"><button type="button" onclick="this.closest('.dastine-wall').classList.add('is-open')">آثارِ بیشتر</button></div>
+<!-- /wp:html -->
+</div>
+<!-- /wp:group -->
+
+<!-- wp:html -->
+<section class="v2-workshop" id="workshop">
+<div class="v2-wrap">
+<div>
+<p class="v2-eyebrow">کارگاه</p>
+<h2>آهسته ساخته می‌شود، برای همین می‌ماند</h2>
+<p class="v2-lead">هر قطعه بعد از سفارشِ تو ساخته می‌شود؛ نه در کارخانه، روی میزِ کارِ یک سازنده. همراهش کارتی می‌رسد با اسمِ سازنده، شماره‌ی اثر و تاریخِ ساخت.</p>
+<ol class="v2-steps">
+<li><span class="n">۱</span><div><b>طرح</b><span>هر طرح را با دقت و کم‌تعداد انتخاب می‌کنیم.</span></div></li>
+<li><span class="n">۲</span><div><b>ساخت با دست</b><span>بعد از سفارشِ تو، روی میزِ سازنده شکل می‌گیرد؛ اگر حکاکی خواسته باشی، همان‌جا.</span></div></li>
+<li><span class="n">۳</span><div><b>شناسنامه و ارسال</b><span>با کارتِ امضاشده در جعبه، با پستِ پیشتاز به دستت می‌رسد.</span></div></li>
+</ol>
+<a class="v2-btn" href="/about/">ببین چطور ساخته می‌شود</a>
+</div>
+<div class="v2-visual">
+<div class="v2-photo"><img src="/wp-content/themes/dastine/assets/images/dastine-mark.svg" alt=""><span>جای عکسِ دست‌های سازنده<br>سرِ میزِ کار</span></div>
+<div class="v2-card" aria-label="نمونه‌ی کارتِ شناسنامه">
+<div class="v2-card__top"><span class="v2-card__brand"><img src="/wp-content/themes/dastine/assets/images/dastine-mark.svg" alt="">دستینه</span><span class="v2-card__no">اثرِ شماره‌ی<b>۰۰۰۷</b></span></div>
+<p class="v2-card__name">گردنبندِ «پسته‌ی خندان»</p>
+<dl><div><dt>سازنده</dt><dd>[نامِ سازنده]</dd></div><div><dt>تاریخِ ساخت</dt><dd>۱۷ آبانِ ۱۴۰۵</dd></div><div><dt>جنس</dt><dd>[فلز و سنگ]</dd></div><div><dt>حکاکی</dt><dd>«برای مریم»</dd></div></dl>
+<div class="v2-card__sign"><div><i></i>امضای سازنده</div><span>از دستانِ سازنده، به دستانِ تو</span></div>
+</div>
+</div>
+</div>
+</section>
+<!-- /wp:html -->
+
+</main>
+<!-- /wp:group -->
+
+<!-- wp:html -->
+<footer class="dastine-v2 v2-foot">
+<div class="v2-wrap">
+<div class="v2-foot__grid">
+<div>
+<p class="v2-foot__brand">دستینه</p>
+<p>از دستانِ سازنده، به دستانِ تو</p>
+<p>زیورِ دست‌سازِ شناسنامه‌دار؛ هر قطعه را یک نفر با دست می‌سازد.</p>
+<a class="v2-insta" href="#"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.8"/></svg>اینستاگرامِ دستینه</a>
+</div>
+<div>
+<h3>خریدِ مطمئن</h3>
+<ul>
+<li>پرداختِ کارت‌به‌کارت، رسید در همین سایت</li>
+<li>ارسال با پستِ پیشتاز به همه‌ی ایران</li>
+<li>حکاکیِ دلخواه، رایگان</li>
+</ul>
+</div>
+<div>
+<h3>دستینه</h3>
+<ul>
+<li><a href="/about/">داستانِ ما</a></li>
+<li><a href="/shipping/">ارسال و مرجوعی</a></li>
+<li><a href="/contact/">تماس با ما</a></li>
+<li><a href="/favorites/">دلخواه‌ها</a></li>
+<li>پیگیریِ سفارش<span class="v2-soon">به‌زودی</span></li>
+</ul>
+</div>
+<div>
+<h3>نمادِ اعتماد</h3>
+<div class="v2-seal">جای نمادِ اعتمادِ الکترونیکی</div>
+</div>
+</div>
+<p class="v2-copy">© ۱۴۰۵ دستینه — ساخته‌شده با دست در ایران</p>
+</div>
+<nav class="dastine-bottomnav" aria-label="منوی پایین">
+<a href="/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4l8 7v9h-5v-6H9v6H4z"/></svg><span>گالری</span></a>
+<a href="/shop/"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg><span>سالن‌ها</span></a>
+<a href="/about/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 13V6a1.5 1.5 0 0 1 3 0v5M11 11V5a1.5 1.5 0 0 1 3 0v6M14 11V6.5a1.5 1.5 0 0 1 3 0V14c0 4-2.5 6-5.5 6S7 18.5 6 16l-2-4a1.5 1.5 0 0 1 2.6-1.4L8 13"/></svg><span>داستان</span></a>
+<a href="/favorites/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg><span>دلخواه‌ها</span></a>
+</nav>
+</footer>
+<!-- /wp:html -->

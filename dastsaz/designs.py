@@ -225,6 +225,57 @@ V2_STYLE = (" Close-up lifestyle photo of a small handmade jewelry piece, worn o
             " no text, no letters, no logo, no watermark.")
 
 
+# ---- more pictures of the same piece (2026-11-08): the supplier makes what our pictures show ----
+VIEW_MODEL = C.secret("VIEW_IMAGE_MODEL") or "google/gemini-2.5-flash-image"
+WORN = {"necklace": "around the neck, resting on the collarbone", "earring": "on the earlobe",
+        "ring": "on a finger", "bracelet": "on the wrist", "hair": "in the hair"}
+SAME = ("The exact same handmade jewelry piece as in the reference photo: same shape, colours, materials, "
+        "proportions and small real size; do not add, remove or redesign any part. ")
+VIEWS = {
+    "detail": SAME + "Macro detail photo of the piece alone, lying on warm beige linen, no hands, soft window light, "
+              "shallow depth of field, shows the handmade texture. No text, no logo, no watermark.",
+    "worn": SAME + "Worn by a young woman {where}, cropped so no face is visible, soft natural light, plain cosy "
+            "neutral clothes, the piece clearly in focus and showing its true small size. No text, no logo, no watermark.",
+}
+
+
+def image_like(prompt: str, ref: bytes, key: str, session=None) -> tuple[bytes | None, float]:
+    """A new picture of the piece in `ref` (image in, image out)."""
+    s = session or requests
+    h = {"Authorization": f"Bearer {key}", "Content-Type": "application/json", "X-Title": "Dastsaz views"}
+    data = "data:image/jpeg;base64," + base64.b64encode(ref).decode()
+    for model in dict.fromkeys([VIEW_MODEL, V2_IMAGE_MODEL]):
+        try:
+            r = s.post(CHAT_API, headers=h, timeout=180, json={
+                "model": model, "modalities": ["image", "text"],
+                "messages": [{"role": "user", "content": [{"type": "text", "text": prompt},
+                                                          {"type": "image_url", "image_url": {"url": data}}]}]})
+            j = r.json()
+            msg = ((j.get("choices") or [{}])[0].get("message") or {})
+            for im in msg.get("images") or []:
+                url = ((im or {}).get("image_url") or {}).get("url") or ""
+                if url.startswith("data:") and "," in url:
+                    return base64.b64decode(url.split(",", 1)[1]), float((j.get("usage") or {}).get("cost") or 0)
+            log.warning("view image %s: no image: %s", model, str(j)[:200])
+        except Exception as e:  # noqa: BLE001
+            log.warning("view image %s: %s", model, e)
+    return None, 0.0
+
+
+def views(d: dict, hall: str, key: str, session=None) -> tuple[list[str], float]:
+    """Two more pictures of design `d` (detail + worn). Saved next to the first one; returns their file names."""
+    ref = (_dir() / "img" / d["img"]).read_bytes()
+    names, usd = [], 0.0
+    for kind, prompt in VIEWS.items():
+        raw, c = image_like(prompt.format(where=WORN.get(hall, "on the body")), ref, key, session)
+        usd += c
+        if raw:
+            name = uuid.uuid4().hex[:8] + ".png"
+            (_dir() / "img" / name).write_bytes(shrink(raw))
+            names.append(name)
+    return names, usd
+
+
 def critic_score(x: dict) -> float:
     return (x.get("diff", 0) * 1.2 + x.get("creative", 0) + x.get("make", 0) * 1.2 + x.get("clear", 0) * 0.6)
 

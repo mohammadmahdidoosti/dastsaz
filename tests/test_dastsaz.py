@@ -1124,3 +1124,39 @@ def test_schedule_has_weekly_drop():
     from dastsaz import schedule as S
     wed = dt.datetime(2026, 11, 11, 3, tzinfo=S.TZ)
     assert "shop_drop" in S.due(wed, {})
+
+
+def test_shop_views_adds_two_pictures_to_gallery(tmp_path, monkeypatch):
+    import base64 as b64
+    from dastsaz import designs, shop
+    monkeypatch.setattr(C, "DATA_DIR", tmp_path)
+    d = _design(0, "v2_neck")
+    d["wc"] = {"id": 7, "drop": 0, "status": "publish"}
+    designs.save([d, _design(1, "v2_ear")])
+    (designs._dir() / "img" / "d0.png").write_bytes(b"ref")
+    sent = []
+
+    class S:
+        def post(self, url, headers=None, timeout=None, json=None):
+            sent.append(json)
+            img = "data:image/png;base64," + b64.b64encode(b"new").decode()
+
+            class R:
+                def json(self_inner):
+                    return {"choices": [{"message": {"images": [{"image_url": {"url": img}}]}}], "usage": {"cost": 0.04}}
+            return R()
+
+    class W(_FakeWoo):
+        def get(self, path, **params):
+            return {"name": "گردنبند ماهی", "images": [{"id": 55}]}
+
+    w = W()
+    out = shop.add_views(woo=w, session=S())
+    assert out["done"] == 1 and out["usd"] == 0.08
+    assert "neck" in sent[1]["messages"][0]["content"][0]["text"]
+    assert sent[0]["messages"][0]["content"][1]["image_url"]["url"].startswith("data:image/jpeg;base64,")
+    path, body = w.puts[0]
+    assert path == "products/7" and body["images"][0] == {"id": 55} and len(body["images"]) == 3
+    assert body["images"][1]["src"].endswith(".png")
+    assert len(next(x for x in designs.load() if x["id"] == "d0")["views"]) == 2
+    assert shop.add_views(woo=w, session=S())["done"] == 0        # never twice

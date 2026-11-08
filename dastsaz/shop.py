@@ -226,6 +226,45 @@ def next_drop(woo: Woo | None = None) -> dict:
     return {"drop": drop, "published": n}
 
 
+def add_views(limit: int = 0, progress=None, woo: Woo | None = None, session=None) -> dict:
+    """Two more pictures (detail + worn) for every piece already on the site, added to its gallery."""
+    woo = woo or client()
+    if not woo:
+        return {"error": "WC_KEY / WC_SECRET not set"}
+    key = C.secret("OPENROUTER_API_KEY")
+    todo = [x for x in designs.load() if (x.get("wc") or {}).get("id") and not x.get("views")]
+    todo.sort(key=lambda x: (x["wc"].get("status") != "publish", int(x["wc"].get("drop") or 0)))
+    if limit:
+        todo = todo[:limit]
+    done, usd, failed = 0, 0.0, []
+    for n, d in enumerate(todo, 1):
+        try:
+            names, c = designs.views(d, hall_of(d), key, session)
+            usd += c
+            if names:
+                pid = d["wc"]["id"]
+                cur = woo.get(f"products/{pid}")
+                keep = [{"id": im["id"]} for im in (cur.get("images") or []) if im.get("id")] if isinstance(cur, dict) else []
+                name = (cur.get("name") if isinstance(cur, dict) else "") or d["name"]
+                new = [{"src": f"{PUBLIC}/s/{designs.token()}/img/{f}", "name": name, "alt": name} for f in names]
+                woo.put(f"products/{pid}", {"images": keep + new})
+                with designs._lock:
+                    allx = designs.load()
+                    for x in allx:
+                        if x["id"] == d["id"]:
+                            x["views"] = names
+                    designs.save(allx)
+                done += 1
+            else:
+                failed.append(f"{d['id']}: no picture")
+        except Exception as e:  # noqa: BLE001
+            log.warning("views %s: %s", d.get("id"), e)
+            failed.append(f"{d['id']}: {str(e)[:160]}")
+        if progress:
+            progress(n, len(todo))
+    return {"done": done, "left": len(todo) - done, "failed": failed[:10], "usd": round(usd, 3)}
+
+
 def check(woo: Woo | None = None) -> dict:
     """Can our server reach the shop with the keys? (and can the shop fetch our pictures — tested on first sync)."""
     woo = woo or client()
