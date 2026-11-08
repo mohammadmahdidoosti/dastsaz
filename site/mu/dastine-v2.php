@@ -15,6 +15,19 @@ add_action('wp_head', function () {
         . '</style>';
 }, 50);
 
+/* ---------- floating support (WhatsApp, Telegram, phone) ---------- */
+add_action('wp_footer', function () {
+    if (is_admin()) { return; }
+    echo '<details class="dastine-fab"><summary aria-label="پشتیبانی">'
+        . '<svg class="dastine-fab__open" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg>'
+        . '<svg class="dastine-fab__close" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></summary>'
+        . '<div class="dastine-fab__list">'
+        . '<a href="https://wa.me/989100291903" rel="noopener"><i style="background:#25D366"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1.3-4A8 8 0 1 1 8 19z"/><path d="M9 9c0 3 3 6 6 6l1-1.5-2-1-1 .8c-1-.5-2-1.5-2.4-2.4l.8-1-1-2z"/></svg></i><span>واتس‌اپ</span></a>'
+        . '<a href="https://t.me/+989100291903" rel="noopener"><i style="background:#2AABEE"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 4 3 11l6 2 2 6 3-4 5 4z"/><path d="m9 13 8-6"/></svg></i><span>تلگرام</span></a>'
+        . '<a href="tel:09100291903"><i style="background:#3B2A24"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1z"/></svg></i><span>تماس تلفنی</span></a>'
+        . '</div></details>';
+}, 30);
+
 /* ---------- v2 ---------- */
 function dastine_v2_halls() {
     return array(
@@ -226,6 +239,27 @@ ul.products li.product a:focus:not(:focus-visible),.dastine-hero2 a:focus:not(:f
 .dastine-v2 .dastine-v2hall__chips{display:flex;flex-wrap:wrap;gap:8px}
 .dastine-v2 .dastine-v2hall__chips a{display:inline-flex;align-items:center;height:36px;padding:0 16px;border:1px solid #D9CDBD;border-radius:999px;color:var(--d-ink);text-decoration:none;font-size:14px}
 .dastine-v2 .dastine-v2hall__chips a[aria-current]{background:var(--d-ink);border-color:var(--d-ink);color:#fff}
+.v2-photo--img{border:0!important;padding:0!important;overflow:hidden;background:none!important}
+.v2-photo--img img{width:100%!important;height:100%!important;object-fit:cover;opacity:1!important;display:block}
+.v2-custom{padding:0 0 72px}
+.v2-custom__card{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:36px 40px;border-radius:14px;background:var(--d-ink);color:#F4EDE3!important;text-decoration:none!important;transition:transform .2s}
+.v2-custom__card:hover{transform:translateY(-2px)}
+.v2-custom__card .v2-eyebrow{color:#E8B9A6!important}
+.v2-custom__card h2{font-size:28px;margin:0 0 8px;color:#fff}
+.v2-custom__card p{margin:0;font-size:16px;line-height:1.9;color:#E9DFD2}
+.v2-custom__go{flex-shrink:0;display:inline-flex;align-items:center;height:50px;padding:0 28px;border-radius:999px;background:#fff;color:var(--d-anar);font-weight:700}
+@media (max-width:700px){.v2-custom__card{flex-direction:column;align-items:flex-start;padding:28px 24px}}
+.dastine-fab{position:fixed;left:20px;bottom:20px;z-index:70;display:flex;flex-direction:column-reverse;align-items:flex-start;gap:10px}
+.dastine-fab summary{list-style:none;width:58px;height:58px;border-radius:50%;background:var(--d-anar);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 8px 22px rgba(59,42,36,.25)}
+.dastine-fab summary::-webkit-details-marker{display:none}
+.dastine-fab summary svg{width:26px;height:26px;fill:none;stroke:#fff;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.dastine-fab[open] .dastine-fab__open,.dastine-fab:not([open]) .dastine-fab__close{display:none}
+.dastine-fab__list{display:flex;flex-direction:column;gap:10px;margin-bottom:10px}
+.dastine-fab__list a{display:flex;align-items:center;gap:10px;text-decoration:none!important;color:var(--d-ink)!important;font-weight:600;font-size:14px}
+.dastine-fab__list a span{background:#fff;padding:8px 14px;border-radius:8px;box-shadow:0 4px 14px rgba(59,42,36,.12)}
+.dastine-fab__list a i{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(59,42,36,.15)}
+.dastine-fab__list a i svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+@media (max-width:900px){.dastine-fab{bottom:80px;left:14px}}
 @media (max-width:900px){
 .dastine-v2 .dastine-product .woocommerce-Tabs-panel--description{grid-template-columns:minmax(0,1fr)}
 .dastine-v2 .dastine-product .woocommerce-Tabs-panel--description>*{grid-column:1!important;grid-row:auto!important}
