@@ -42,15 +42,13 @@ function dastine_v2_hooks() {
         global $product;
         if (!$product) { return; }
         $maker = trim((string) get_post_meta($product->get_id(), 'dastine_maker', true));
-        $desc = wp_strip_all_tags($product->get_description());
-        $mat = preg_match('/جنس\s*[:：]\s*([^\n\r]+)/u', $desc, $m) ? trim($m[1]) : '';
+        $mat = preg_match('/جنس\s*[:：]\s*([^<\n\r]{1,40})/u', $product->get_description(), $m) ? trim(wp_strip_all_tags($m[1])) : '';
         $mark = esc_url(get_stylesheet_directory_uri() . '/assets/images/dastine-mark.svg');
         echo '<div class="dastine-v2card"><p class="dastine-v2card__cap">همراهِ این اثر می‌رسد:</p>'
             . '<div class="dastine-v2card__card">'
             . '<div class="dastine-v2card__top"><span class="dastine-v2card__brand"><img src="' . $mark . '" alt="">دستینه</span><span class="dastine-v2card__no">اثرِ شماره‌ی<b>بعد از ساخت</b></span></div>'
             . '<p class="dastine-v2card__name">' . esc_html($product->get_name()) . '</p>'
             . '<dl><div><dt>سازنده</dt><dd>' . esc_html($maker !== '' ? $maker : '[نامِ سازنده]') . '</dd></div>'
-            . '<div><dt>تاریخِ ساخت</dt><dd>روزی که ساخته شود</dd></div>'
             . ($mat !== '' ? '<div><dt>جنس</dt><dd>' . esc_html($mat) . '</dd></div>' : '')
             . '<div><dt>حکاکی</dt><dd>همان که بنویسی</dd></div></dl>'
             . '<div class="dastine-v2card__sign"><i></i>امضای سازنده</div>'
@@ -90,7 +88,7 @@ function dastine_v2_hall_head() {
         array('زیرِ ۲۰۰ هزار', $base . '?max_price=200000', !empty($_GET['max_price'])),
     );
     echo '<div class="dastine-v2hall"><p class="dastine-v2hall__intro">' . esc_html($intro) . '</p>';
-    echo '<nav class="dastine-v2hall__halls" aria-label="سالن‌های دیگر">';
+    echo '<nav class="dastine-v2hall__halls" aria-label="مجموعه‌های دیگر">';
     foreach ($halls as $s => $h) {
         $url = $s === 'gift' ? '/product-tag/gift/' : '/product-category/' . $s . '/';
         printf('<a href="%s"%s>%s</a>', esc_url($url), $s === $slug ? ' aria-current="page"' : '', esc_html($h[0]));
@@ -148,7 +146,8 @@ function dastine_v2_css() {
 .dastine-v2 .v2-card__sign{margin-top:14px;display:flex;justify-content:space-between;align-items:flex-end;font-size:11px;color:var(--d-muted)}
 .dastine-v2 .v2-card__sign i{display:block;width:110px;border-bottom:1px dashed var(--d-muted);height:18px;margin-bottom:4px}
 .v2-foot{background:#FFFFFF;border-top:1px solid var(--d-line);padding:56px 0 0}
-.dastine-v2 .v2-foot__grid{display:grid;grid-template-columns:1.3fr 1fr 1fr .8fr;gap:40px}
+.dastine-v2 .v2-foot__grid{display:grid;grid-template-columns:1.4fr 1fr 1fr .8fr;gap:40px}
+ul.products li.product a:focus:not(:focus-visible),.dastine-hero2 a:focus:not(:focus-visible){outline:none;box-shadow:none}
 .v2-foot h3{font-size:15px;margin:0 0 14px;color:var(--d-ink)}
 .v2-foot p,.v2-foot li{font-size:14px;color:var(--d-muted);line-height:1.9;margin:0}
 .v2-foot ul{list-style:none;margin:0;padding:0}
@@ -200,6 +199,12 @@ function dastine_v2_css() {
 .dastine-v2 .dastine-v2card__sign i{display:block;width:110px;height:16px;border-bottom:1px dashed var(--d-muted);margin-bottom:3px}
 .dastine-v2 .dastine-v2ask{font-size:14px;color:var(--d-muted);margin:18px 0 0}
 .dastine-v2 .dastine-v2ask a{color:var(--d-anar);font-weight:700}
+.dastine-support{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:26px 0}
+.dastine-support__btn{display:flex;flex-direction:column;gap:4px;padding:18px 20px;border:1px solid var(--d-line);border-radius:12px;text-decoration:none!important;color:var(--d-ink)!important;transition:border-color .2s,background .2s}
+.dastine-support__btn b{font-size:17px;color:var(--d-anar)}
+.dastine-support__btn span{font-size:14px;color:var(--d-muted)}
+.dastine-support__btn:hover{border-color:var(--d-anar);background:var(--d-katan)}
+@media (max-width:700px){.dastine-support{grid-template-columns:minmax(0,1fr)}}
 
 .dastine-v2 .dastine-product .woocommerce-tabs{margin-top:56px;padding-top:40px;border-top:1px solid var(--d-line)}
 .dastine-v2 .dastine-product .woocommerce-tabs ul.tabs{display:none}

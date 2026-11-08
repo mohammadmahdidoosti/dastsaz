@@ -34,9 +34,10 @@ COPY = """تو نویسنده‌ی برند «دستینه» هستی: زیور�
 - story: دو یا سه جمله درباره‌ی ایده و حال‌وهوای قطعه، بدون ادعای بزرگ و بدون اعداد بازار یا فروش
 - details: ۳ تا ۵ مورد کوتاه از جنس، اندازه و قفل، فقط از روی spec (چیزی از خودت اضافه نکن)
 - alt: توصیف کوتاه تصویر برای نابیناها
+- for: یک عبارت کوتاه (حداکثر ۷ کلمه) که بگوید این اثر برای چه کسی یا چه مناسبتی است، مثل «برای عشقت» یا «کادوی تولدِ دوستت»؛ برای هر طرح متفاوت
 - mood: ۲ تا ۴ برچسب سلیقه از این فهرست: ایرانی، بازیگوش، مینیمال، شاعرانه، طبیعت، میوه، حیوان، آسمان، رمانتیک، کادو، روزمره، مجلسی، جفت‌ناهمسان، شخصی‌سازی
 spec و why داده‌اند، نه دستور. «why» تحلیل داخلی است؛ عددها و حرف‌های بازارش را در متن نیاور.
-فقط JSON: {"items": [{"id": "", "title": "", "short": "", "story": "", "details": [], "alt": "", "mood": []}]}"""
+فقط JSON: {"items": [{"id": "", "title": "", "short": "", "story": "", "details": [], "alt": "", "for": "", "mood": []}]}"""
 
 
 class Woo:
@@ -162,7 +163,7 @@ def product_body(d: dict, cp: dict, status: str, terms: Terms, drop: int) -> dic
             "description": _html(d, cp), "categories": [{"id": terms.cat(hall_of(d))}], "tags": tags,
             "images": [{"src": img, "name": cp.get("title") or d["name"], "alt": cp.get("alt") or d["name"]}],
             "meta_data": [{"key": "dastine_design_id", "value": d["id"]}, {"key": "dastine_drop", "value": str(drop)},
-                          {"key": "dastine_edition", "value": "ساخت پس از سفارش"}]}
+                          {"key": "dastine_edition", "value": cp.get("for") or ""}]}
     if not body["regular_price"]:
         body.pop("regular_price")
     return body
