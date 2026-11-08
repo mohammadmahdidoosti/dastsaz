@@ -86,7 +86,7 @@ function dastine_v2_hooks() {
             . '<div class="dastine-v2card__card">'
             . '<div class="dastine-v2card__top"><span class="dastine-v2card__brand"><img src="' . $mark . '" alt="">دستینه</span><span class="dastine-v2card__no">اثرِ شماره‌ی<b>بعد از ساخت</b></span></div>'
             . '<p class="dastine-v2card__name">' . esc_html($product->get_name()) . '</p>'
-            . '<dl><div><dt>سازنده</dt><dd>' . esc_html($maker !== '' ? $maker : '[نامِ سازنده]') . '</dd></div>'
+            . '<dl><div><dt>سازنده</dt><dd>' . esc_html($maker !== '' ? $maker : 'به خطِ خودِ سازنده') . '</dd></div>'
             . ($mat !== '' ? '<div><dt>جنس</dt><dd>' . esc_html($mat) . '</dd></div>' : '')
             . '<div><dt>حکاکی</dt><dd>همان که بنویسی</dd></div></dl>'
             . '<div class="dastine-v2card__sign"><i></i>امضای سازنده</div>'
