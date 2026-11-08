@@ -28,6 +28,31 @@ add_action('wp_footer', function () {
         . '</div></details>';
 }, 30);
 
+/* ---------- trust seal (e-Namad): the owner pastes the code on Settings › نماد اعتماد ---------- */
+add_action('admin_menu', function () {
+    add_options_page('نماد اعتماد', 'نماد اعتماد', 'unfiltered_html', 'dastine-seal', function () {
+        if (!current_user_can('unfiltered_html')) { return; }
+        $note = '';
+        if (!empty($_POST['dastine_seal_nonce']) && wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['dastine_seal_nonce'])), 'dastine_seal')) {
+            update_option('dastine_seal', trim((string) wp_unslash($_POST['dastine_seal'] ?? '')));
+            $note = 'ذخیره شد. پایینِ همه‌ی صفحه‌ها، ستونِ «نمادِ اعتماد» را ببینید.';
+        }
+        echo '<div class="wrap" dir="rtl"><h1>نماد اعتماد (اینماد)</h1>';
+        if ($note) { echo '<div class="notice notice-success"><p>' . esc_html($note) . '</p></div>'; }
+        echo '<p>کدی را که سایتِ اینماد داده (یک لینک و یک عکس) کامل این‌جا بچسبانید و ذخیره کنید. خالی بماند، جای خالی نشان داده می‌شود.</p>'
+            . '<form method="post">';
+        wp_nonce_field('dastine_seal', 'dastine_seal_nonce');
+        echo '<textarea name="dastine_seal" rows="8" class="large-text code" dir="ltr">' . esc_textarea((string) get_option('dastine_seal', '')) . '</textarea>'
+            . '<p><button class="button button-primary">ذخیره</button></p></form></div>';
+    });
+});
+add_filter('render_block', function ($html, $block) {
+    if (($block['blockName'] ?? '') !== 'core/html' || strpos($html, 'v2-seal') === false) { return $html; }
+    $code = trim((string) get_option('dastine_seal', ''));
+    if ($code === '') { return $html; }
+    return preg_replace('#<div class="v2-seal">.*?</div>#su', '<div class="v2-seal v2-seal--on">' . $code . '</div>', $html, 1);
+}, 10, 2);
+
 /* ---------- v2 ---------- */
 function dastine_v2_halls() {
     return array(
@@ -239,6 +264,8 @@ ul.products li.product a:focus:not(:focus-visible),.dastine-hero2 a:focus:not(:f
 .dastine-v2 .dastine-v2hall__chips{display:flex;flex-wrap:wrap;gap:8px}
 .dastine-v2 .dastine-v2hall__chips a{display:inline-flex;align-items:center;height:36px;padding:0 16px;border:1px solid #D9CDBD;border-radius:999px;color:var(--d-ink);text-decoration:none;font-size:14px}
 .dastine-v2 .dastine-v2hall__chips a[aria-current]{background:var(--d-ink);border-color:var(--d-ink);color:#fff}
+.dastine-v2 .v2-seal--on{border:0;width:auto;height:auto;padding:0}
+.v2-seal--on img{max-width:110px;height:auto}
 .v2-photo--img{border:0!important;padding:0!important;overflow:hidden;background:none!important}
 .v2-photo--img img{width:100%!important;height:100%!important;object-fit:cover;opacity:1!important;display:block}
 .v2-custom{padding:0 0 72px}
