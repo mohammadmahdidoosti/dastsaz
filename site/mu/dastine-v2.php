@@ -60,7 +60,7 @@ function dastine_latin_digits($s) {
         '٠' => '0', '١' => '1', '٢' => '2', '٣' => '3', '٤' => '4', '٥' => '5', '٦' => '6', '٧' => '7', '٨' => '8', '٩' => '9'));
 }
 add_filter('woocommerce_get_country_locale', function ($l) {
-    $l['IR']['postcode'] = array('required' => false, 'hidden' => true);
+    $l['IR']['postcode'] = array('required' => true, 'hidden' => false, 'label' => 'کد پستی', 'priority' => 95);
     $l['IR']['phone'] = array('label' => 'موبایل', 'required' => true, 'priority' => 25);
     $l['IR']['address_1'] = array('label' => 'نشانیِ کامل', 'placeholder' => 'محله، خیابان، کوچه، پلاک، واحد', 'priority' => 90);
     $l['IR']['state'] = array('priority' => 60);
@@ -68,8 +68,8 @@ add_filter('woocommerce_get_country_locale', function ($l) {
     return $l;
 }, 50);
 add_filter('woocommerce_checkout_fields', function ($f) {
-    unset($f['billing']['billing_email'], $f['billing']['billing_postcode'], $f['billing']['billing_company'], $f['billing']['billing_address_2'],
-        $f['shipping']['shipping_postcode'], $f['shipping']['shipping_company'], $f['shipping']['shipping_address_2']);
+    unset($f['billing']['billing_email'], $f['billing']['billing_company'], $f['billing']['billing_address_2'],
+        $f['shipping']['shipping_company'], $f['shipping']['shipping_address_2']);
     if (isset($f['billing']['billing_phone'])) {
         $f['billing']['billing_phone'] = array_merge($f['billing']['billing_phone'], array(
             'label' => 'موبایل', 'required' => true, 'priority' => 25, 'placeholder' => '۰۹۱۲۱۲۳۴۵۶۷',
@@ -78,6 +78,9 @@ add_filter('woocommerce_checkout_fields', function ($f) {
     if (isset($f['billing']['billing_address_1'])) {
         $f['billing']['billing_address_1']['placeholder'] = 'محله، خیابان، کوچه، پلاک، واحد';
         $f['billing']['billing_address_1']['label'] = 'نشانیِ کامل';
+    }
+    if (isset($f['billing']['billing_postcode'])) {
+        $f['billing']['billing_postcode']['placeholder'] = '۱۰ رقم، بدون خط تیره';
     }
     if (isset($f['order']['order_comments'])) {
         $f['order']['order_comments']['placeholder'] = 'اگر نکته‌ای درباره‌ی سفارش یا حکاکی داری، این‌جا بنویس (اختیاری)';
@@ -91,14 +94,21 @@ add_filter('woocommerce_checkout_posted_data', function ($d) {
         if (strlen($p) === 10 && $p[0] === '9') { $p = '0' . $p; }
         $d['billing_phone'] = $p;
     }
+    if (isset($d['billing_postcode'])) {
+        $d['billing_postcode'] = preg_replace('/\D+/', '', dastine_latin_digits($d['billing_postcode']));
+    }
     return $d;
 });
 add_action('woocommerce_after_checkout_validation', function ($data, $errors) {
     if (!preg_match('/^09\d{9}$/', (string) ($data['billing_phone'] ?? ''))) {
         $errors->add('validation', 'شماره‌ی موبایل را درست وارد کن؛ مثلاً ۰۹۱۲۱۲۳۴۵۶۷');
     }
+    if (!preg_match('/^\d{10}$/', (string) ($data['billing_postcode'] ?? ''))) {
+        $errors->add('validation', 'کد پستی باید ۱۰ رقم باشد.');
+    }
 }, 10, 2);
 add_filter('woocommerce_cart_needs_shipping_address', '__return_false');
+add_filter('woocommerce_validate_postcode', function ($ok, $postcode, $country) { return $country === 'IR' ? true : $ok; }, 20, 3);
 add_filter('gettext', function ($t, $text, $domain) {
     if ($domain === 'woocommerce' && ($text === 'Billing details' || $text === 'Billing &amp; Shipping')) { return 'اطلاعاتِ ارسال'; }
     return $t;
@@ -332,6 +342,16 @@ ul.products li.product a:focus:not(:focus-visible),.dastine-hero2 a:focus:not(:f
 .woocommerce-checkout #payment{background:var(--d-katan)!important;border-radius:12px}
 .woocommerce-checkout #place_order{background:var(--d-anar)!important;color:#fff!important;border-radius:999px!important;width:100%;height:56px;font-size:17px!important;font-weight:700!important;font-family:inherit}
 .woocommerce-checkout #place_order:hover{background:var(--d-ink)!important}
+.dastine-buybar{bottom:calc(64px + env(safe-area-inset-bottom))!important;visibility:hidden;transform:translateY(calc(100% + 120px))!important}
+.dastine-buybar.is-on{visibility:visible;transform:none!important}
+@media (max-width:900px){.single-product .dastine-fab{bottom:150px}}
+.woocommerce-cart .woocommerce{max-width:1000px;margin:0 auto}
+.woocommerce-cart table.shop_table{border:1px solid var(--d-line);border-radius:12px;border-collapse:separate;overflow:hidden}
+.woocommerce-cart table.cart img{width:72px;border-radius:8px}
+.woocommerce-cart table.cart td.actions .coupon .input-text{border:1px solid #D9CDBD;border-radius:10px;padding:10px 12px;min-width:160px;font-family:inherit}
+.woocommerce-cart .button,.woocommerce-cart button.button{border-radius:999px!important;font-family:inherit!important}
+.woocommerce-cart .wc-proceed-to-checkout a.checkout-button{background:var(--d-anar)!important;color:#fff!important;border-radius:999px!important;font-size:17px!important;padding:16px!important}
+.woocommerce-cart .cart_totals h2{font-size:20px}
 .v2-photo--img{border:0!important;padding:0!important;overflow:hidden;background:none!important}
 .v2-photo--img img{width:100%!important;height:100%!important;object-fit:cover;opacity:1!important;display:block}
 .v2-custom{padding:0 0 72px}
