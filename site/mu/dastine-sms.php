@@ -80,6 +80,7 @@ function dastine_sms_send($to, $template, $params) {
 function dastine_sms_queue($order, $kind) {
     $cfg = dastine_sms_cfg();
     if ($cfg['on'] !== '1' || !$order) { return; }
+    if (trim((string) ($cfg['tpl_' . $kind] ?? '')) === '') { return; }   // empty template = this message is switched off
     if ($order->get_meta('_dastine_sms_' . $kind)) { return; }
     $order->update_meta_data('_dastine_sms_' . $kind, 'queued');
     $order->save_meta_data();
