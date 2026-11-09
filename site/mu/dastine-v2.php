@@ -353,6 +353,14 @@ ul.products li.product a:focus:not(:focus-visible),.dastine-hero2 a:focus:not(:f
 .woocommerce-cart .wc-proceed-to-checkout a.checkout-button{background:var(--d-anar)!important;color:#fff!important;border-radius:999px!important;font-size:17px!important;padding:16px!important}
 .woocommerce-cart .cart_totals h2{font-size:20px}
 .woocommerce-shipping-destination,.woocommerce-shipping-calculator{display:none!important}
+.dastine-hp{left:auto!important;right:auto!important;clip-path:inset(50%);overflow:hidden;pointer-events:none}
+.dastine-pay{overflow-x:clip}
+.dastine-pay__amount{padding:14px 0 12px;border-bottom:1px dashed #DCCBB6}
+.dastine-pay__amount>span{color:var(--d-muted);font-size:14px}
+.dastine-pay__amount>div{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:4px 0}
+.dastine-pay__amount b{font-size:30px;font-weight:800;color:var(--d-ink);letter-spacing:.5px}
+.dastine-pay__amount small{display:block;color:var(--d-muted);font-size:13px;line-height:1.9}
+.dastine-pay__row--card b{font-size:17px!important;white-space:nowrap}
 .v2-photo--img{border:0!important;padding:0!important;overflow:hidden;background:none!important}
 .v2-photo--img img{width:100%!important;height:100%!important;object-fit:cover;opacity:1!important;display:block}
 .v2-custom{padding:0 0 72px}

@@ -41,8 +41,8 @@ add_action('admin_init', function () {
     $bacs = array_merge($bacs, array(
         'enabled' => 'yes',
         'title' => 'کارت‌به‌کارت',
-        'description' => 'بعد از ثبتِ سفارش، شماره‌ی کارت و مبلغ را می‌بینی؛ واریز کن و رسیدش را همان‌جا بفرست.',
-        'instructions' => 'رسیدِ واریز را در صفحه‌ی پرداخت بفرست تا ساختِ قطعه‌ات شروع شود.',
+        'description' => 'سفارش را که ثبت کنی، شماره‌ی کارت و مبلغ را نشانت می‌دهیم. مبلغ چند تومان با قیمت فرق دارد؛ همین چند تومان کمک می‌کند واریزت را بدون رسید و شماره‌ی پیگیری بشناسیم.',
+        'instructions' => 'همان مبلغ را دقیق کارت‌به‌کارت کن تا واریزت را بشناسیم و ساختِ قطعه‌ات شروع شود.',
     ));
     update_option('woocommerce_bacs_settings', $bacs);
     // Shipping: one zone for Iran with post. The price is set by the owner later.
@@ -134,6 +134,30 @@ add_filter('woocommerce_get_checkout_order_received_url', function ($url, $order
     return $url;
 }, 10, 2);
 
+/* every card-to-card order gets a few toman off, so the exact amount tells us whose payment it is */
+add_action('woocommerce_checkout_create_order', function ($order, $data) {
+    if (($data['payment_method'] ?? '') !== 'bacs') { return; }
+    $base = (float) $order->get_total();
+    if ($base < 2000) { return; }
+    $taken = array();
+    foreach (wc_get_orders(array('status' => array('pending', 'on-hold'), 'limit' => 300, 'date_created' => '>' . (time() - 30 * DAY_IN_SECONDS))) as $o) {
+        $taken[(string) (int) round((float) $o->get_total())] = true;
+    }
+    $x = 0;
+    for ($i = 0; $i < 60; $i++) {
+        $x = wp_rand(11, 999);
+        if (!isset($taken[(string) (int) round($base - $x)])) { break; }
+    }
+    $fee = new WC_Order_Item_Fee();
+    $fee->set_name('شناسه‌ی واریز (کسر از مبلغ)');
+    $fee->set_amount(-$x);
+    $fee->set_total(-$x);
+    $fee->set_tax_status('none');
+    $order->add_item($fee);
+    $order->set_total($base - $x);
+    $order->update_meta_data('_dastine_pay_id', $x);
+}, 20, 2);
+
 function dastine_pay_order() {
     $id = isset($_REQUEST['order']) ? absint($_REQUEST['order']) : 0;
     $key = isset($_REQUEST['key']) ? sanitize_text_field(wp_unslash($_REQUEST['key'])) : '';
@@ -165,7 +189,6 @@ add_action('template_redirect', function () {
             if (is_wp_error($att)) { $att = 0; $err = 'file'; }
         }
     }
-    if (!$att && $code === '') { $err = $err ?: 'empty'; }
     if ($err) {
         wp_safe_redirect(add_query_arg(array('order' => $order->get_id(), 'key' => $order->get_order_key(), 'err' => $err), get_permalink()));
         exit;
@@ -211,26 +234,26 @@ add_shortcode('dastine_pay', function () {
     $card = preg_replace('/\D+/', '', (string) ($a['account_number'] ?? ''));
     $card_fmt = $card ? implode('-', str_split($card, 4)) : '';
     $total = (int) round((float) $order->get_total());
-    $rows = '<div class="dastine-pay__row"><span>مبلغ</span><b>' . wp_kses_post(wc_price($order->get_total())) . '</b><button type="button" class="dastine-copy" data-copy="' . esc_attr($total) . '">کپی</button></div>';
+    $rial = $total * 10;
+    $off = (int) $order->get_meta('_dastine_pay_id');
+    $rows = '<div class="dastine-pay__amount"><span>مبلغِ واریز، به ریال</span><div><b>' . esc_html(dastine_fa(number_format($rial))) . '</b><button type="button" class="dastine-copy" data-copy="' . esc_attr($rial) . '">کپی</button></div>'
+        . '<small>یعنی ' . esc_html(dastine_fa(number_format($total))) . ' تومان' . ($off ? ' — ' . esc_html(dastine_fa($off)) . ' تومان کمتر از قیمت، به حسابِ ما' : '') . '</small></div>';
     if (!empty($a['bank_name'])) { $rows .= '<div class="dastine-pay__row"><span>بانک</span><b>' . esc_html($a['bank_name']) . '</b></div>'; }
     if (!empty($a['account_name'])) { $rows .= '<div class="dastine-pay__row"><span>به نامِ</span><b>' . esc_html($a['account_name']) . '</b></div>'; }
     $rows .= $card
         ? '<div class="dastine-pay__row dastine-pay__row--card"><span>شماره‌ی کارت</span><b dir="ltr">' . esc_html(dastine_fa($card_fmt)) . '</b><button type="button" class="dastine-copy" data-copy="' . esc_attr($card) . '">کپی</button></div>'
         : '<div class="dastine-pay__row"><span>شماره‌ی کارت</span><b>به‌زودی</b></div>';
     $err = isset($_GET['err']) ? sanitize_key($_GET['err']) : '';
-    $msg = $err === 'file' ? '<p class="dastine-pay__err">تصویرِ رسید باید JPG، PNG یا WEBP و کمتر از ۴ مگابایت باشد.</p>'
-        : ($err === 'empty' ? '<p class="dastine-pay__err">تصویرِ رسید یا شماره‌ی پیگیری را بفرست.</p>' : '');
+    $msg = $err === 'file' ? '<p class="dastine-pay__err">عکسِ رسید باید JPG، PNG یا WEBP و کمتر از ۴ مگابایت باشد.</p>' : '';
     $form = '<form class="dastine-pay__form" method="post" enctype="multipart/form-data">'
         . wp_nonce_field('dastine_pay_' . $order->get_id(), '_dpn', true, false)
         . '<input type="hidden" name="dastine_pay" value="1"><input type="hidden" name="order" value="' . esc_attr($order->get_id()) . '"><input type="hidden" name="key" value="' . esc_attr($order->get_order_key()) . '">'
         . '<input type="text" name="website" tabindex="-1" autocomplete="off" class="dastine-hp" aria-hidden="true">'
-        . '<label class="dastine-drop"><input type="file" name="receipt" accept="image/jpeg,image/png,image/webp"><span class="dastine-drop__t">تصویرِ رسید را این‌جا بگذار یا بزن تا انتخاب کنی</span><span class="dastine-pay__muted">JPG، PNG یا WEBP، حداکثر ۴ مگابایت</span></label>'
-        . '<div class="dastine-or"><span>یا</span></div>'
-        . '<label class="dastine-field"><span>شماره‌ی پیگیری یا چهار رقمِ آخرِ کارتِ خودت</span><input type="text" name="paycode" inputmode="numeric" maxlength="60" placeholder="مثلاً ۱۲۳۴۵۶"></label>'
+        . '<label class="dastine-drop"><input type="file" name="receipt" accept="image/jpeg,image/png,image/webp"><span class="dastine-drop__t">اگر دوست داشتی، عکسِ رسید را هم بگذار</span><span class="dastine-pay__muted">اختیاری است؛ با همان مبلغ هم پیدایش می‌کنیم</span></label>'
         . $msg
-        . '<button type="submit" class="dastine-btn dastine-btn--anar dastine-btn--block">ثبتِ پرداخت</button></form>';
+        . '<button type="submit" class="dastine-btn dastine-btn--anar dastine-btn--block">واریز کردم</button></form>';
     return '<div class="dastine-pay">' . $head
-        . '<h1>یک قدم تا ساختِ قطعه‌ات</h1><p class="dastine-pay__muted">مبلغ را به این کارت واریز کن، بعد رسید یا شماره‌ی پیگیری را بفرست.</p>'
+        . '<h1>یک قدم تا ساختِ قطعه‌ات</h1><p class="dastine-pay__muted">همین مبلغ را دقیق، تا رقمِ آخر، به این کارت بزن. چند تومانِ آخرش مثلِ امضای سفارشِ توست؛ با آن می‌فهمیم واریز از طرفِ توست و دیگر رسید و شماره‌ی پیگیری لازم نیست. بعد دکمه‌ی «واریز کردم» را بزن.</p>'
         . '<div class="dastine-pay__card">' . $rows . '</div>' . $form . '</div>';
 });
 
