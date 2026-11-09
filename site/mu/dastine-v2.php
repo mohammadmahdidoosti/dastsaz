@@ -24,6 +24,7 @@ add_action('wp_footer', function () {
         . '<div class="dastine-fab__list">'
         . '<a href="https://wa.me/989100291903" rel="noopener"><i style="background:#25D366"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1.3-4A8 8 0 1 1 8 19z"/><path d="M9 9c0 3 3 6 6 6l1-1.5-2-1-1 .8c-1-.5-2-1.5-2.4-2.4l.8-1-1-2z"/></svg></i><span>واتس‌اپ</span></a>'
         . '<a href="https://t.me/+989100291903" rel="noopener"><i style="background:#2AABEE"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 4 3 11l6 2 2 6 3-4 5 4z"/><path d="m9 13 8-6"/></svg></i><span>تلگرام</span></a>'
+        . '<a href="https://www.instagram.com/dastine.official/" rel="noopener"><i style="background:#C13584"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.6"/><circle cx="16.8" cy="7.2" r="0.6"/></svg></i><span>اینستاگرام</span></a>'
         . '<a href="tel:09100291903"><i style="background:#3B2A24"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1z"/></svg></i><span>تماس تلفنی</span></a>'
         . '</div></details>';
 }, 30);
@@ -237,7 +238,7 @@ ul.products li.product a:focus:not(:focus-visible),.dastine-hero2 a:focus:not(:f
 .dastine-v2 .dastine-v2card__sign i{display:block;width:110px;height:16px;border-bottom:1px dashed var(--d-muted);margin-bottom:3px}
 .dastine-v2 .dastine-v2ask{font-size:14px;color:var(--d-muted);margin:18px 0 0}
 .dastine-v2 .dastine-v2ask a{color:var(--d-anar);font-weight:700}
-.dastine-support{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:26px 0}
+.dastine-support{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:26px 0}
 .dastine-support__btn{display:flex;flex-direction:column;gap:4px;padding:18px 20px;border:1px solid var(--d-line);border-radius:12px;text-decoration:none!important;color:var(--d-ink)!important;transition:border-color .2s,background .2s}
 .dastine-support__btn b{font-size:17px;color:var(--d-anar)}
 .dastine-support__btn span{font-size:14px;color:var(--d-muted)}
