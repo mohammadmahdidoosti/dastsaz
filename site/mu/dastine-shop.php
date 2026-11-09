@@ -249,11 +249,10 @@ add_shortcode('dastine_pay', function () {
         . wp_nonce_field('dastine_pay_' . $order->get_id(), '_dpn', true, false)
         . '<input type="hidden" name="dastine_pay" value="1"><input type="hidden" name="order" value="' . esc_attr($order->get_id()) . '"><input type="hidden" name="key" value="' . esc_attr($order->get_order_key()) . '">'
         . '<input type="text" name="website" tabindex="-1" autocomplete="off" class="dastine-hp" aria-hidden="true">'
-        . '<label class="dastine-drop"><input type="file" name="receipt" accept="image/jpeg,image/png,image/webp"><span class="dastine-drop__t">اگر دوست داشتی، عکسِ رسید را هم بگذار</span><span class="dastine-pay__muted">اختیاری است؛ با همان مبلغ هم پیدایش می‌کنیم</span></label>'
         . $msg
         . '<button type="submit" class="dastine-btn dastine-btn--anar dastine-btn--block">واریز کردم</button></form>';
     return '<div class="dastine-pay">' . $head
-        . '<h1>یک قدم تا ساختِ قطعه‌ات</h1><p class="dastine-pay__muted">همین مبلغ را دقیق، تا رقمِ آخر، به این کارت بزن. چند تومانِ آخرش مثلِ امضای سفارشِ توست؛ با آن می‌فهمیم واریز از طرفِ توست و دیگر رسید و شماره‌ی پیگیری لازم نیست. بعد دکمه‌ی «واریز کردم» را بزن.</p>'
+        . '<h1>یک قدم تا ساختِ قطعه‌ات</h1><p class="dastine-pay__muted">همین مبلغ را دقیق، تا رقمِ آخر، به این کارت بزن. چند تومانِ آخرش مثلِ امضای سفارشِ توست؛ با آن می‌فهمیم واریز از طرفِ توست و رسید یا شماره‌ی پیگیری لازم نیست. واریز که کردی، فقط دکمه‌ی «واریز کردم» را بزن.</p>'
         . '<div class="dastine-pay__card">' . $rows . '</div>' . $form . '</div>';
 });
 
