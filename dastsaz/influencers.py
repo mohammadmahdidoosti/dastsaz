@@ -32,6 +32,12 @@ NICHES = {"ناخن و آرایش": ["طراحی_ناخن", "کاشت_ناخن",
           "استایل و ولاگ": ["استایل_روزانه", "ولاگ", "ولاگ_روزانه", "استایل_دخترانه"],
           "دست‌سازی": ["گلدوزی", "بافتنی", "سفالگری", "دستساز"],
           "گربه و گیاه": ["گربه", "گیاهان_آپارتمانی"]}
+# 2026-11-09: the three niches of the first test (books, pets, cooking/cafe) and the handmade pages the supplier sent
+FOCUS = {"کتاب": ["بوکستاگرام", "کتابخوانی", "معرفی_کتاب", "کتاب_خوب"],
+         "گربه و حیوانِ خانگی": ["گربه", "گربه_ایرانی", "عاشق_گربه", "حیوانات_خانگی"],
+         "آشپزی و کافه": ["کافه_گردی", "آشپزی_خانگی", "دسر", "کیک_خانگی"]}
+SUPPLIER_SEEDS = ["farnoosh.mashreghi.jewelery", "vcore_art", "motisa.art", "pishi.crafts", "zug_gallery",
+                  "craft_by_zzahra", "korvo.art", "nullityvillage", "_munrim_", "_nilouna_"]
 TW_TERMS = ["استایل امروزم min_faves:30", "اکسسوری min_faves:30", "گوشواره min_faves:30", "کافه گردی min_faves:50",
             "کتاب پیشنهاد min_faves:50", "کادو تولد min_faves:30", "ناخن min_faves:30", "دستساز min_faves:20"]
 TW_MIN, TW_MAX = 2_000, 30_000
@@ -465,3 +471,14 @@ def grow(rounds: int = 2, max_usd: float = 1.2, progress=None) -> dict:
     (_dir() / "latest.json").write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding="utf-8")
     return {"rounds": out, "A": sum(1 for x in d["rows"] if x.get("grade") == "A" and x["kind"] == "creator"),
             "B": sum(1 for x in d["rows"] if x.get("grade") == "B" and x["kind"] == "creator")}
+
+
+def focus(progress=None, seeds_usd: float = 1.5, niches_usd: float = 2.0) -> dict:
+    """Who tagged / worked with the supplier's handmade pages, then the three test niches by hashtag (~$3.5 on Apify)."""
+    a = snowball(SUPPLIER_SEEDS, max_usd=seeds_usd, label="از پیج‌های تأمین‌کننده")
+    if progress:
+        progress(1, 2)
+    b = run(max_usd=niches_usd, per_tag=20, niches=FOCUS)
+    if progress:
+        progress(2, 2)
+    return {"snowball": a, "niches": b}

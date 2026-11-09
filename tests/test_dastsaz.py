@@ -1160,3 +1160,14 @@ def test_shop_views_adds_two_pictures_to_gallery(tmp_path, monkeypatch):
     assert body["images"][1]["src"].endswith(".png")
     assert len(next(x for x in designs.load() if x["id"] == "d0")["views"]) == 2
     assert shop.add_views(woo=w, session=S())["done"] == 0        # never twice
+
+
+def test_influencers_focus_runs_both(monkeypatch):
+    from dastsaz import influencers as I
+    calls = []
+    monkeypatch.setattr(I, "snowball", lambda seeds, max_usd, label: calls.append(("s", len(seeds), max_usd)) or {"ok": 1})
+    monkeypatch.setattr(I, "run", lambda max_usd, per_tag, niches: calls.append(("r", sorted(niches), max_usd)) or {"ok": 2})
+    out = I.focus()
+    assert calls[0] == ("s", 10, 1.5)
+    assert calls[1][0] == "r" and "کتاب" in calls[1][1] and calls[1][2] == 2.0
+    assert out == {"snowball": {"ok": 1}, "niches": {"ok": 2}}
