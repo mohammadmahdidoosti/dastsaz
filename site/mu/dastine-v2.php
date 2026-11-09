@@ -352,6 +352,7 @@ ul.products li.product a:focus:not(:focus-visible),.dastine-hero2 a:focus:not(:f
 .woocommerce-cart .button,.woocommerce-cart button.button{border-radius:999px!important;font-family:inherit!important}
 .woocommerce-cart .wc-proceed-to-checkout a.checkout-button{background:var(--d-anar)!important;color:#fff!important;border-radius:999px!important;font-size:17px!important;padding:16px!important}
 .woocommerce-cart .cart_totals h2{font-size:20px}
+.woocommerce-shipping-destination,.woocommerce-shipping-calculator{display:none!important}
 .v2-photo--img{border:0!important;padding:0!important;overflow:hidden;background:none!important}
 .v2-photo--img img{width:100%!important;height:100%!important;object-fit:cover;opacity:1!important;display:block}
 .v2-custom{padding:0 0 72px}
