@@ -1171,3 +1171,21 @@ def test_influencers_focus_runs_both(monkeypatch):
     assert calls[0] == ("s", 10, 1.5)
     assert calls[1][0] == "r" and "کتاب" in calls[1][1] and calls[1][2] == 2.0
     assert out == {"snowball": {"ok": 1}, "niches": {"ok": 2}}
+
+
+def test_grow_from_uses_new_good_creators(monkeypatch):
+    from dastsaz import influencers as I
+    state = {"rows": [{"u": "old", "kind": "creator", "eng": 5}]}
+    seen = []
+
+    def fake_snowball(seeds, max_usd, label):
+        seen.append(list(seeds))
+        if len(seen) == 1:
+            state["rows"] += [{"u": "a", "kind": "creator", "eng": 3, "grade": "A", "fit": 8},
+                              {"u": "b", "kind": "maker", "eng": 9, "grade": "A", "fit": 9},
+                              {"u": "c", "kind": "creator", "eng": 1.0, "grade": "B", "fit": 7}]
+        return {}
+    monkeypatch.setattr(I, "snowball", fake_snowball)
+    monkeypatch.setattr(I, "latest", lambda: state)
+    I.grow_from(["s1", "s2"])
+    assert seen == [["s1", "s2"], ["a"]]

@@ -482,3 +482,24 @@ def focus(progress=None, seeds_usd: float = 1.5, niches_usd: float = 2.0) -> dic
     if progress:
         progress(2, 2)
     return {"snowball": a, "niches": b}
+
+
+FOCUS_SEEDS = ["shivabookish_", "thisissamiira", "sania_riazi", "doozigol"]
+
+
+def grow_from(seeds: list[str] | None = None, rounds: int = 2, max_usd: float = 1.0, round2_max: int = 8, progress=None) -> dict:
+    """Snowball from a few good creators, then from the best new creators that round found (not makers or shops)."""
+    seeds = list(seeds or FOCUS_SEEDS)
+    out = []
+    for r in range(rounds):
+        if not seeds:
+            break
+        before = {x["u"] for x in (latest() or {"rows": []})["rows"]}
+        out.append(snowball(seeds, max_usd=max_usd, label=f"از اینفلوئنسرهای خوب، دور {r + 1}"))
+        rows = (latest() or {"rows": []})["rows"]
+        new = [x for x in rows if x["u"] not in before and x.get("kind") == "creator" and x.get("eng", 0) >= 1.5]
+        new.sort(key=lambda x: (x.get("grade", "C"), -x.get("fit", 0)))
+        seeds = [x["u"] for x in new[:round2_max]]
+        if progress:
+            progress(r + 1, rounds)
+    return {"rounds": out}
