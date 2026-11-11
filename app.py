@@ -390,7 +390,7 @@ def _brightdata_test() -> dict:
     out = {"keys": sorted(rows[0]) if rows else [], "post": {k: (str(v)[:40] if v is not None else None) for k, v in post.items()},
            "avg_engagement": rows[0].get("avg_engagement") if rows else None}
     (C.DATA_DIR / "influencers" / "brightdata_test.json").write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
-    return out | {"note": json.dumps(out, ensure_ascii=False)}
+    return out | {"note": json.dumps({k: (v[:12] if isinstance(v, str) else v) for k, v in out["post"].items()}, ensure_ascii=False)}
 
 
 def _designs() -> list[str]:
