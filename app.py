@@ -385,12 +385,11 @@ class H(BaseHTTPRequestHandler):
 def _brightdata_test() -> dict:
     """Three known pages through Bright Data; the result is written next to the influencer data for a look."""
     from dastsaz import brightdata
-    rows = brightdata.raw(["shivabookish_"])
-    post = ((rows[0].get("posts") or [{}])[0]) if rows else {}
-    out = {"keys": sorted(rows[0]) if rows else [], "post": {k: (str(v)[:40] if v is not None else None) for k, v in post.items()},
-           "avg_engagement": rows[0].get("avg_engagement") if rows else None}
+    profs, skipped = brightdata.profiles(["shivabookish_", "thisissamiira"])
+    out = {"ok": [{"u": p["username"], "followers": p["followersCount"], "posts": len(p["latestPosts"]),
+                   "eng": influencers.stats(p)["eng"]} for p in profs], "skipped": skipped}
     (C.DATA_DIR / "influencers" / "brightdata_test.json").write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
-    return out | {"note": json.dumps({k: (v[:12] if isinstance(v, str) else v) for k, v in out["post"].items()}, ensure_ascii=False)}
+    return out | {"note": json.dumps(out, ensure_ascii=False)}
 
 
 def _designs() -> list[str]:

@@ -14,6 +14,8 @@ from . import config as C
 log = logging.getLogger(__name__)
 API = "https://api.brightdata.com/datasets/v3"
 PROFILES = "gd_l1vikfch901nx3by4"
+POSTS = "gd_lk5ns7kz21pck8jpis"          # the profile rows carry no like counts; these do
+PER = 6                                          # recent posts read per page: 1 + 6 records a page
 
 
 def ready() -> bool:
@@ -37,9 +39,19 @@ def to_profile(x: dict) -> dict:
 
 def raw(users: list[str], max_wait: int = 900, sess=None, sleep=time.sleep) -> list[dict]:
     """Bright Data's own rows for these handles."""
+    return _collect(PROFILES, [f"https://www.instagram.com/{u}/" for u in users], max_wait, sess, sleep)
+
+
+def _key(url: str) -> str:
+    return str(url or "").split("?")[0].rstrip("/").lower()
+
+
+def _collect(dataset: str, urls: list[str], max_wait: int = 900, sess=None, sleep=time.sleep) -> list[dict]:
+    if not urls:
+        return []
     s = sess or requests.Session()
-    r = s.post(f"{API}/trigger", params={"dataset_id": PROFILES, "include_errors": "true"}, headers=_h(), timeout=60,
-               json=[{"url": f"https://www.instagram.com/{u}/"} for u in users])
+    r = s.post(f"{API}/trigger", params={"dataset_id": dataset, "include_errors": "true"}, headers=_h(), timeout=60,
+               json=[{"url": u} for u in urls])
     if r.status_code >= 400:
         raise RuntimeError(f"bright data trigger HTTP {r.status_code}: {r.text[:200]}")
     sid = r.json().get("snapshot_id")
@@ -63,12 +75,26 @@ def profiles(usernames: list[str], max_wait: int = 900, sess=None, sleep=time.sl
     users = [u.strip().lstrip("@").lower() for u in usernames if u and u.strip()]
     if not users:
         return [], []
-    rows = raw(users, max_wait=max_wait, sess=sess, sleep=sleep)
+    rows = [x for x in raw(users, max_wait=max_wait, sess=sess, sleep=sleep)
+            if not x.get("error") and not x.get("is_private") and x.get("account")]
+    want = [q["url"] for x in rows for q in [p for p in (x.get("posts") or []) if p.get("url") and not p.get("is_pinned")][:PER]]
+    counts = {}
+    try:
+        for q in _collect(POSTS, want, max_wait, sess, sleep):
+            if not q.get("error") and q.get("likes") is not None:
+                counts[_key(q.get("url"))] = (q.get("likes"), q.get("num_comments") or 0)
+    except RuntimeError as e:                                   # profiles still count without the like numbers
+        log.warning("bright data posts: %s", e)
     out, ok = [], set()
     for x in rows:
-        if x.get("error") or x.get("is_private") or not x.get("account"):
-            continue
         p = to_profile(x)
+        posts = []
+        for q, src in zip(p["latestPosts"], x.get("posts") or []):
+            c = counts.get(_key(src.get("url")))
+            if c:
+                q["likesCount"], q["commentsCount"] = c
+                posts.append(q)
+        p["latestPosts"] = posts or p["latestPosts"]
         out.append(p)
         ok.add(p["username"])
     return out, [u for u in users if u not in ok]

@@ -1208,16 +1208,22 @@ def test_brightdata_profiles_shape(monkeypatch):
             self.n = 0
 
         def post(self, url, **k):
-            assert k["json"][0]["url"] == "https://www.instagram.com/a/"
-            return R({"snapshot_id": "s1"})
+            if k["params"]["dataset_id"] == B.PROFILES:
+                assert k["json"][0]["url"] == "https://www.instagram.com/a/"
+                return R({"snapshot_id": "prof"})
+            assert [j["url"] for j in k["json"]] == ["https://www.instagram.com/p/x1/"]
+            return R({"snapshot_id": "posts"})
 
         def get(self, url, **k):
             if "/progress/" in url:
                 self.n += 1
                 return R({"status": "running" if self.n == 1 else "ready"})
-            return R([{"account": "A", "followers": 1000, "posts_count": 50, "biography": "hi",
-                       "posts": [{"caption": "x", "likes": 40, "comments": 2, "datetime": "2026-11-01", "image_url": "u"}]},
-                      {"account": "p", "is_private": True}, {"error": "not found", "input": {"url": "c"}}])
+            if url.endswith("/prof"):
+                return R([{"account": "A", "followers": 1000, "posts_count": 50, "biography": "hi",
+                           "posts": [{"caption": "x", "datetime": "2026-11-01", "image_url": "u", "url": "https://www.instagram.com/p/x1/"},
+                                     {"caption": "pin", "url": "https://www.instagram.com/p/pp/", "is_pinned": True}]},
+                          {"account": "p", "is_private": True}, {"error": "not found", "input": {"url": "c"}}])
+            return R([{"url": "https://www.instagram.com/p/x1", "likes": 40, "num_comments": 2}])
     got, skipped = B.profiles(["a", "p", "c"], sess=S(), sleep=lambda *_: None)
     assert [g["username"] for g in got] == ["a"] and got[0]["latestPosts"][0]["likesCount"] == 40
     assert skipped == ["p", "c"]

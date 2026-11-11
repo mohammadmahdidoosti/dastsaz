@@ -186,8 +186,11 @@ def nightly(budget: float = 0.15, ap=None, rnd: random.Random | None = None) -> 
     from . import igapi, brightdata
     free = igapi.ready() or brightdata.ready()                 # Instagram's own API or Bright Data's free monthly records
     per = 0.0065                                               # ~ dollars per profile on Apify
-    n_new = 120 if free else max(1, int(budget * 0.85 / per))
-    n_old = 20 if free else max(0, int(budget * 0.15 / per))
+    if free and not igapi.ready():                             # Bright Data: ~5,000 free records a month, 7 a page
+        n_new, n_old = 20, 3
+    else:
+        n_new = 120 if free else max(1, int(budget * 0.85 / per))
+        n_old = 20 if free else max(0, int(budget * 0.15 / per))
     today = C.today().isoformat()
     new = pick(fr, n_new, rnd)
     old = [u for u, x in rows.items() if x.get("grade") in ("A", "B") and x.get("src") != "twitter"
