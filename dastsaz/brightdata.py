@@ -35,11 +35,8 @@ def to_profile(x: dict) -> dict:
             "profilePicUrl": x.get("profile_image_link") or "", "latestPosts": posts, "via": "brightdata"}
 
 
-def profiles(usernames: list[str], max_wait: int = 900, sess=None, sleep=time.sleep) -> tuple[list[dict], list[str]]:
-    """(profiles found, handles that came back private, missing or with an error)."""
-    users = [u.strip().lstrip("@").lower() for u in usernames if u and u.strip()]
-    if not users:
-        return [], []
+def raw(users: list[str], max_wait: int = 900, sess=None, sleep=time.sleep) -> list[dict]:
+    """Bright Data's own rows for these handles."""
     s = sess or requests.Session()
     r = s.post(f"{API}/trigger", params={"dataset_id": PROFILES, "include_errors": "true"}, headers=_h(), timeout=60,
                json=[{"url": f"https://www.instagram.com/{u}/"} for u in users])
@@ -58,8 +55,17 @@ def profiles(usernames: list[str], max_wait: int = 900, sess=None, sleep=time.sl
         sleep(10)
         waited += 10
     rows = s.get(f"{API}/snapshot/{sid}", params={"format": "json"}, headers=_h(), timeout=120).json()
+    return rows if isinstance(rows, list) else []
+
+
+def profiles(usernames: list[str], max_wait: int = 900, sess=None, sleep=time.sleep) -> tuple[list[dict], list[str]]:
+    """(profiles found, handles that came back private, missing or with an error)."""
+    users = [u.strip().lstrip("@").lower() for u in usernames if u and u.strip()]
+    if not users:
+        return [], []
+    rows = raw(users, max_wait=max_wait, sess=sess, sleep=sleep)
     out, ok = [], set()
-    for x in rows if isinstance(rows, list) else []:
+    for x in rows:
         if x.get("error") or x.get("is_private") or not x.get("account"):
             continue
         p = to_profile(x)
