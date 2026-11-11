@@ -39,7 +39,7 @@ PIN = re.compile(r"^[\w\-]{1,120}$")
 STEP_FA = {"wait": "منتظر", "basalam": "باسلام", "digikala": "دیجی‌کالا", "etsy": "اتسی", "ai": "هوش مصنوعی", "expand": "فرصت‌یابی", "testlist": "لیست آزمایش", "trends": "گوگل ترندز", "suggest": "پیشنهادهای جست‌وجو",
            "reviews": "نظر خریداران", "makers": "سازنده‌ها", "snapshot": "عکس هفتگی فروش",
            "voice": "صدای مشتری", "needs": "نیازهای کادو", "telegram": "تلگرام", "radar": "رادار دسته‌ها",
-           "radar_trends": "گوگلِ دسته‌ها", "radar_ig": "اینستاگرامِ دسته‌ها", "twitter": "توییتر کادو", "translation_test": "تست ترجمه‌ی دسته‌ها", "lab_seed": "ثبت طرح‌های اول", "designs": "ماشین طراحی", "designs_sample": "۵ طرح نمونه", "designs_redraw": "تصویر طرح‌ها", "designs_v2": "طراحی دور دوم", "deepdive": "بررسی دسته‌های کم‌رقیب", "pinterest": "پینترست هفتگی", "twitter_ideas": "ایده‌های توییتر", "shop_check": "آزمایش اتصال به سایت", "shop_sync": "بارگذاری طرح‌ها روی سایت", "shop_drop": "دراپ هفتگی سایت", "shop_views": "عکس‌های بیشترِ آثار", "shop_views_test": "عکس بیشتر برای ۲ اثر (آزمایشی)", "twitter_ideas_recheck": "بررسی دوباره‌ی بازار ایده‌ها", "influencers": "پیدا کردن اینفلوئنسر", "influencers_focus": "اینفلوئنسرهای کتاب، گربه و کافه + پیج‌های تأمین‌کننده", "influencers_grow_focus": "گسترش از ۴ اینفلوئنسرِ خوب",
+           "radar_trends": "گوگلِ دسته‌ها", "radar_ig": "اینستاگرامِ دسته‌ها", "twitter": "توییتر کادو", "translation_test": "تست ترجمه‌ی دسته‌ها", "lab_seed": "ثبت طرح‌های اول", "designs": "ماشین طراحی", "designs_sample": "۵ طرح نمونه", "designs_redraw": "تصویر طرح‌ها", "designs_v2": "طراحی دور دوم", "deepdive": "بررسی دسته‌های کم‌رقیب", "pinterest": "پینترست هفتگی", "twitter_ideas": "ایده‌های توییتر", "shop_check": "آزمایش اتصال به سایت", "shop_sync": "بارگذاری طرح‌ها روی سایت", "shop_drop": "دراپ هفتگی سایت", "shop_views": "عکس‌های بیشترِ آثار", "shop_views_test": "عکس بیشتر برای ۲ اثر (آزمایشی)", "twitter_ideas_recheck": "بررسی دوباره‌ی بازار ایده‌ها", "influencers": "پیدا کردن اینفلوئنسر", "influencers_focus": "اینفلوئنسرهای کتاب، گربه و کافه + پیج‌های تأمین‌کننده", "influencers_grow_focus": "گسترش از ۴ اینفلوئنسرِ خوب", "brightdata_test": "آزمایش Bright Data با ۳ پیج",
            "report": "گزارش"}
 
 
@@ -67,8 +67,9 @@ class Job:
         try:
             if task:
                 self.update(step=name)
-                task(lambda i, t: self.update(done=i, total=t))
-                self.update(running=False, ended=time.time(), step="done", note="آماده است")
+                res = task(lambda i, t: self.update(done=i, total=t))
+                note = res.get("note") if isinstance(res, dict) and res.get("note") else "آماده است"
+                self.update(running=False, ended=time.time(), step="done", note=str(note)[:400])
                 return
             pipeline.run(name, status=self.update, only=only)
             self.update(running=False, ended=time.time(), step="done", note="گزارش آماده است")
@@ -366,7 +367,7 @@ class H(BaseHTTPRequestHandler):
                   "radar": lambda p: categories.run(progress=p), "radar_trends": lambda p: categories.trends(), "radar_ig": lambda p: categories.instagram(), "twitter": lambda p: needs.twitter(), "translation_test": lambda p: categories.translation_test(progress=p),
                   "lab_seed": lambda p: lab_seed.seed(), "designs": lambda p: designs.generate(progress=p),
                   "designs_sample": lambda p: designs.generate(per=5, cats=["necklace"], progress=p),
-                  "designs_redraw": lambda p: designs.redraw(), "designs_v2": lambda p: designs.generate_v2(progress=p), "designs_shrink": lambda p: designs.shrink_all(), "deepdive": lambda p: deepdive.run(progress=p), "pinterest": lambda p: pinterest.run(), "twitter_ideas": lambda p: needs.twitter_ideas(progress=p), "twitter_ideas_recheck": lambda p: needs.twitter_ideas(progress=p, reuse=True), "influencers": lambda p: influencers.run(progress=p), "influencers_snowball": lambda p: influencers.snowball((C.DATA_DIR / "influencers" / "seeds.txt").read_text(encoding="utf-8").split()), "influencers_grow": lambda p: influencers.grow(progress=p), "influencers_focus": lambda p: influencers.focus(progress=p), "influencers_grow_focus": lambda p: influencers.grow_from(progress=p), "people": lambda p: people.nightly(float(C.secret("PEOPLE_BUDGET") or 0)), "people_bootstrap": lambda p: people.bootstrap(), "influencers_niches": lambda p: influencers.run(progress=p, niches=influencers.NICHES, with_twitter=True, max_usd=2.5, per_tag=20), "shop_check": lambda p: shop.check(), "shop_sync": lambda p: shop.sync(progress=p), "shop_drop": lambda p: shop.next_drop(), "shop_views": lambda p: shop.add_views(progress=p), "shop_views_test": lambda p: shop.add_views(limit=2, progress=p)}.get(name)
+                  "designs_redraw": lambda p: designs.redraw(), "designs_v2": lambda p: designs.generate_v2(progress=p), "designs_shrink": lambda p: designs.shrink_all(), "deepdive": lambda p: deepdive.run(progress=p), "pinterest": lambda p: pinterest.run(), "twitter_ideas": lambda p: needs.twitter_ideas(progress=p), "twitter_ideas_recheck": lambda p: needs.twitter_ideas(progress=p, reuse=True), "influencers": lambda p: influencers.run(progress=p), "influencers_snowball": lambda p: influencers.snowball((C.DATA_DIR / "influencers" / "seeds.txt").read_text(encoding="utf-8").split()), "influencers_grow": lambda p: influencers.grow(progress=p), "influencers_focus": lambda p: influencers.focus(progress=p), "influencers_grow_focus": lambda p: influencers.grow_from(progress=p), "brightdata_test": lambda p: _brightdata_test(), "people": lambda p: people.nightly(float(C.secret("PEOPLE_BUDGET") or 0)), "people_bootstrap": lambda p: people.bootstrap(), "influencers_niches": lambda p: influencers.run(progress=p, niches=influencers.NICHES, with_twitter=True, max_usd=2.5, per_tag=20), "shop_check": lambda p: shop.check(), "shop_sync": lambda p: shop.sync(progress=p), "shop_drop": lambda p: shop.next_drop(), "shop_views": lambda p: shop.add_views(progress=p), "shop_views_test": lambda p: shop.add_views(limit=2, progress=p)}.get(name)
             if not fn:
                 return self._json({"error": "نامعتبر"}, 400)
             err = JOB.start(name, task=fn)
@@ -379,6 +380,16 @@ class H(BaseHTTPRequestHandler):
             err = JOB.start(name, (q.get("only") or [""])[0])
             return self._json({"error": err} if err else {"ok": True, "run": name})
         return self._json({"error": "not found"}, 404)
+
+
+def _brightdata_test() -> dict:
+    """Three known pages through Bright Data; the result is written next to the influencer data for a look."""
+    from dastsaz import brightdata
+    profs, skipped = brightdata.profiles(["shivabookish_", "thisissamiira", "dastine.official"])
+    out = {"ok": [{"u": p["username"], "followers": p["followersCount"], "posts": len(p["latestPosts"]),
+                   "eng": influencers.stats(p)["eng"]} for p in profs], "skipped": skipped}
+    (C.DATA_DIR / "influencers" / "brightdata_test.json").write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
+    return out | {"note": json.dumps(out, ensure_ascii=False)}
 
 
 def _designs() -> list[str]:

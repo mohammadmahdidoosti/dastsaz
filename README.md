@@ -20,6 +20,8 @@
 | `OPENROUTER_API_KEY` | کلید OpenRouter (یک کلید جدا برای دست‌ساز) |
 | `DATA_DIR` | `/data` (حجم ماندگار) |
 
+| `BRIGHTDATA_API_KEY` | کلید Bright Data (رادارِ شبانه‌ی اینفلوئنسرها؛ ماهی ~۵۰۰۰ پیجِ رایگان) |
+
 اختیاری: `APIFY_MAX_USD`، `TOP_N` (۲۰۰)، `ETSY_PER_QUERY` (۴۰)، `BASALAM_PER_QUERY` (۶۰)، `USD_TOMAN` (۲۷۰۰۰۰)، `QUIET_FROM`/`QUIET_TO`.
 
 ## Coolify

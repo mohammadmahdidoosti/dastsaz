@@ -1189,3 +1189,37 @@ def test_grow_from_uses_new_good_creators(monkeypatch):
     monkeypatch.setattr(I, "latest", lambda: state)
     I.grow_from(["s1", "s2"])
     assert seen == [["s1", "s2"], ["a"]]
+
+
+def test_brightdata_profiles_shape(monkeypatch):
+    from dastsaz import brightdata as B
+    monkeypatch.setattr(C, "secret", lambda k: {"BRIGHTDATA_API_KEY": "k"}.get(k, ""))
+    assert B.ready()
+
+    class R:
+        def __init__(self, j, code=200):
+            self._j, self.status_code, self.text = j, code, ""
+
+        def json(self):
+            return self._j
+
+    class S:
+        def __init__(self):
+            self.n = 0
+
+        def post(self, url, **k):
+            assert k["json"][0]["url"] == "https://www.instagram.com/a/"
+            return R({"snapshot_id": "s1"})
+
+        def get(self, url, **k):
+            if "/progress/" in url:
+                self.n += 1
+                return R({"status": "running" if self.n == 1 else "ready"})
+            return R([{"account": "A", "followers": 1000, "posts_count": 50, "biography": "hi",
+                       "posts": [{"caption": "x", "likes": 40, "comments": 2, "datetime": "2026-11-01", "image_url": "u"}]},
+                      {"account": "p", "is_private": True}, {"error": "not found", "input": {"url": "c"}}])
+    got, skipped = B.profiles(["a", "p", "c"], sess=S(), sleep=lambda *_: None)
+    assert [g["username"] for g in got] == ["a"] and got[0]["latestPosts"][0]["likesCount"] == 40
+    assert skipped == ["p", "c"]
+    from dastsaz import influencers as I
+    assert I.stats(got[0])["eng"] == 4.2

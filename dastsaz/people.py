@@ -183,8 +183,8 @@ def nightly(budget: float = 0.15, ap=None, rnd: random.Random | None = None) -> 
     fr = frontier()
     known = set(rows) | set(d.get("checked", []))
     got = harvest(fr, known)
-    from . import igapi
-    free = igapi.ready()                                       # Instagram's own API: free, ~120 pages a night
+    from . import igapi, brightdata
+    free = igapi.ready() or brightdata.ready()                 # Instagram's own API or Bright Data's free monthly records
     per = 0.0065                                               # ~ dollars per profile on Apify
     n_new = 120 if free else max(1, int(budget * 0.85 / per))
     n_old = 20 if free else max(0, int(budget * 0.15 / per))
@@ -201,7 +201,7 @@ def nightly(budget: float = 0.15, ap=None, rnd: random.Random | None = None) -> 
         _save("frontier.json", fr)
         return {"date": today, "harvest": got, "profiled": 0, "waiting": "instagram token"}
     if free:
-        profs, skipped = igapi.profiles(users)
+        profs, skipped = igapi.profiles(users) if igapi.ready() else brightdata.profiles(users)
         usd = 0.0
     else:
         r = ap.run({"usernames": users}, budget, actor=I.PROFILE_ACTOR)
@@ -262,7 +262,7 @@ def nightly(budget: float = 0.15, ap=None, rnd: random.Random | None = None) -> 
     d["checked"] = sorted(set(d.get("checked", [])) | {u.lower() for u in new})
     d.setdefault("radar", []).append({"date": today, "harvest": got, "profiled": len(profs), "added": added,
                                       "good": sum(1 for x in fresh if x.get("grade") in ("A", "B") and x["kind"] in ("creator", "maker")),
-                                      "rising": rising, "usd": round(usd, 3), "via": "instagram" if free else "apify", "personal": len(skipped), "frontier": sum(1 for c in fr.values() if not c.get("done"))})
+                                      "rising": rising, "usd": round(usd, 3), "via": ("instagram" if igapi.ready() else "brightdata") if free else "apify", "personal": len(skipped), "frontier": sum(1 for c in fr.values() if not c.get("done"))})
     d["radar"] = d["radar"][-60:]
     (I._dir() / "latest.json").write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding="utf-8")
     _save("frontier.json", fr)
