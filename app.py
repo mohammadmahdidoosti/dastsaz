@@ -25,6 +25,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from dastsaz import config as C
+from dastsaz import transcribe as T
 from dastsaz import ads, categories, deepdive, designs, influencers, people, pinterest, shop, lab_seed, guard, schedule, lab, needs, page, pipeline, snapshot, telegram, voice
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S")
@@ -216,6 +217,8 @@ class H(BaseHTTPRequestHandler):
             return self._send(200, page.designs_page(
                 designs.load(), designs.counts(), designs.CATEGORIES, f"https://{host}/s/{designs.token()}",
                 json.loads(lf.read_text(encoding="utf-8")) if lf.exists() else None).encode())
+        if parts == ["voice-text"]:
+            return self._send(200, T.page().encode())
         if parts == ["people"]:
             return self._send(200, page.influencers_page(influencers.latest(), "/person", add_url="/add-people",
                                                          queue=people.frontier()).encode())
@@ -332,6 +335,17 @@ class H(BaseHTTPRequestHandler):
             else:
                 influencers.pick(parts[1], f.get("on") == "1")
             return self._back(f"/people#{parts[1]}")
+        if parts == ["voice-text"]:
+            data = self._upload()
+            if not data:
+                return self._send(200, T.page(err="فایلی نرسید.").encode())
+            try:
+                txt, usd = T.transcribe(data)
+            except Exception as e:  # noqa: BLE001
+                log.warning("transcribe: %s", e)
+                return self._send(200, T.page(err=f"نشد: {e}").encode())
+            T.save(txt)
+            return self._send(200, T.page(result=txt).encode())
         if parts == ["add-people"]:
             people.add_manual(re.split(r"[\s,،]+", self._form().get("handles", ""))[:50])
             return self._back("/people?added=1")

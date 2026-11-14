@@ -1229,3 +1229,21 @@ def test_brightdata_profiles_shape(monkeypatch):
     assert skipped == ["p", "c"]
     from dastsaz import influencers as I
     assert I.stats(got[0])["eng"] == 4.2
+
+
+def test_transcribe_sends_mp3_and_reads_text(monkeypatch, tmp_path):
+    from dastsaz import transcribe as T
+    monkeypatch.setattr(T, "to_mp3", lambda d: b"MP3")
+    seen = {}
+
+    class R:
+        def json(self):
+            return {"choices": [{"message": {"content": " سلام، قیمت‌ها را فرستادم. "}}], "usage": {"cost": 0.001}}
+
+    def post(url, json, timeout, headers):
+        seen.update(json)
+        return R()
+    txt, usd = T.transcribe(b"ogg", key="k", post=post)
+    part = seen["messages"][0]["content"][1]
+    assert part["type"] == "input_audio" and part["input_audio"]["format"] == "mp3"
+    assert txt == "سلام، قیمت‌ها را فرستادم." and usd == 0.001
